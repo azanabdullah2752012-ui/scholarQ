@@ -43,19 +43,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('ask-form').addEventListener('submit', handleAsk);
   document.getElementById('answer-form').addEventListener('submit', handleAnswer);
 
-  // Real-time Quality Assistant
-  document.getElementById('ask-title').addEventListener('input', (e) => {
-    const predicted = predictSubject(e.target.value);
-    if (predicted) {
-      const subjectSelect = document.getElementById('ask-subject');
-      subjectSelect.value = predicted;
-      showToast(`AI Suggested: ${predicted}`, 'info');
-    }
-  });
-
-  document.getElementById('ask-body').addEventListener('input', (e) => updateQualityUI('ask', e.target.value));
-  document.getElementById('answer-body').addEventListener('input', (e) => updateQualityUI('answer', e.target.value));
-
   if (user) {
     // Refresh user points from DB
     await fetchUserFromDB();
@@ -293,6 +280,44 @@ function renderBadges(asked, answered, bestCount) {
     container.appendChild(badge);
   });
   lucide.createIcons();
+}
+
+async function handleUpdateScore(e) {
+  e.preventDefault();
+  const newScore = parseInt(document.getElementById('profile-new-score').value);
+  if (isNaN(newScore) || newScore < 0 || newScore > 100) return;
+
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  btn.innerText = 'Updating...';
+
+  let newRole = 'student';
+  if (newScore >= 92) newRole = 'elite';
+  else if (newScore >= 85) newRole = 'scholar';
+  else if (newScore >= 80) newRole = 'junior_scholar';
+
+  const updates = { 
+    percentage: newScore, 
+    role: newRole 
+  };
+
+  const { error } = await supabaseClient
+    .from('users')
+    .update(updates)
+    .eq('id', user.id);
+
+  if (!error) {
+    user = { ...user, ...updates };
+    localStorage.setItem('scholarq_user', JSON.stringify(user));
+    showToast(`Score updated! You are now a ${newRole.replace('_', ' ')}`, 'success');
+    renderProfile();
+    updateNavbar();
+  } else {
+    showToast('Failed to update score', 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerText = 'Update Score';
 }
 
 // Navigation
@@ -748,18 +773,8 @@ async function handleAnswer(e) {
     is_best: false
   };
 
-  const { score } = analyzeQuality(body);
-  const isHighQuality = score >= 80;
-
-  const { error } = await supabaseClient.from('answers').insert([newAnswer]);
-
-  if (!error) {
     const q = questions.find(x => x.id === currentQuestionId);
     let reward = q?.reward || 5;
-    if (isHighQuality) {
-      reward += 2;
-      showToast('High Quality Bonus: +2 pts!', 'success');
-    }
     await updateUserPoints(user.points + reward);
     document.getElementById('answer-form').reset();
     await fetchQuestionsFromDB();
@@ -874,44 +889,4 @@ function escapeHTML(str) {
       '"': '&quot;'
     }[tag] || tag)
   );
-}
-
-// AI Assistant & Quality Control
-function analyzeQuality(text) {
-  let score = 0;
-  let tips = [];
-
-  if (text.length > 50) score += 30; else tips.push('Add more detail');
-  if (text.length > 150) score += 20;
-  if (/[.!?].*?[.!?]/.test(text)) score += 20; else tips.push('Use multiple sentences');
-  if (/(example|because|therefore|specifically|how)/i.test(text)) score += 30; else tips.push('Add explanatory keywords');
-
-  return { score, tips };
-}
-
-function predictSubject(title) {
-  const t = title.toLowerCase();
-  if (/(solve|x|y|equation|math|calculate|integral|geometry)/i.test(t)) return 'Math';
-  if (/(science|physics|chemistry|biology|atom|molecule|energy)/i.test(t)) return 'Science';
-  if (/(history|war|century|empire|civilization|dated)/i.test(t)) return 'History';
-  if (/(literature|poem|book|novel|shakespeare|author)/i.test(t)) return 'Literature';
-  if (/(code|programming|python|js|html|css|server|database)/i.test(t)) return 'Computer Science';
-  return null;
-}
-
-function updateQualityUI(view, text) {
-  const { score, tips } = analyzeQuality(text);
-  const meter = document.getElementById(`${view}-quality-meter`);
-  const tipText = document.getElementById(`${view}-quality-tips`);
-  
-  if (!meter) return;
-
-  meter.style.width = `${score}%`;
-  if (score < 40) meter.style.background = 'var(--accent-danger)';
-  else if (score < 75) meter.style.background = 'var(--accent-warning)';
-  else meter.style.background = 'var(--accent-success)';
-
-  if (tipText) {
-    tipText.innerText = score >= 80 ? 'Perfect! High Quality Bonus eligible.' : `Tip: ${tips[0] || 'Keep writing...'}`;
-  }
 }
