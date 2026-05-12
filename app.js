@@ -346,15 +346,23 @@ function renderQuestionDetail() {
   
   (q.answers || []).forEach(a => {
     ansCont.innerHTML += `
-      <div class="glass-card" style="padding: 2rem; margin-bottom: 1.5rem; border-left: 5px solid var(--p-500);">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
-          <div style="width: 35px; height: 35px; background: rgba(0,0,0,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${a.author_name[0]}</div>
-          <div>
-            <div style="font-size: 0.95rem; font-weight: 700;">${a.author_name}</div>
-            <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800;">${a.author_role}</div>
+      <div class="glass-card" style="padding: 2rem; margin-bottom: 1.5rem; border-left: 5px solid var(--p-500); display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
+            <div style="width: 35px; height: 35px; background: rgba(0,0,0,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${a.author_name[0]}</div>
+            <div>
+              <div style="font-size: 0.95rem; font-weight: 700;">${a.author_name}</div>
+              <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800;">${a.author_role}</div>
+            </div>
           </div>
+          <p style="line-height: 1.7; font-weight: 500;">${escapeHTML(a.body)}</p>
         </div>
-        <p style="line-height: 1.7; font-weight: 500;">${escapeHTML(a.body)}</p>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-left: 1.5rem;">
+          <button onclick="handleUpvote('${a.id}', '${a.author_id}')" class="btn-icon glass-card" style="width: 40px; height: 40px; background: ${profile && profile.points >= 5 ? 'rgba(139, 92, 246, 0.1)' : 'transparent'}">
+            <i data-lucide="arrow-big-up" style="width: 20px; color: var(--p-500);"></i>
+          </button>
+          <span style="font-weight: 800; color: var(--text-secondary); font-size: 0.9rem;">${a.upvotes || 0}</span>
+        </div>
       </div>
     `;
   });
@@ -390,6 +398,15 @@ function updateGlobalUI() {
   document.getElementById('welcome-name').innerText = profile.name.split(' ')[0];
   document.getElementById('dash-points').innerText = profile.points;
   document.getElementById('dash-role').innerText = profile.role;
+
+  // Scholar Features
+  const isScholar = profile.role === 'scholar';
+  document.getElementById('scholar-badge').style.display = isScholar ? 'block' : 'none';
+  document.getElementById('scholar-hub').style.display = isScholar ? 'block' : 'none';
+  if (isScholar) {
+    document.getElementById('dash-specialty').innerText = profile.specialty || 'Generalist';
+    document.getElementById('dash-rank').innerText = profile.points > 100 ? 'Master' : 'Rising Star';
+  }
 }
 
 function handleSearch(val) {
@@ -433,16 +450,36 @@ async function handleAnswer(e) {
     id: 'a_' + Date.now(),
     question_id: currentQuestionId,
     body, author_id: session.user.id, author_name: profile.name,
-    author_role: profile.role
+    author_role: profile.role,
+    upvotes: 0
   }]);
 
   if (!error) {
     showToast('Solution submitted! +5 Points.', 'success');
     document.getElementById('answer-form').reset();
     await fetchQuestions();
-    await supabaseClient.from('users').update({ points: profile.points + 5 }).eq('id', session.user.id);
+    await supabaseClient.from('users').update({ points: (profile.points || 0) + 5 }).eq('id', session.user.id);
     await fetchProfile();
   }
+}
+
+async function handleUpvote(answerId, authorId) {
+  if (authorId === session.user.id) return showToast("You can't upvote your own answer!", 'error');
+  
+  // Update answer upvotes
+  const answer = questions.flatMap(q => q.answers).find(a => a.id === answerId);
+  const newUpvotes = (answer.upvotes || 0) + 1;
+  
+  const { error: aError } = await supabaseClient.from('answers').update({ upvotes: newUpvotes }).eq('id', answerId);
+  if (aError) return showToast("Vote failed", "error");
+
+  // Award points to author
+  const { data: authorData } = await supabaseClient.from('users').select('points').eq('id', authorId).single();
+  const newPoints = (authorData.points || 0) + 2;
+  await supabaseClient.from('users').update({ points: newPoints }).eq('id', authorId);
+  
+  showToast('Upvoted! +2 pts awarded to author.', 'success');
+  fetchQuestions();
 }
 
 function showToast(msg, type = 'info') {

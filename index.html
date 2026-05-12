@@ -130,26 +130,46 @@
         </form>
       </div>
 
-      <!-- Hub View -->
-      <div id="view-home" class="view" style="display: none;">
-        <div style="margin-bottom: 3rem;">
-          <h1 style="font-size: 2.75rem; font-weight: 800; letter-spacing: -1.5px;">Welcome, <span id="welcome-name" style="color: var(--p-500);">Scholar</span>!</h1>
-          <p style="color: var(--text-secondary); font-weight: 600; font-size: 1.1rem;">Connect, solve, and grow with your peers.</p>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card glass-card">
-            <span class="stat-label">Power Score</span>
-            <div style="display: flex; align-items: baseline; gap: 8px;">
-              <h3 class="stat-value" id="dash-points">0</h3>
-              <span style="font-weight: 700; color: var(--p-500);">PTS</span>
+        <!-- Hub View -->
+        <div id="view-home" class="view" style="display: none;">
+          <div style="margin-bottom: 3rem; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+              <h1 style="font-size: 2.75rem; font-weight: 800; letter-spacing: -1.5px;">Welcome, <span id="welcome-name" style="color: var(--p-500);">Scholar</span>!</h1>
+              <p style="color: var(--text-secondary); font-weight: 600; font-size: 1.1rem;">Connect, solve, and grow with your peers.</p>
+            </div>
+            <div id="scholar-badge" class="glass-card" style="display: none; padding: 10px 20px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; border: none; font-weight: 800; font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase;">
+              <i data-lucide="shield-check" style="width: 14px; margin-right: 6px;"></i> Elite Scholar
             </div>
           </div>
-          <div class="stat-card glass-card">
-            <span class="stat-label">Platform Role</span>
-            <h3 class="stat-value" id="dash-role" style="text-transform: capitalize; font-size: 1.5rem;">Student</h3>
+
+          <div class="stats-grid">
+            <div class="stat-card glass-card">
+              <span class="stat-label">Power Score</span>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <h3 class="stat-value" id="dash-points">0</h3>
+                <span style="font-weight: 700; color: var(--p-500);">PTS</span>
+              </div>
+            </div>
+            <div class="stat-card glass-card">
+              <span class="stat-label">Platform Role</span>
+              <h3 class="stat-value" id="dash-role" style="text-transform: capitalize; font-size: 1.5rem;">Student</h3>
+            </div>
           </div>
-        </div>
+
+          <!-- Scholar Special Section -->
+          <div id="scholar-hub" class="glass-card" style="display: none; margin-top: 2rem; padding: 2rem; border-left: 6px solid #fbbf24;">
+            <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem; color: #b45309;">Scholar's Hub</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+              <div style="background: rgba(251, 191, 36, 0.1); padding: 1rem; border-radius: 16px;">
+                <div style="font-size: 0.7rem; font-weight: 800; color: #b45309; text-transform: uppercase;">Specialty</div>
+                <div id="dash-specialty" style="font-weight: 700; color: #78350f;">General</div>
+              </div>
+              <div style="background: rgba(251, 191, 36, 0.1); padding: 1rem; border-radius: 16px;">
+                <div style="font-size: 0.7rem; font-weight: 800; color: #b45309; text-transform: uppercase;">Contribution Rank</div>
+                <div id="dash-rank" style="font-weight: 700; color: #78350f;">Top 10%</div>
+              </div>
+            </div>
+          </div>
 
         <div style="margin-top: 4rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
