@@ -165,6 +165,7 @@ function navigateTo(view, param = null) {
   if (view === 'profile') renderProfile();
   if (view === 'leaderboard') renderLeaderboard();
   if (view === 'settings') renderSettings();
+  if (view === 'ask') renderAsk();
   if (view === 'question') {
     currentQuestionId = param;
     renderQuestionDetail();
@@ -334,7 +335,21 @@ function logout() {
   navigateTo('auth');
 }
 
-// Questions & Answers
+// Ask
+function renderAsk() {
+  const balanceEl = document.getElementById('ask-balance-points');
+  if(balanceEl) balanceEl.innerText = `${user.points} pts`;
+  
+  const categorySelect = document.getElementById('ask-category');
+  if(categorySelect) {
+    categorySelect.onchange = () => {
+      const option = categorySelect.options[categorySelect.selectedIndex];
+      const cost = option.dataset.cost;
+      const costDisplay = categorySelect.closest('form').querySelector('strong');
+      if(costDisplay) costDisplay.innerText = `-${cost} pts`;
+    };
+  }
+}
 async function handleAsk(e) {
   e.preventDefault();
   const title = document.getElementById('ask-title').value;
