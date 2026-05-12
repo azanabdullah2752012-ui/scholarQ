@@ -1,44 +1,17 @@
+// Initialize Supabase
+const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
+const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
 // State
 let user = JSON.parse(localStorage.getItem('scholarq_user'));
-let questions = JSON.parse(localStorage.getItem('scholarq_questions')) || [
-  {
-    id: 'q1',
-    title: 'How to solve quadratic equations?',
-    body: 'I am struggling with the equation x² + 5x + 6 = 0. Can someone explain the steps?',
-    subject: 'Math',
-    askerId: 'mock-user-1',
-    askerName: 'Alice',
-    status: 'open',
-    answers: []
-  },
-  {
-    id: 'q2',
-    title: 'What is Newton\'s second law?',
-    body: 'Can you explain it with an example?',
-    subject: 'Science',
-    askerId: 'mock-user-2',
-    askerName: 'Bob',
-    status: 'resolved',
-    bestAnswerId: 'a1',
-    answers: [
-      {
-        id: 'a1',
-        body: 'Newton\'s second law states that Force = mass × acceleration (F = ma). For example, if you push a 10kg cart with an acceleration of 2m/s², you are applying a force of 20 Newtons.',
-        authorId: 'mock-scholar-1',
-        authorName: 'Dr. Smith',
-        authorRole: 'scholar',
-        upvotes: 5,
-        isBest: true
-      }
-    ]
-  }
-];
+let questions = [];
 
 let currentView = 'auth';
 let currentQuestionId = null;
 
 // Initialization
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   lucide.createIcons();
   
   document.getElementById('auth-score').addEventListener('input', (e) => {
@@ -59,17 +32,73 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('answer-form').addEventListener('submit', handleAnswer);
 
   if (user) {
+    // Refresh user points from DB
+    await fetchUserFromDB();
+    await fetchQuestionsFromDB();
     navigateTo('home');
   } else {
     navigateTo('auth');
   }
 });
 
-function saveState() {
-  if (user) localStorage.setItem('scholarq_user', JSON.stringify(user));
-  else localStorage.removeItem('scholarq_user');
-  localStorage.setItem('scholarq_questions', JSON.stringify(questions));
+async function fetchUserFromDB() {
+  if (!user) return;
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+  
+  if (data && !error) {
+    user = data;
+    localStorage.setItem('scholarq_user', JSON.stringify(user));
+    updateNavbar();
+  }
+}
+
+async function fetchQuestionsFromDB() {
+  const { data: qData, error: qError } = await supabase
+    .from('questions')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (qError) {
+    console.error('Error fetching questions:', qError);
+    return;
+  }
+
+  const { data: aData, error: aError } = await supabase
+    .from('answers')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (aError) {
+    console.error('Error fetching answers:', aError);
+    return;
+  }
+
+  // Combine answers into questions
+  questions = qData.map(q => {
+    return {
+      ...q,
+      answers: aData.filter(a => a.question_id === q.id)
+    };
+  });
+
+  if (currentView === 'home') renderHome();
+  if (currentView === 'dashboard') renderDashboard();
+  if (currentView === 'question') renderQuestionDetail();
+}
+
+async function updateUserPoints(newPoints) {
+  user.points = newPoints;
+  localStorage.setItem('scholarq_user', JSON.stringify(user));
   updateNavbar();
+  
+  await supabase
+    .from('users')
+    .update({ points: newPoints })
+    .eq('id', user.id);
 }
 
 // Navigation
@@ -91,6 +120,9 @@ function navigateTo(view, param = null) {
   if (user) {
     navbar.style.display = 'flex';
     updateNavbar();
+    if(view === 'home' || view === 'dashboard' || view === 'question') {
+      fetchQuestionsFromDB(); // Refresh data when navigating to data-heavy pages
+    }
   } else {
     navbar.style.display = 'none';
   }
@@ -120,8 +152,12 @@ function updateNavbar() {
 }
 
 // Auth
-function handleJoin(e) {
+async function handleJoin(e) {
   e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.innerText = 'Joining...';
+
   const name = document.getElementById('auth-name').value;
   const score = parseInt(document.getElementById('auth-score').value);
   const subject = document.getElementById('auth-subject').value;
@@ -135,8 +171,8 @@ function handleJoin(e) {
 
   if (score < 80) userSubject = '';
 
-  user = {
-    id: Date.now().toString(),
+  const newUser = {
+    id: 'user_' + Date.now().toString(),
     name,
     percentage: score,
     role,
@@ -144,13 +180,26 @@ function handleJoin(e) {
     points: 50
   };
 
-  saveState();
+  const { error } = await supabase.from('users').insert([newUser]);
+
+  btn.disabled = false;
+  btn.innerText = 'Enter Ecosystem';
+
+  if (error) {
+    alert("Error joining: " + error.message);
+    return;
+  }
+
+  user = newUser;
+  localStorage.setItem('scholarq_user', JSON.stringify(user));
+  
+  await fetchQuestionsFromDB();
   navigateTo('home');
 }
 
 function logout() {
   user = null;
-  saveState();
+  localStorage.removeItem('scholarq_user');
   navigateTo('auth');
 }
 
@@ -212,32 +261,42 @@ function renderAsk() {
   document.getElementById('ask-points').innerText = user.points;
 }
 
-function handleAsk(e) {
+async function handleAsk(e) {
   e.preventDefault();
   if (user.points < 2) {
     alert("Not enough points to ask a question! You need at least 2 points.");
     return;
   }
 
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.innerText = 'Posting...';
+
   const title = document.getElementById('ask-title').value;
   const subject = document.getElementById('ask-subject').value;
   const body = document.getElementById('ask-body').value;
 
   const newQuestion = {
-    id: Date.now().toString(),
+    id: 'q_' + Date.now().toString(),
     title, body, subject,
-    askerId: user.id,
-    askerName: user.name,
-    status: 'open',
-    answers: []
+    asker_id: user.id,
+    asker_name: user.name,
+    status: 'open'
   };
 
-  questions.unshift(newQuestion);
-  user.points -= 2;
-  
-  saveState();
-  document.getElementById('ask-form').reset();
-  navigateTo('home');
+  const { error } = await supabase.from('questions').insert([newQuestion]);
+
+  if (!error) {
+    await updateUserPoints(user.points - 2);
+    document.getElementById('ask-form').reset();
+    await fetchQuestionsFromDB();
+    navigateTo('home');
+  } else {
+    alert("Failed to post question: " + error.message);
+  }
+
+  btn.disabled = false;
+  btn.innerText = 'Post Question (-2 pts)';
 }
 
 // Dashboard
@@ -308,7 +367,11 @@ function createDashCard(q, statusLabel) {
 // Question Detail
 function renderQuestionDetail() {
   const q = questions.find(x => x.id === currentQuestionId);
-  if (!q) return navigateTo('home');
+  if (!q) {
+    document.getElementById('qd-header').innerHTML = "<p>Question not found.</p>";
+    document.getElementById('qd-answer-form-container').style.display = 'none';
+    return;
+  }
 
   const header = document.getElementById('qd-header');
   header.className = "card mb-8";
@@ -322,7 +385,7 @@ function renderQuestionDetail() {
         <i data-lucide="tag" style="width: 12px; height: 12px; margin-right: 0.25rem;"></i>
         ${q.subject}
       </span>
-      <span>Asked by <strong style="color: var(--text-main);">${escapeHTML(q.askerName)}</strong></span>
+      <span>Asked by <strong style="color: var(--text-main);">${escapeHTML(q.asker_name)}</strong></span>
     </div>
     <p style="white-space: pre-wrap; line-height: 1.6; font-size: 1.125rem;">${escapeHTML(q.body)}</p>
   `;
@@ -334,22 +397,22 @@ function renderQuestionDetail() {
   
   (q.answers || []).forEach(ans => {
     const aCard = document.createElement('div');
-    aCard.className = `answer-card ${ans.isBest ? 'best-answer' : ''}`;
+    aCard.className = `answer-card ${ans.is_best ? 'best-answer' : ''}`;
     
     let markBestBtn = '';
-    if (user.id === q.askerId && !q.bestAnswerId) {
+    if (user.id === q.asker_id && !q.best_answer_id) {
       markBestBtn = `<button class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.875rem; margin-left: auto;" onclick="markBest('${ans.id}')"><i data-lucide="award" style="width:14px;height:14px;"></i> Mark as Best</button>`;
     }
 
-    const canUpvote = ans.authorId !== user.id;
+    const canUpvote = ans.author_id !== user.id;
 
     aCard.innerHTML = `
-      ${ans.isBest ? `<div class="best-answer-badge"><i data-lucide="award" style="width:14px;height:14px;"></i> Best Answer</div>` : ''}
+      ${ans.is_best ? `<div class="best-answer-badge"><i data-lucide="award" style="width:14px;height:14px;"></i> Best Answer</div>` : ''}
       <div class="answer-header">
         <span class="flex items-center gap-2">
           <i data-lucide="user" style="width:14px;height:14px;"></i> 
-          <strong style="color: var(--text-main);">${escapeHTML(ans.authorName)}</strong> 
-          <span class="badge" style="font-size: 0.7rem; padding: 0.1rem 0.5rem; background: var(--bg-color);">${ans.authorRole.replace('_', ' ')}</span>
+          <strong style="color: var(--text-main);">${escapeHTML(ans.author_name)}</strong> 
+          <span class="badge" style="font-size: 0.7rem; padding: 0.1rem 0.5rem; background: var(--bg-color);">${ans.author_role.replace('_', ' ')}</span>
         </span>
       </div>
       <p class="answer-body" style="white-space: pre-wrap;">${escapeHTML(ans.body)}</p>
@@ -374,52 +437,82 @@ function renderQuestionDetail() {
   lucide.createIcons();
 }
 
-function handleAnswer(e) {
+async function handleAnswer(e) {
   e.preventDefault();
   const body = document.getElementById('answer-body').value;
   if (!body) return;
 
-  const q = questions.find(x => x.id === currentQuestionId);
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.innerText = 'Submitting...';
+
   const newAnswer = {
-    id: Date.now().toString(),
+    id: 'a_' + Date.now().toString(),
+    question_id: currentQuestionId,
     body,
-    authorId: user.id,
-    authorName: user.name,
-    authorRole: user.role,
+    author_id: user.id,
+    author_name: user.name,
+    author_role: user.role,
     upvotes: 0,
-    isBest: false
+    is_best: false
   };
 
-  q.answers.push(newAnswer);
-  user.points += 5;
-  
-  saveState();
-  document.getElementById('answer-form').reset();
-  renderQuestionDetail();
+  const { error } = await supabase.from('answers').insert([newAnswer]);
+
+  if (!error) {
+    await updateUserPoints(user.points + 5);
+    document.getElementById('answer-form').reset();
+    await fetchQuestionsFromDB();
+  } else {
+    alert("Failed to post answer: " + error.message);
+  }
+
+  btn.disabled = false;
+  btn.innerText = 'Submit Answer';
 }
 
-function upvote(ansId) {
+async function upvote(ansId) {
   const q = questions.find(x => x.id === currentQuestionId);
   const ans = q.answers.find(x => x.id === ansId);
-  if (ans.authorId === user.id) return; // Cannot upvote self
+  if (ans.author_id === user.id) return; // Cannot upvote self
 
-  ans.upvotes = (ans.upvotes || 0) + 1;
-  saveState();
+  const newUpvotes = (ans.upvotes || 0) + 1;
+  ans.upvotes = newUpvotes; // Optimistic update
   renderQuestionDetail();
+
+  await supabase
+    .from('answers')
+    .update({ upvotes: newUpvotes })
+    .eq('id', ansId);
 }
 
-function markBest(ansId) {
+async function markBest(ansId) {
   const q = questions.find(x => x.id === currentQuestionId);
   const ans = q.answers.find(x => x.id === ansId);
   
   q.status = 'resolved';
-  q.bestAnswerId = ansId;
-  ans.isBest = true;
-  
-  user.points += 2; // Reward asker
-  
-  saveState();
-  renderQuestionDetail();
+  q.best_answer_id = ansId;
+  ans.is_best = true;
+  renderQuestionDetail(); // Optimistic update
+
+  // Reward asker +2 points
+  await updateUserPoints(user.points + 2);
+
+  // Update question
+  await supabase
+    .from('questions')
+    .update({ status: 'resolved', best_answer_id: ansId })
+    .eq('id', currentQuestionId);
+
+  // Update answer
+  await supabase
+    .from('answers')
+    .update({ is_best: true })
+    .eq('id', ansId);
+    
+  // Note: we should theoretically reward the scholar +10 points here, 
+  // but since we don't have server-side functions set up, we'd have to 
+  // fetch that user and update them. For MVP we skip updating the offline scholar's points.
 }
 
 // Utilities
