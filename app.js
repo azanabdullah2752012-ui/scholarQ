@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('ask-form').addEventListener('submit', handleAsk);
   document.getElementById('answer-form').addEventListener('submit', handleAnswer);
   document.getElementById('finish-profile-form').addEventListener('submit', handleFinishProfile);
+  document.getElementById('sell-form').addEventListener('submit', handleSell);
   document.getElementById('finish-score').addEventListener('input', (e) => {
     const group = document.getElementById('finish-subject-group');
     group.style.display = (parseInt(e.target.value) >= 80) ? 'block' : 'none';
@@ -112,6 +113,7 @@ function navigateTo(view, param = null) {
   if (view === 'home') renderHome();
   if (view === 'leaderboard') renderLeaderboard();
   if (view === 'profile') renderProfile();
+  if (view === 'marketplace') renderMarketplace();
   if (view === 'question') {
     currentQuestionId = param;
     renderQuestionDetail();
@@ -263,16 +265,20 @@ function renderHome() {
 
   filtered.forEach(q => {
     const isHighValue = ['PPT Design', 'Creative Work', 'Assignments'].includes(q.subject);
+    const isResolved = q.status === 'resolved';
+    
     const el = document.createElement('div');
     el.className = 'doubt-card glass-card';
-    if (isHighValue) el.style.borderLeft = '5px solid #ec4899'; // Pink glow for creative
+    if (isResolved) el.style.borderLeft = '5px solid #10b981';
+    else if (isHighValue) el.style.borderLeft = '5px solid #ec4899'; 
     
     el.onclick = () => navigateTo('question', q.id);
     el.innerHTML = `
       <div class="doubt-info">
         <h4 style="display: flex; align-items: center; gap: 8px;">
           ${escapeHTML(q.title)}
-          ${isHighValue ? '<i data-lucide="zap" style="width: 14px; color: #ec4899;"></i>' : ''}
+          ${isResolved ? '<i data-lucide="check-circle" style="width: 14px; color: #10b981;"></i>' : ''}
+          ${isHighValue && !isResolved ? '<i data-lucide="zap" style="width: 14px; color: #ec4899;"></i>' : ''}
         </h4>
         <div style="display: flex; gap: 10px; align-items: center;">
           <span class="tag" style="background: ${getTagColor(q.subject)}">${q.subject}</span>
@@ -280,6 +286,7 @@ function renderHome() {
             <i data-lucide="message-circle" style="width: 14px;"></i>
             ${q.answers?.length || 0}
           </span>
+          ${isResolved ? '<span style="font-size: 0.7rem; font-weight: 800; color: #10b981; text-transform: uppercase;">Solved</span>' : ''}
         </div>
       </div>
       <i data-lucide="arrow-right" style="color: var(--p-500);"></i>
@@ -354,17 +361,26 @@ function renderQuestionDetail() {
   ansCont.innerHTML = `<h3 style="margin-bottom: 2rem; font-weight: 800;">${q.answers?.length || 0} Contributions</h3>`;
   
   (q.answers || []).forEach(a => {
+    const isBest = q.best_answer_id === a.id;
+    const isAsker = session && session.user.id === q.asker_id;
+    
     ansCont.innerHTML += `
-      <div class="glass-card" style="padding: 2rem; margin-bottom: 1.5rem; border-left: 5px solid var(--p-500); display: flex; justify-content: space-between; align-items: flex-start;">
+      <div class="glass-card" style="padding: 2rem; margin-bottom: 1.5rem; border-left: 5px solid ${isBest ? '#10b981' : 'var(--p-500)'}; display: flex; justify-content: space-between; align-items: flex-start; ${isBest ? 'background: rgba(16, 185, 129, 0.05);' : ''}">
         <div style="flex: 1;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
             <div style="width: 35px; height: 35px; background: rgba(0,0,0,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${a.author_name[0]}</div>
             <div>
-              <div style="font-size: 0.95rem; font-weight: 700;">${a.author_name}</div>
+              <div style="font-size: 0.95rem; font-weight: 700;">${a.author_name} ${isBest ? '<span style="color: #10b981; margin-left: 8px;">✅ BEST SOLUTION</span>' : ''}</div>
               <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800;">${a.author_role}</div>
             </div>
           </div>
           <p style="line-height: 1.7; font-weight: 500;">${escapeHTML(a.body)}</p>
+          
+          ${isAsker && !q.best_answer_id ? `
+            <button onclick="handleMarkBest('${a.id}', '${a.author_id}')" class="btn glass-card" style="margin-top: 1.5rem; font-size: 0.7rem; color: #10b981; border-color: #10b981;">
+              <i data-lucide="check-circle" style="width: 14px;"></i> Mark as Best
+            </button>
+          ` : ''}
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-left: 1.5rem;">
           <button onclick="handleUpvote('${a.id}', '${a.author_id}')" class="btn-icon glass-card" style="width: 40px; height: 40px; background: ${profile && profile.points >= 5 ? 'rgba(139, 92, 246, 0.1)' : 'transparent'}">
@@ -403,10 +419,12 @@ function updateThemeIcon() {
 
 function updateGlobalUI() {
   if (!profile) return;
+  const rank = calculateRank(profile.points);
   document.getElementById('top-points').innerText = profile.points;
   document.getElementById('welcome-name').innerText = profile.name.split(' ')[0];
   document.getElementById('dash-points').innerText = profile.points;
-  document.getElementById('dash-role').innerText = profile.role;
+  document.getElementById('dash-role').innerText = rank;
+  document.getElementById('side-streak').innerText = `🔥 ${profile.streak || 0} Days`;
 
   // Scholar Features
   const isScholar = profile.role === 'scholar';
@@ -414,8 +432,15 @@ function updateGlobalUI() {
   document.getElementById('scholar-hub').style.display = isScholar ? 'block' : 'none';
   if (isScholar) {
     document.getElementById('dash-specialty').innerText = profile.specialty || 'Generalist';
-    document.getElementById('dash-rank').innerText = profile.points > 100 ? 'Master' : 'Rising Star';
+    document.getElementById('dash-rank').innerText = rank;
   }
+}
+
+function calculateRank(pts) {
+  if (pts >= 1000) return 'Sage';
+  if (pts >= 500) return 'Scholar';
+  if (pts >= 200) return 'Brainiac';
+  return 'Newbie';
 }
 
 function handleSearch(val) {
@@ -505,6 +530,26 @@ async function handleUpvote(answerId, authorId) {
   fetchQuestions();
 }
 
+async function handleMarkBest(answerId, authorId) {
+  if (!confirm("Is this the best solution? This will resolve your doubt and award bonus points!")) return;
+
+  // 1. Mark question as resolved and link best answer
+  const { error: qError } = await supabaseClient.from('questions').update({ 
+    best_answer_id: answerId,
+    status: 'resolved'
+  }).eq('id', currentQuestionId);
+
+  if (qError) return showToast("Failed to mark as best", "error");
+
+  // 2. Award bonus points to author (+20)
+  const { data: authorData } = await supabaseClient.from('users').select('points').eq('id', authorId).single();
+  const newPoints = (authorData.points || 0) + 20;
+  await supabaseClient.from('users').update({ points: newPoints }).eq('id', authorId);
+
+  showToast('Doubt Resolved! +20 bonus pts awarded to helper.', 'success');
+  await fetchQuestions();
+}
+
 function showToast(msg, type = 'info') {
   const cont = document.getElementById('toast-container');
   const t = document.createElement('div');
@@ -530,4 +575,94 @@ function escapeHTML(str) {
   return str.replace(/[&<>'"]/g, tag => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
   }[tag] || tag));
+}
+
+// Marketplace Logic
+async function renderMarketplace() {
+  const container = document.getElementById('market-list');
+  container.innerHTML = '<div class="glass-card">Loading marketplace...</div>';
+
+  const { data: items } = await supabaseClient.from('marketplace_items').select('*').order('created_at', { ascending: false });
+  const { data: myPurchases } = await supabaseClient.from('purchases').select('item_id').eq('user_id', session.user.id);
+  const purchasedIds = (myPurchases || []).map(p => p.item_id);
+
+  if (items) {
+    container.innerHTML = '';
+    items.forEach(item => {
+      const isOwner = item.seller_id === session.user.id;
+      const isBought = purchasedIds.includes(item.id) || isOwner;
+      
+      container.innerHTML += `
+        <div class="glass-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <h3 style="font-size: 1.25rem; font-weight: 800;">${escapeHTML(item.title)}</h3>
+            <span style="color: var(--p-500); font-weight: 800;">${item.price} PTS</span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">By <strong>${item.seller_name}</strong></p>
+          
+          ${isBought ? `
+            <a href="${item.link}" target="_blank" class="btn btn-primary" style="text-decoration: none; justify-content: center;">
+              <i data-lucide="external-link"></i> View Document
+            </a>
+          ` : `
+            <button onclick="handleBuyItem('${item.id}', ${item.price}, '${item.seller_id}')" class="btn glass-card" style="justify-content: center; color: var(--p-500);">
+              <i data-lucide="lock"></i> Buy with Points
+            </button>
+          `}
+        </div>
+      `;
+    });
+  }
+  lucide.createIcons();
+}
+
+async function handleSell(e) {
+  e.preventDefault();
+  const title = document.getElementById('sell-title').value;
+  const price = parseInt(document.getElementById('sell-price').value);
+  const link = document.getElementById('sell-link').value;
+
+  const { error } = await supabaseClient.from('marketplace_items').insert([{
+    id: 'm_' + Date.now(),
+    title, price, link,
+    seller_id: session.user.id, seller_name: profile.name
+  }]);
+
+  if (!error) {
+    showToast('Item listed successfully!', 'success');
+    closeSellModal();
+    renderMarketplace();
+  }
+}
+
+async function handleBuyItem(itemId, price, sellerId) {
+  if (profile.points < price) return showToast('Not enough points!', 'error');
+  if (!confirm(`Buy this item for ${price} points?`)) return;
+
+  // 1. Record purchase
+  const { error: pError } = await supabaseClient.from('purchases').insert([{
+    user_id: session.user.id,
+    item_id: itemId
+  }]);
+
+  if (pError) return showToast('Transaction failed', 'error');
+
+  // 2. Subtract points from buyer
+  await supabaseClient.from('users').update({ points: profile.points - price }).eq('id', session.user.id);
+  
+  // 3. Add points to seller
+  const { data: sellerData } = await supabaseClient.from('users').select('points').eq('id', sellerId).single();
+  await supabaseClient.from('users').update({ points: (sellerData.points || 0) + price }).eq('id', sellerId);
+
+  showToast('Purchase successful!', 'success');
+  await fetchProfile();
+  renderMarketplace();
+}
+
+function openSellModal() {
+  document.getElementById('modal-sell').style.display = 'block';
+}
+
+function closeSellModal() {
+  document.getElementById('modal-sell').style.display = 'none';
 }
