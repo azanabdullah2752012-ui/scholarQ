@@ -99,6 +99,16 @@
             <input type="text" id="ask-title" class="input-field" placeholder="e.g., How to solve x² + 5x + 6 = 0?" required>
           </div>
           <div class="input-group">
+            <label class="input-label">Help Category</label>
+            <select id="ask-category" class="input-field" required onchange="updateAskCost()">
+              <option value="Doubt Solving" data-cost="2" data-reward="5">❓ Doubt Solving (Cost: 2 pts | Reward: 5 pts)</option>
+              <option value="Homework Help" data-cost="3" data-reward="7">📝 Homework Help (Cost: 3 pts | Reward: 7 pts)</option>
+              <option value="Assignment Help" data-cost="5" data-reward="10">📄 Assignment Help (Cost: 5 pts | Reward: 10 pts)</option>
+              <option value="PPT Creation" data-cost="8" data-reward="15">📊 PPT Creation (Cost: 8 pts | Reward: 15 pts)</option>
+              <option value="Creative Project" data-cost="10" data-reward="20">🎨 Creative Project (Cost: 10 pts | Reward: 20 pts)</option>
+            </select>
+          </div>
+          <div class="input-group">
             <label class="input-label">Subject</label>
             <select id="ask-subject" class="input-field" required>
               <option value="">Select Subject...</option>
@@ -113,7 +123,7 @@
             <label class="input-label">Question Details</label>
             <textarea id="ask-body" class="input-field" placeholder="Provide more context..." required></textarea>
           </div>
-          <button type="submit" class="btn btn-primary" style="width: 100%;">Post Question (-2 pts)</button>
+          <button type="submit" id="ask-submit-btn" class="btn btn-primary" style="width: 100%;">Post Question (-2 pts)</button>
         </form>
       </div>
     </div>
