@@ -22,21 +22,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   lucide.createIcons();
   
-  const { data: { subscription } } = await supabaseClient.auth.onAuthStateChange(async (event, newSession) => {
+  const { data: { session: initialSession } } = await supabaseClient.auth.getSession();
+  session = initialSession;
+  
+  if (session) {
+    const hasProfile = await fetchProfile();
+    if (hasProfile) {
+      await handleDailyLogin();
+      await fetchQuestions();
+      setupSubscriptions();
+      navigateTo('home');
+    }
+  } else {
+    navigateTo('auth');
+  }
+
+  supabaseClient.auth.onAuthStateChange(async (event, newSession) => {
     console.log('Auth Event:', event);
-    session = newSession;
-    if (session) {
-      const hasProfile = await fetchProfile();
-      if (hasProfile) {
-        await handleDailyLogin();
-        await fetchQuestions();
-        setupSubscriptions();
-        navigateTo('home');
-      } else {
-        // fetchProfile already calls navigateTo('finish-profile')
-        console.log('Waiting for profile completion...');
+    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      session = newSession;
+      if (session) {
+        const hasProfile = await fetchProfile();
+        if (hasProfile) {
+          await handleDailyLogin();
+          await fetchQuestions();
+          setupSubscriptions();
+          navigateTo('home');
+        }
       }
-    } else {
+    } else if (event === 'SIGNED_OUT') {
+      session = null;
+      profile = null;
       navigateTo('auth');
     }
   });
