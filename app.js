@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Refresh user points from DB
     await fetchUserFromDB();
     await fetchQuestionsFromDB();
+    setupRealtimeSubscriptions(); // Start listening for updates
     navigateTo('home');
   } else {
     navigateTo('auth');
@@ -160,6 +161,58 @@ function adjustColor(hex, amt) {
   let g = (num & 0x0000FF) + amt;
   if (g > 255) g = 255; else if (g < 0) g = 0;
   return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+}
+
+// Realtime Subscriptions
+function setupRealtimeSubscriptions() {
+  // Listen for ALL changes on questions and answers
+  supabaseClient
+    .channel('scholarq_realtime')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'questions' },
+      (payload) => {
+        console.log('Realtime change in questions:', payload);
+        if (payload.eventType === 'INSERT') {
+          showToast(`New Question: "${payload.new.title.substring(0, 30)}..."`, 'info');
+        }
+        fetchQuestionsFromDB(); // Refresh local state
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'answers' },
+      (payload) => {
+        console.log('Realtime change in answers:', payload);
+        if (payload.eventType === 'INSERT') {
+          showToast(`New Answer added to a question!`, 'success');
+        }
+        fetchQuestionsFromDB(); // Refresh local state
+      }
+    )
+    .subscribe();
+}
+
+// UI Utilities
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  
+  const icon = type === 'success' ? 'check-circle' : 'bell';
+  
+  toast.innerHTML = `
+    <i data-lucide="${icon}" style="width: 18px; height: 18px;"></i>
+    <span>${message}</span>
+  `;
+  
+  container.appendChild(toast);
+  lucide.createIcons();
+  
+  setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
 }
 
 // Navigation
