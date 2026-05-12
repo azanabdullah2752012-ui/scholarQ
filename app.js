@@ -10,8 +10,17 @@ let questions = [];
 let currentView = 'auth';
 let currentQuestionId = null;
 
+// Theme State
+const defaultTheme = {
+  primary: '#6366f1',
+  primaryHover: '#4f46e5',
+  glow: 'rgba(99, 102, 241, 0.3)'
+};
+let currentTheme = JSON.parse(localStorage.getItem('scholarq_theme')) || defaultTheme;
+
 // Initialization
 document.addEventListener('DOMContentLoaded', async () => {
+  applyTheme(currentTheme);
   lucide.createIcons();
   
   document.getElementById('auth-score').addEventListener('input', (e) => {
@@ -101,6 +110,58 @@ async function updateUserPoints(newPoints) {
     .eq('id', user.id);
 }
 
+// Theme Management
+function applyTheme(theme) {
+  const root = document.documentElement;
+  root.style.setProperty('--primary', theme.primary);
+  root.style.setProperty('--primary-hover', theme.primaryHover);
+  root.style.setProperty('--shadow-glow', theme.glow);
+  
+  currentTheme = theme;
+  localStorage.setItem('scholarq_theme', JSON.stringify(theme));
+
+  // Update Settings UI if it exists
+  const picker = document.getElementById('custom-color-picker');
+  const label = document.getElementById('current-hex-label');
+  if (picker) picker.value = theme.primary;
+  if (label) label.innerText = theme.primary.toUpperCase();
+}
+
+function updateCustomColor(hex) {
+  const hover = adjustColor(hex, -20); // Darken by 20
+  const glow = hexToRgba(hex, 0.3);
+  
+  const newTheme = {
+    primary: hex,
+    primaryHover: hover,
+    glow: glow
+  };
+  applyTheme(newTheme);
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function adjustColor(hex, amt) {
+  let usePound = false;
+  if (hex[0] == "#") {
+    hex = hex.slice(1);
+    usePound = true;
+  }
+  let num = parseInt(hex, 16);
+  let r = (num >> 16) + amt;
+  if (r > 255) r = 255; else if (r < 0) r = 0;
+  let b = ((num >> 8) & 0x00FF) + amt;
+  if (b > 255) b = 255; else if (b < 0) b = 0;
+  let g = (num & 0x0000FF) + amt;
+  if (g > 255) g = 255; else if (g < 0) g = 0;
+  return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+}
+
 // Navigation
 function navigateTo(view, param = null) {
   document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
@@ -131,6 +192,13 @@ function navigateTo(view, param = null) {
   if (view === 'ask') renderAsk();
   if (view === 'dashboard') renderDashboard();
   if (view === 'leaderboard') renderLeaderboard();
+  if (view === 'settings') {
+    // Initial UI state for settings
+    const label = document.getElementById('current-hex-label');
+    const picker = document.getElementById('custom-color-picker');
+    if (label) label.innerText = currentTheme.primary.toUpperCase();
+    if (picker) picker.value = currentTheme.primary;
+  }
   if (view === 'question') {
     currentQuestionId = param;
     renderQuestionDetail();

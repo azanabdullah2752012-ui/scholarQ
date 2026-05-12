@@ -59,9 +59,10 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 2rem;
-  background-color: rgba(30, 41, 59, 0.8);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-color);
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -200,17 +201,19 @@ textarea.input-field {
 
 /* Cards */
 .card {
-  background-color: var(--bg-card);
+  background-color: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(8px);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
-  border: 1px solid var(--border-color);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-4px) scale(1.01);
+  background-color: rgba(30, 41, 59, 0.6);
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 0, 0, 0.2);
+  border-color: var(--primary);
 }
 
 .card-header {
@@ -399,4 +402,39 @@ textarea.input-field {
 }
 .stat-item:last-child {
   border-bottom: none;
+}
+
+/* Customization View */
+.theme-presets {
+  margin-bottom: 2rem;
+}
+
+.preset-btn {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: 700;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.preset-btn:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.preset-btn:active {
+  transform: scale(0.95);
+}
+
+/* Transitions */
+.view {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
