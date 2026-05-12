@@ -38,7 +38,7 @@
           <i data-lucide="award" style="width: 18px; height: 18px;"></i>
           <span id="nav-points">0</span> pts
         </div>
-        <div style="display: flex; align-items: center; gap: 8px; font-weight: 600;">
+        <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;" onclick="navigateTo('profile')" class="nav-link">
           <i data-lucide="user" style="width: 18px; height: 18px;"></i>
           <span id="nav-username">User</span>
         </div>
@@ -83,9 +83,22 @@
     </div>
 
     <div id="view-home" class="view main-content" style="display: none;">
-      <div class="page-header">
-        <h1 class="page-title">Global Feed</h1>
-        <div class="flex gap-2" id="home-filters">
+      <div class="page-header" style="flex-direction: column; align-items: stretch; gap: 1.5rem;">
+        <div class="flex justify-between items-center">
+          <h1 class="page-title">Global Feed</h1>
+          <div class="flex gap-4">
+            <div class="search-wrapper" style="position: relative; width: 300px;">
+              <i data-lucide="search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-muted);"></i>
+              <input type="text" id="home-search" class="input-field" style="padding-left: 2.75rem; width: 100%;" placeholder="Search questions..." oninput="handleSearch(this.value)">
+            </div>
+            <select id="home-sort" class="input-field" style="width: 180px;" onchange="handleSort(this.value)">
+              <option value="newest">Newest First</option>
+              <option value="reward">Highest Reward</option>
+              <option value="answers">Most Answered</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex gap-2" id="home-filters" style="padding-bottom: 0.5rem; overflow-x: auto;">
           <!-- Filters injected by JS -->
         </div>
       </div>
@@ -223,6 +236,49 @@
             <p id="current-hex-label" style="font-family: monospace; font-weight: 700; font-size: 1.125rem;">#6366f1</p>
             <p style="font-size: 0.875rem; color: var(--text-muted);">Dynamic accents and glows will update automatically.</p>
           </div>
+        </div>
+    </div>
+
+    <div id="view-profile" class="view main-content" style="display: none; max-width: 900px;">
+      <div class="profile-header card mb-8" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border-color: var(--primary);">
+        <div class="flex items-center gap-6">
+          <div class="profile-avatar" style="width: 80px; height: 80px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; color: white; box-shadow: var(--shadow-glow);">
+            <span id="profile-initial">S</span>
+          </div>
+          <div style="flex: 1;">
+            <div class="flex justify-between items-start">
+              <div>
+                <h1 id="profile-name" class="page-title" style="font-size: 1.75rem; margin: 0;">User Name</h1>
+                <span id="profile-role-badge" class="badge badge-status" style="margin-top: 0.5rem; text-transform: capitalize;">Scholar</span>
+              </div>
+              <div class="text-right">
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-warning);"><span id="profile-points">0</span> pts</div>
+                <div style="font-size: 0.875rem; color: var(--text-muted);">Total Balance</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-cards mb-8" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="card text-center">
+          <div style="font-size: 1.5rem; font-weight: 700;" id="profile-stat-asked">0</div>
+          <div style="color: var(--text-muted); font-size: 0.875rem;">Questions Asked</div>
+        </div>
+        <div class="card text-center">
+          <div style="font-size: 1.5rem; font-weight: 700;" id="profile-stat-answered">0</div>
+          <div style="color: var(--text-muted); font-size: 0.875rem;">Answers Given</div>
+        </div>
+        <div class="card text-center">
+          <div style="font-size: 1.5rem; font-weight: 700;" id="profile-stat-best">0</div>
+          <div style="color: var(--text-muted); font-size: 0.875rem;">Best Answers</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="mb-6" style="font-weight: 700; font-size: 1.25rem;">Badges & Achievements</h2>
+        <div id="profile-badges" class="flex gap-4 flex-wrap">
+          <!-- Badges injected here -->
         </div>
       </div>
     </div>
