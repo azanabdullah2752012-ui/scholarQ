@@ -9,6 +9,9 @@ let questions = [];
 
 let currentView = 'auth';
 let currentQuestionId = null;
+let currentSearch = '';
+let currentSort = 'newest';
+let searchTimeout = null;
 
 // Theme State
 const defaultTheme = {
@@ -173,6 +176,9 @@ function setupRealtimeSubscriptions() {
       { event: '*', schema: 'public', table: 'questions' },
       (payload) => {
         console.log('Realtime change in questions:', payload);
+        if (payload.eventType === 'INSERT') {
+          showToast(`New Question: "${payload.new.title.substring(0, 30)}..."`, 'info');
+        }
         fetchQuestionsFromDB(); // Refresh local state
       }
     )
@@ -181,10 +187,99 @@ function setupRealtimeSubscriptions() {
       { event: '*', schema: 'public', table: 'answers' },
       (payload) => {
         console.log('Realtime change in answers:', payload);
+        if (payload.eventType === 'INSERT') {
+          showToast(`New Answer added to a question!`, 'success');
+        }
         fetchQuestionsFromDB(); // Refresh local state
       }
     )
     .subscribe();
+}
+
+// UI Utilities
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  
+  const icon = type === 'success' ? 'check-circle' : 'bell';
+  
+  toast.innerHTML = `
+    <i data-lucide="${icon}" style="width: 18px; height: 18px;"></i>
+    <span>${message}</span>
+  `;
+  
+  container.appendChild(toast);
+  lucide.createIcons();
+  
+  setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// Profile
+function renderProfile() {
+  if (!user) return;
+  
+  // Update Header
+  document.getElementById('profile-name').innerText = user.name;
+  document.getElementById('profile-initial').innerText = user.name[0].toUpperCase();
+  document.getElementById('profile-role-badge').innerText = user.role.replace('_', ' ');
+  document.getElementById('profile-points').innerText = user.points;
+
+  // Calculate Stats
+  const asked = questions.filter(q => q.asker_id === user.id);
+  const answered = [];
+  let bestCount = 0;
+
+  questions.forEach(q => {
+    (q.answers || []).forEach(a => {
+      if (a.author_id === user.id) {
+        answered.push(a);
+        if (a.is_best) bestCount++;
+      }
+    });
+  });
+
+  document.getElementById('profile-stat-asked').innerText = asked.length;
+  document.getElementById('profile-stat-answered').innerText = answered.length;
+  document.getElementById('profile-stat-best').innerText = bestCount;
+
+  // Render Badges
+  renderBadges(asked, answered, bestCount);
+}
+
+function renderBadges(asked, answered, bestCount) {
+  const container = document.getElementById('profile-badges');
+  container.innerHTML = '';
+
+  const badges = [
+    { id: 'pioneer', name: 'Pioneer', icon: 'flag', description: 'Joined ScholarQ', earned: true, color: '#6366f1' },
+    { id: 'helpful', name: 'Helpful Soul', icon: 'heart', description: 'Answered 5+ questions', earned: answered.length >= 5, color: '#10b981' },
+    { id: 'expert', name: 'Subject Expert', icon: 'award', description: 'Got 3 Best Answers', earned: bestCount >= 3, color: '#f59e0b' },
+    { id: 'curious', name: 'Curious Mind', icon: 'help-circle', description: 'Asked 5+ questions', earned: asked.length >= 5, color: '#f43f5e' },
+    { id: 'elite', name: 'Scholar Elite', icon: 'zap', description: 'Reached 500+ points', earned: user.points >= 500, color: '#8b5cf6' }
+  ];
+
+  badges.forEach(b => {
+    const badge = document.createElement('div');
+    badge.className = `card flex items-center gap-4 ${!b.earned ? 'locked-badge' : ''}`;
+    badge.style.padding = '0.75rem 1rem';
+    badge.style.opacity = b.earned ? '1' : '0.4';
+    badge.style.borderLeft = `4px solid ${b.earned ? b.color : 'var(--text-muted)'}`;
+    badge.title = b.description;
+
+    badge.innerHTML = `
+      <i data-lucide="${b.icon}" style="width: 24px; height: 24px; color: ${b.earned ? b.color : 'inherit'};"></i>
+      <div>
+        <h4 style="margin: 0; font-size: 0.9rem;">${b.name}</h4>
+        <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">${b.earned ? 'Earned' : 'Locked'}</p>
+      </div>
+    `;
+    container.appendChild(badge);
+  });
+  lucide.createIcons();
 }
 
 // Navigation
@@ -224,6 +319,7 @@ function navigateTo(view, param = null) {
     if (label) label.innerText = currentTheme.primary.toUpperCase();
     if (picker) picker.value = currentTheme.primary;
   }
+  if (view === 'profile') renderProfile();
   if (view === 'question') {
     currentQuestionId = param;
     renderQuestionDetail();
@@ -299,9 +395,11 @@ function logout() {
 
 // Home
 let currentFilter = 'All';
-function renderHome() {
+
+function renderHomeFilters() {
   const subjects = ['All', 'Math', 'Science', 'History', 'Literature', 'Computer Science'];
   const filterContainer = document.getElementById('home-filters');
+  if (!filterContainer) return;
   filterContainer.innerHTML = '';
   
   subjects.forEach(sub => {
@@ -313,8 +411,12 @@ function renderHome() {
     btn.onclick = () => { currentFilter = sub; renderHome(); };
     filterContainer.appendChild(btn);
   });
+}
 
-  const filtered = currentFilter === 'All' ? questions : questions.filter(q => q.subject === currentFilter);
+function renderHome() {
+  renderHomeFilters();
+  
+  const filtered = getFilteredQuestions();
   const qContainer = document.getElementById('home-questions');
   qContainer.innerHTML = '';
 
@@ -351,6 +453,52 @@ function renderHome() {
     qContainer.appendChild(card);
   });
   lucide.createIcons();
+}
+
+function getFilteredQuestions() {
+  let filtered = [...questions];
+
+  // Apply Subject Filter
+  if (currentFilter !== 'All') {
+    filtered = filtered.filter(q => q.subject === currentFilter);
+  }
+
+  // Apply Search Filter
+  if (currentSearch) {
+    const term = currentSearch.toLowerCase();
+    filtered = filtered.filter(q => 
+      q.title.toLowerCase().includes(term) || 
+      q.body.toLowerCase().includes(term) ||
+      q.subject.toLowerCase().includes(term)
+    );
+  }
+
+  // Apply Sorting
+  filtered.sort((a, b) => {
+    if (currentSort === 'newest') {
+      return new Date(b.created_at) - new Date(a.created_at);
+    } else if (currentSort === 'reward') {
+      return (b.reward || 0) - (a.reward || 0);
+    } else if (currentSort === 'answers') {
+      return (b.answers?.length || 0) - (a.answers?.length || 0);
+    }
+    return 0;
+  });
+
+  return filtered;
+}
+
+function handleSearch(val) {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentSearch = val;
+    renderHome();
+  }, 300); // 300ms debounce
+}
+
+function handleSort(val) {
+  currentSort = val;
+  renderHome();
 }
 
 // Ask
