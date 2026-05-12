@@ -10,8 +10,17 @@ let questions = [];
 let currentView = 'auth';
 let currentQuestionId = null;
 
+// Theme State
+const defaultTheme = {
+  primary: '#6366f1',
+  primaryHover: '#4f46e5',
+  glow: 'rgba(99, 102, 241, 0.3)'
+};
+let currentTheme = JSON.parse(localStorage.getItem('scholarq_theme')) || defaultTheme;
+
 // Initialization
 document.addEventListener('DOMContentLoaded', async () => {
+  applyTheme(currentTheme);
   lucide.createIcons();
   
   document.getElementById('auth-score').addEventListener('input', (e) => {
@@ -35,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Refresh user points from DB
     await fetchUserFromDB();
     await fetchQuestionsFromDB();
+    setupRealtimeSubscriptions(); // Start listening for updates
     navigateTo('home');
   } else {
     navigateTo('auth');
@@ -101,6 +111,82 @@ async function updateUserPoints(newPoints) {
     .eq('id', user.id);
 }
 
+// Theme Management
+function applyTheme(theme) {
+  const root = document.documentElement;
+  root.style.setProperty('--primary', theme.primary);
+  root.style.setProperty('--primary-hover', theme.primaryHover);
+  root.style.setProperty('--shadow-glow', theme.glow);
+  
+  currentTheme = theme;
+  localStorage.setItem('scholarq_theme', JSON.stringify(theme));
+
+  // Update Settings UI if it exists
+  const picker = document.getElementById('custom-color-picker');
+  const label = document.getElementById('current-hex-label');
+  if (picker) picker.value = theme.primary;
+  if (label) label.innerText = theme.primary.toUpperCase();
+}
+
+function updateCustomColor(hex) {
+  const hover = adjustColor(hex, -20); // Darken by 20
+  const glow = hexToRgba(hex, 0.3);
+  
+  const newTheme = {
+    primary: hex,
+    primaryHover: hover,
+    glow: glow
+  };
+  applyTheme(newTheme);
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function adjustColor(hex, amt) {
+  let usePound = false;
+  if (hex[0] == "#") {
+    hex = hex.slice(1);
+    usePound = true;
+  }
+  let num = parseInt(hex, 16);
+  let r = (num >> 16) + amt;
+  if (r > 255) r = 255; else if (r < 0) r = 0;
+  let b = ((num >> 8) & 0x00FF) + amt;
+  if (b > 255) b = 255; else if (b < 0) b = 0;
+  let g = (num & 0x0000FF) + amt;
+  if (g > 255) g = 255; else if (g < 0) g = 0;
+  return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+}
+
+// Realtime Subscriptions
+function setupRealtimeSubscriptions() {
+  // Listen for ALL changes on questions and answers
+  supabaseClient
+    .channel('scholarq_realtime')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'questions' },
+      (payload) => {
+        console.log('Realtime change in questions:', payload);
+        fetchQuestionsFromDB(); // Refresh local state
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'answers' },
+      (payload) => {
+        console.log('Realtime change in answers:', payload);
+        fetchQuestionsFromDB(); // Refresh local state
+      }
+    )
+    .subscribe();
+}
+
 // Navigation
 function navigateTo(view, param = null) {
   document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
@@ -130,6 +216,14 @@ function navigateTo(view, param = null) {
   if (view === 'home') renderHome();
   if (view === 'ask') renderAsk();
   if (view === 'dashboard') renderDashboard();
+  if (view === 'leaderboard') renderLeaderboard();
+  if (view === 'settings') {
+    // Initial UI state for settings
+    const label = document.getElementById('current-hex-label');
+    const picker = document.getElementById('custom-color-picker');
+    if (label) label.innerText = currentTheme.primary.toUpperCase();
+    if (picker) picker.value = currentTheme.primary;
+  }
   if (view === 'question') {
     currentQuestionId = param;
     renderQuestionDetail();
@@ -554,6 +648,50 @@ async function markBest(ansId) {
   // Note: we should theoretically reward the scholar +10 points here, 
   // but since we don't have server-side functions set up, we'd have to 
   // fetch that user and update them. For MVP we skip updating the offline scholar's points.
+}
+
+// Leaderboard
+async function renderLeaderboard() {
+  const container = document.getElementById('leaderboard-container');
+  container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Loading ranks...</p>';
+
+  const { data, error } = await supabaseClient
+    .from('users')
+    .select('name, points, role')
+    .order('points', { ascending: false })
+    .limit(10);
+
+  if (error || !data) {
+    container.innerHTML = `<p style="color: red;">Error loading leaderboard: ${error?.message}</p>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  data.forEach((u, index) => {
+    let rankMedal = `#${index + 1}`;
+    if (index === 0) rankMedal = '🥇';
+    if (index === 1) rankMedal = '🥈';
+    if (index === 2) rankMedal = '🥉';
+
+    const item = document.createElement('div');
+    item.className = 'card flex items-center justify-between';
+    item.style.padding = '1rem 1.5rem';
+    
+    item.innerHTML = `
+      <div class="flex items-center gap-4">
+        <span style="font-size: 1.5rem; font-weight: bold; width: 40px; text-align: center;">${rankMedal}</span>
+        <div>
+          <h4 style="margin: 0; font-size: 1.125rem;">${escapeHTML(u.name)}</h4>
+          <span class="badge" style="font-size: 0.7rem; padding: 0.1rem 0.5rem; background: var(--bg-color); margin-top: 0.25rem; display: inline-block;">${u.role.replace('_', ' ')}</span>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <span style="font-size: 1.25rem; font-weight: bold; color: var(--accent-success);">${u.points}</span>
+        <span style="font-size: 0.875rem; color: var(--text-muted);">pts</span>
+      </div>
+    `;
+    container.appendChild(item);
+  });
 }
 
 // Utilities
