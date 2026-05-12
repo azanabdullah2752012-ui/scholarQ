@@ -235,7 +235,7 @@ function renderHome() {
   container.innerHTML = '';
   filterCont.innerHTML = '';
 
-  const subjects = ['All', 'Math', 'Science', 'History', 'Computer Science'];
+  const subjects = ['All', 'Math', 'Science', 'History', 'Computer Science', 'PPT Design', 'Creative Work', 'Assignments'];
   subjects.forEach(s => {
     const btn = document.createElement('button');
     btn.className = 'btn glass-card';
@@ -262,14 +262,20 @@ function renderHome() {
   }
 
   filtered.forEach(q => {
+    const isHighValue = ['PPT Design', 'Creative Work', 'Assignments'].includes(q.subject);
     const el = document.createElement('div');
     el.className = 'doubt-card glass-card';
+    if (isHighValue) el.style.borderLeft = '5px solid #ec4899'; // Pink glow for creative
+    
     el.onclick = () => navigateTo('question', q.id);
     el.innerHTML = `
       <div class="doubt-info">
-        <h4>${escapeHTML(q.title)}</h4>
+        <h4 style="display: flex; align-items: center; gap: 8px;">
+          ${escapeHTML(q.title)}
+          ${isHighValue ? '<i data-lucide="zap" style="width: 14px; color: #ec4899;"></i>' : ''}
+        </h4>
         <div style="display: flex; gap: 10px; align-items: center;">
-          <span class="tag">${q.subject}</span>
+          <span class="tag" style="background: ${getTagColor(q.subject)}">${q.subject}</span>
           <span style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
             <i data-lucide="message-circle" style="width: 14px;"></i>
             ${q.answers?.length || 0}
@@ -321,15 +327,18 @@ function renderQuestionDetail() {
   const q = questions.find(x => x.id === currentQuestionId);
   if (!q) return;
 
+  const isHighValue = ['PPT Design', 'Creative Work', 'Assignments'].includes(q.subject);
+  const reward = isHighValue ? 15 : 5;
+
   document.getElementById('qd-content').innerHTML = `
     <div class="glass-card" style="padding: 3rem; text-align: left;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
         <div>
-          <span class="tag" style="padding: 6px 16px; font-size: 0.8rem;">${q.subject}</span>
+          <span class="tag" style="padding: 6px 16px; font-size: 0.8rem; background: ${getTagColor(q.subject)}">${q.subject}</span>
           <h2 style="font-size: 2.25rem; font-weight: 800; margin-top: 1rem; letter-spacing: -1px;">${escapeHTML(q.title)}</h2>
         </div>
-        <div class="glass-card" style="padding: 12px 20px; text-align: center; border-color: var(--p-500);">
-          <div style="color: var(--p-600); font-weight: 800; font-size: 1.25rem;">+5</div>
+        <div class="glass-card" style="padding: 12px 20px; text-align: center; border-color: ${isHighValue ? '#ec4899' : 'var(--p-500)'};">
+          <div style="color: ${isHighValue ? '#ec4899' : 'var(--p-600)'}; font-weight: 800; font-size: 1.25rem;">+${reward}</div>
           <div style="font-size: 0.6rem; font-weight: 900; text-transform: uppercase; color: var(--text-secondary);">Potential</div>
         </div>
       </div>
@@ -445,6 +454,9 @@ async function handleAsk(e) {
 async function handleAnswer(e) {
   e.preventDefault();
   const body = document.getElementById('answer-body').value;
+  const q = questions.find(x => x.id === currentQuestionId);
+  const isHighValue = ['PPT Design', 'Creative Work', 'Assignments'].includes(q.subject);
+  const reward = isHighValue ? 15 : 5;
   
   const { error } = await supabaseClient.from('answers').insert([{
     id: 'a_' + Date.now(),
@@ -455,11 +467,22 @@ async function handleAnswer(e) {
   }]);
 
   if (!error) {
-    showToast('Solution submitted! +5 Points.', 'success');
+    showToast(`Solution submitted! +${reward} Points earned.`, 'success');
     document.getElementById('answer-form').reset();
     await fetchQuestions();
-    await supabaseClient.from('users').update({ points: (profile.points || 0) + 5 }).eq('id', session.user.id);
+    await supabaseClient.from('users').update({ points: (profile.points || 0) + reward }).eq('id', session.user.id);
     await fetchProfile();
+  }
+}
+
+function getTagColor(subject) {
+  switch(subject) {
+    case 'Math': return 'rgba(139, 92, 246, 0.1)';
+    case 'Science': return 'rgba(16, 185, 129, 0.1)';
+    case 'PPT Design': return 'rgba(236, 72, 153, 0.1)';
+    case 'Creative Work': return 'rgba(245, 158, 11, 0.1)';
+    case 'Assignments': return 'rgba(59, 130, 246, 0.1)';
+    default: return 'rgba(0,0,0,0.05)';
   }
 }
 
