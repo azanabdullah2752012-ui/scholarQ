@@ -263,16 +263,20 @@ function renderHome() {
 
   filtered.forEach(q => {
     const isHighValue = ['PPT Design', 'Creative Work', 'Assignments'].includes(q.subject);
+    const isResolved = q.status === 'resolved';
+    
     const el = document.createElement('div');
     el.className = 'doubt-card glass-card';
-    if (isHighValue) el.style.borderLeft = '5px solid #ec4899'; // Pink glow for creative
+    if (isResolved) el.style.borderLeft = '5px solid #10b981';
+    else if (isHighValue) el.style.borderLeft = '5px solid #ec4899'; 
     
     el.onclick = () => navigateTo('question', q.id);
     el.innerHTML = `
       <div class="doubt-info">
         <h4 style="display: flex; align-items: center; gap: 8px;">
           ${escapeHTML(q.title)}
-          ${isHighValue ? '<i data-lucide="zap" style="width: 14px; color: #ec4899;"></i>' : ''}
+          ${isResolved ? '<i data-lucide="check-circle" style="width: 14px; color: #10b981;"></i>' : ''}
+          ${isHighValue && !isResolved ? '<i data-lucide="zap" style="width: 14px; color: #ec4899;"></i>' : ''}
         </h4>
         <div style="display: flex; gap: 10px; align-items: center;">
           <span class="tag" style="background: ${getTagColor(q.subject)}">${q.subject}</span>
@@ -280,6 +284,7 @@ function renderHome() {
             <i data-lucide="message-circle" style="width: 14px;"></i>
             ${q.answers?.length || 0}
           </span>
+          ${isResolved ? '<span style="font-size: 0.7rem; font-weight: 800; color: #10b981; text-transform: uppercase;">Solved</span>' : ''}
         </div>
       </div>
       <i data-lucide="arrow-right" style="color: var(--p-500);"></i>
@@ -354,17 +359,26 @@ function renderQuestionDetail() {
   ansCont.innerHTML = `<h3 style="margin-bottom: 2rem; font-weight: 800;">${q.answers?.length || 0} Contributions</h3>`;
   
   (q.answers || []).forEach(a => {
+    const isBest = q.best_answer_id === a.id;
+    const isAsker = session && session.user.id === q.asker_id;
+    
     ansCont.innerHTML += `
-      <div class="glass-card" style="padding: 2rem; margin-bottom: 1.5rem; border-left: 5px solid var(--p-500); display: flex; justify-content: space-between; align-items: flex-start;">
+      <div class="glass-card" style="padding: 2rem; margin-bottom: 1.5rem; border-left: 5px solid ${isBest ? '#10b981' : 'var(--p-500)'}; display: flex; justify-content: space-between; align-items: flex-start; ${isBest ? 'background: rgba(16, 185, 129, 0.05);' : ''}">
         <div style="flex: 1;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
             <div style="width: 35px; height: 35px; background: rgba(0,0,0,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${a.author_name[0]}</div>
             <div>
-              <div style="font-size: 0.95rem; font-weight: 700;">${a.author_name}</div>
+              <div style="font-size: 0.95rem; font-weight: 700;">${a.author_name} ${isBest ? '<span style="color: #10b981; margin-left: 8px;">✅ BEST SOLUTION</span>' : ''}</div>
               <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800;">${a.author_role}</div>
             </div>
           </div>
           <p style="line-height: 1.7; font-weight: 500;">${escapeHTML(a.body)}</p>
+          
+          ${isAsker && !q.best_answer_id ? `
+            <button onclick="handleMarkBest('${a.id}', '${a.author_id}')" class="btn glass-card" style="margin-top: 1.5rem; font-size: 0.7rem; color: #10b981; border-color: #10b981;">
+              <i data-lucide="check-circle" style="width: 14px;"></i> Mark as Best
+            </button>
+          ` : ''}
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-left: 1.5rem;">
           <button onclick="handleUpvote('${a.id}', '${a.author_id}')" class="btn-icon glass-card" style="width: 40px; height: 40px; background: ${profile && profile.points >= 5 ? 'rgba(139, 92, 246, 0.1)' : 'transparent'}">
@@ -503,6 +517,26 @@ async function handleUpvote(answerId, authorId) {
   
   showToast('Upvoted! +2 pts awarded to author.', 'success');
   fetchQuestions();
+}
+
+async function handleMarkBest(answerId, authorId) {
+  if (!confirm("Is this the best solution? This will resolve your doubt and award bonus points!")) return;
+
+  // 1. Mark question as resolved and link best answer
+  const { error: qError } = await supabaseClient.from('questions').update({ 
+    best_answer_id: answerId,
+    status: 'resolved'
+  }).eq('id', currentQuestionId);
+
+  if (qError) return showToast("Failed to mark as best", "error");
+
+  // 2. Award bonus points to author (+20)
+  const { data: authorData } = await supabaseClient.from('users').select('points').eq('id', authorId).single();
+  const newPoints = (authorData.points || 0) + 20;
+  await supabaseClient.from('users').update({ points: newPoints }).eq('id', authorId);
+
+  showToast('Doubt Resolved! +20 bonus pts awarded to helper.', 'success');
+  await fetchQuestions();
 }
 
 function showToast(msg, type = 'info') {
