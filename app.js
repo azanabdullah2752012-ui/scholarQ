@@ -659,11 +659,32 @@ async function handleSell(e) {
   e.preventDefault();
   const title = document.getElementById('sell-title').value;
   const price = parseInt(document.getElementById('sell-price').value);
-  const link = document.getElementById('sell-link').value;
+  const file = document.getElementById('sell-file').files[0];
 
+  if (!file) return showToast('Please select a file', 'error');
+
+  showToast('Uploading file...', 'info');
+
+  // 1. Upload to Supabase Storage
+  const fileName = `${Date.now()}_${file.name}`;
+  const { data: uploadData, error: uploadError } = await supabaseClient.storage
+    .from('marketplace')
+    .upload(fileName, file);
+
+  if (uploadError) {
+    console.error('Upload Error:', uploadError);
+    return showToast(`Upload failed: ${uploadError.message}`, 'error');
+  }
+
+  // 2. Get Public URL
+  const { data: { publicUrl } } = supabaseClient.storage
+    .from('marketplace')
+    .getPublicUrl(fileName);
+
+  // 3. Save Item record
   const { error } = await supabaseClient.from('marketplace_items').insert([{
     id: 'm_' + Date.now(),
-    title, price, link,
+    title, price, link: publicUrl,
     seller_id: session.user.id, seller_name: profile.name
   }]);
 
@@ -671,6 +692,8 @@ async function handleSell(e) {
     showToast('Item listed successfully!', 'success');
     closeSellModal();
     renderMarketplace();
+  } else {
+    showToast('Failed to list item', 'error');
   }
 }
 
@@ -740,6 +763,20 @@ function renderMicroTasks() {
   }
   
   document.getElementById('student-challenges').style.display = 'block';
+  const today = new Date().toISOString().split('T')[0];
+
+  if (profile.last_challenge_date === today) {
+    container.innerHTML = `
+      <div class="glass-card" style="padding: 2rem; text-align: center; width: 100%; border-color: #10b981;">
+        <i data-lucide="check-circle" style="width: 32px; color: #10b981; margin-bottom: 1rem;"></i>
+        <h4 style="font-weight: 800;">Daily Challenges Complete!</h4>
+        <p style="font-size: 0.8rem; color: var(--text-secondary);">Come back tomorrow for new tasks.</p>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
   container.innerHTML = `
     <div class="glass-card" style="padding: 1rem; border-color: #10b981;">
       <div style="font-size: 0.8rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">QUICK MCQ</div>
@@ -761,12 +798,20 @@ function renderMicroTasks() {
 }
 
 async function handleMicroTask(isCorrect, reward) {
+  const today = new Date().toISOString().split('T')[0];
+  if (profile.last_challenge_date === today) return showToast('Challenge already completed today!', 'error');
   if (!isCorrect) return showToast('Incorrect! Try again tomorrow.', 'error');
   
-  await supabaseClient.from('users').update({ points: (profile.points || 0) + reward }).eq('id', session.user.id);
-  showToast(`Challenge Complete! +${reward} pts.`, 'success');
-  await fetchProfile();
-  renderMicroTasks();
+  const { error } = await supabaseClient.from('users').update({ 
+    points: (profile.points || 0) + reward,
+    last_challenge_date: today
+  }).eq('id', session.user.id);
+
+  if (!error) {
+    showToast(`Challenge Complete! +${reward} pts.`, 'success');
+    await fetchProfile();
+    renderMicroTasks();
+  }
 }
 
 async function checkScholarPromotion() {

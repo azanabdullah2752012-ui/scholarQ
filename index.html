@@ -223,7 +223,12 @@
         <form id="sell-form">
           <input type="text" id="sell-title" class="input-styled" placeholder="Title (e.g. Science Ch.5 Notes)" required>
           <input type="number" id="sell-price" class="input-styled" placeholder="Price in Points (e.g. 50)" required>
-          <input type="text" id="sell-link" class="input-styled" placeholder="Link to document (Drive/PDF)" required>
+          
+          <div style="text-align: left; margin-bottom: 1.5rem;">
+            <label style="font-size: 0.7rem; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px; display: block;">UPLOAD FILE (PDF/IMAGE)</label>
+            <input type="file" id="sell-file" class="input-styled" required accept=".pdf,image/*">
+          </div>
+
           <div style="display: flex; gap: 10px;">
             <button type="button" class="btn glass-card" style="flex: 1;" onclick="closeSellModal()">Cancel</button>
             <button type="submit" class="btn btn-primary" style="flex: 1;">List Item</button>
