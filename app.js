@@ -41,6 +41,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('ask-form').addEventListener('submit', handleAsk);
   document.getElementById('answer-form').addEventListener('submit', handleAnswer);
   document.getElementById('finish-profile-form').addEventListener('submit', handleFinishProfile);
+  document.getElementById('finish-score').addEventListener('input', (e) => {
+    const group = document.getElementById('finish-subject-group');
+    group.style.display = (parseInt(e.target.value) >= 80) ? 'block' : 'none';
+  });
 });
 
 async function fetchProfile() {
@@ -199,6 +203,7 @@ async function signInWithGoogle() {
 async function handleFinishProfile(e) {
   e.preventDefault();
   const score = parseInt(document.getElementById('finish-score').value);
+  const specialty = document.getElementById('finish-subject').value;
   const name = session.user.user_metadata.full_name || session.user.email.split('@')[0];
   
   const role = (score >= 90) ? 'scholar' : 'student';
@@ -208,16 +213,18 @@ async function handleFinishProfile(e) {
     points: 50,
     role: role,
     percentage: score,
-    email: session.user.email
+    email: session.user.email,
+    specialty: (score >= 80) ? specialty : 'General'
   };
 
-  const { error } = await supabaseClient.from('users').insert([newProfile]);
+  const { error } = await supabaseClient.from('users').upsert([newProfile]);
   if (!error) {
     profile = newProfile;
     showToast('Profile complete! Welcome.', 'success');
     navigateTo('home');
   } else {
-    showToast('Failed to save profile', 'error');
+    console.error('Profile Upsert Error:', error);
+    showToast(`Error: ${error.message}`, 'error');
   }
 }
 
