@@ -282,6 +282,44 @@ function renderBadges(asked, answered, bestCount) {
   lucide.createIcons();
 }
 
+async function handleUpdateScore(e) {
+  e.preventDefault();
+  const newScore = parseInt(document.getElementById('profile-new-score').value);
+  if (isNaN(newScore) || newScore < 0 || newScore > 100) return;
+
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  btn.innerText = 'Updating...';
+
+  let newRole = 'student';
+  if (newScore >= 92) newRole = 'elite';
+  else if (newScore >= 85) newRole = 'scholar';
+  else if (newScore >= 80) newRole = 'junior_scholar';
+
+  const updates = { 
+    percentage: newScore, 
+    role: newRole 
+  };
+
+  const { error } = await supabaseClient
+    .from('users')
+    .update(updates)
+    .eq('id', user.id);
+
+  if (!error) {
+    user = { ...user, ...updates };
+    localStorage.setItem('scholarq_user', JSON.stringify(user));
+    showToast(`Score updated! You are now a ${newRole.replace('_', ' ')}`, 'success');
+    renderProfile();
+    updateNavbar();
+  } else {
+    showToast('Failed to update score', 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerText = 'Update Score';
+}
+
 // Navigation
 function navigateTo(view, param = null) {
   document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
@@ -735,11 +773,8 @@ async function handleAnswer(e) {
     is_best: false
   };
 
-  const { error } = await supabaseClient.from('answers').insert([newAnswer]);
-
-  if (!error) {
     const q = questions.find(x => x.id === currentQuestionId);
-    const reward = q?.reward || 5;
+    let reward = q?.reward || 5;
     await updateUserPoints(user.points + reward);
     document.getElementById('answer-form').reset();
     await fetchQuestionsFromDB();
