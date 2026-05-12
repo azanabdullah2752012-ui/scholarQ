@@ -22,19 +22,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   lucide.createIcons();
   
-  const { data: { session: initialSession } } = await supabaseClient.auth.getSession();
-  session = initialSession;
-  
-  if (session) {
-    if (hasProfile) {
-      await handleDailyLogin();
-      await fetchQuestions();
-      setupSubscriptions();
-      navigateTo('home');
+  const { data: { subscription } } = await supabaseClient.auth.onAuthStateChange(async (event, newSession) => {
+    console.log('Auth Event:', event);
+    session = newSession;
+    if (session) {
+      const hasProfile = await fetchProfile();
+      if (hasProfile) {
+        await handleDailyLogin();
+        await fetchQuestions();
+        setupSubscriptions();
+        navigateTo('home');
+      } else {
+        // fetchProfile already calls navigateTo('finish-profile')
+        console.log('Waiting for profile completion...');
+      }
+    } else {
+      navigateTo('auth');
     }
-  } else {
-    navigateTo('auth');
-  }
+  });
 
   // Global Listeners
   document.getElementById('auth-form').addEventListener('submit', handleAuth);
