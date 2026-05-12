@@ -43,8 +43,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function fetchProfile() {
   if (!session) return;
   const { data, error } = await supabaseClient.from('users').select('*').eq('id', session.user.id).single();
+  
   if (data && !error) {
     profile = data;
+    updateGlobalUI();
+  } else if (error && error.code === 'PGRST116') {
+    // Profile recovery
+    const defaultProfile = {
+      id: session.user.id,
+      name: session.user.email.split('@')[0],
+      points: 50,
+      role: 'student',
+      percentage: 0,
+      email: session.user.email
+    };
+    await supabaseClient.from('users').insert([defaultProfile]);
+    profile = defaultProfile;
     updateGlobalUI();
   }
 }
@@ -64,7 +78,10 @@ async function fetchQuestions() {
 
 // Navigation
 function navigateTo(view, param = null) {
-  document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.view').forEach(el => {
+    el.style.display = 'none';
+    el.style.opacity = '0';
+  });
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
   if (!session && view !== 'auth') view = 'auth';
@@ -73,22 +90,24 @@ function navigateTo(view, param = null) {
   currentView = view;
   const sidebar = document.getElementById('sidebar');
   const topBar = document.getElementById('top-bar');
-  const mainLayout = document.getElementById('main-layout');
 
   if (view === 'auth') {
     sidebar.style.display = 'none';
     topBar.style.display = 'none';
-    mainLayout.style.marginLeft = '0';
+    document.getElementById('main-layout').style.padding = '0';
   } else {
     sidebar.style.display = 'flex';
     topBar.style.display = 'flex';
-    mainLayout.style.marginLeft = (window.innerWidth > 1024) ? '280px' : '80px';
+    document.getElementById('main-layout').style.padding = (window.innerWidth > 768) ? '1.5rem 3rem' : '1rem';
     const navItem = document.getElementById(`nav-${view}`);
     if (navItem) navItem.classList.add('active');
   }
 
   const viewEl = document.getElementById(`view-${view}`);
-  if (viewEl) viewEl.style.display = 'block';
+  if (viewEl) {
+    viewEl.style.display = 'block';
+    setTimeout(() => viewEl.style.opacity = '1', 50);
+  }
 
   if (view === 'home') renderHome();
   if (view === 'leaderboard') renderLeaderboard();
@@ -111,23 +130,23 @@ function switchAuthTab(mode) {
   const btnText = document.getElementById('auth-btn-text');
 
   if (mode === 'signup') {
-    signupBtn.style.background = 'var(--bg-card)';
-    signupBtn.style.color = 'var(--text-heading)';
-    signupBtn.style.boxShadow = 'var(--shadow-soft)';
+    signupBtn.style.background = 'white';
+    signupBtn.style.color = 'var(--text-primary)';
+    signupBtn.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
     loginBtn.style.background = 'transparent';
-    loginBtn.style.color = 'var(--text-dim)';
+    loginBtn.style.color = 'var(--text-secondary)';
     loginBtn.style.boxShadow = 'none';
     signupFields.style.display = 'block';
-    btnText.innerText = 'Create Account';
+    btnText.innerText = 'Launch Account';
   } else {
-    loginBtn.style.background = 'var(--bg-card)';
-    loginBtn.style.color = 'var(--text-heading)';
-    loginBtn.style.boxShadow = 'var(--shadow-soft)';
+    loginBtn.style.background = 'white';
+    loginBtn.style.color = 'var(--text-primary)';
+    loginBtn.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
     signupBtn.style.background = 'transparent';
-    signupBtn.style.color = 'var(--text-dim)';
+    signupBtn.style.color = 'var(--text-secondary)';
     signupBtn.style.boxShadow = 'none';
     signupFields.style.display = 'none';
-    btnText.innerText = 'Sign In';
+    btnText.innerText = 'Login to Hub';
   }
 }
 
@@ -136,22 +155,23 @@ async function handleAuth(e) {
   const email = document.getElementById('auth-email').value;
   const password = document.getElementById('auth-password').value;
   
+  showToast(`Initiating ${authMode}...`, 'info');
+
   if (authMode === 'signup') {
     const name = document.getElementById('auth-name').value;
-    const score = parseInt(document.getElementById('auth-score').value);
-    
+    const score = parseInt(document.getElementById('auth-score').value) || 0;
     const { data, error } = await supabaseClient.auth.signUp({ email, password });
     if (error) return showToast(error.message, 'error');
     
-    let role = (score >= 90) ? 'scholar' : 'student';
+    const role = (score >= 90) ? 'scholar' : 'student';
     await supabaseClient.from('users').insert([{
       id: data.user.id, name, points: 50, role, percentage: score, email
     }]);
     
-    showToast('Success! Welcome to ScholarQ.', 'success');
+    if (!data.session) return showToast('Verify your email!', 'info');
   } else {
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) return showToast('Invalid email or password', 'error');
+    if (error) return showToast(error.message, 'error');
   }
   
   const { data: { session: newSession } } = await supabaseClient.auth.getSession();
@@ -180,14 +200,12 @@ function renderHome() {
   const subjects = ['All', 'Math', 'Science', 'History', 'Computer Science'];
   subjects.forEach(s => {
     const btn = document.createElement('button');
-    btn.className = 'btn';
-    btn.style.fontSize = '0.75rem';
-    btn.style.padding = '6px 14px';
+    btn.className = 'btn glass-card';
+    btn.style.fontSize = '0.7rem';
+    btn.style.padding = '8px 16px';
     if (currentFilter === s) {
-      btn.style.background = 'var(--primary-glow)';
-      btn.style.color = 'var(--primary)';
-    } else {
-      btn.style.color = 'var(--text-dim)';
+      btn.style.background = 'var(--p-500)';
+      btn.style.color = 'white';
     }
     btn.innerText = s;
     btn.onclick = () => { currentFilter = s; renderHome(); };
@@ -201,26 +219,26 @@ function renderHome() {
   });
 
   if (filtered.length === 0) {
-    container.innerHTML = '<div style="text-align: center; padding: 4rem; color: var(--text-dim); font-weight: 500;">No doubts posted in this category.</div>';
+    container.innerHTML = '<div class="glass-card" style="text-align: center; padding: 4rem; color: var(--text-secondary); font-weight: 600;">No broadcasting doubts here.</div>';
     return;
   }
 
   filtered.forEach(q => {
     const el = document.createElement('div');
-    el.className = 'question-card';
+    el.className = 'doubt-card glass-card';
     el.onclick = () => navigateTo('question', q.id);
     el.innerHTML = `
-      <div style="flex: 1;">
-        <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--text-heading); margin-bottom: 0.5rem;">${escapeHTML(q.title)}</h4>
-        <div class="q-meta">
-          <span class="q-badge">${q.subject}</span>
-          <span class="q-answers-count">
-            <i data-lucide="message-square" style="width: 14px;"></i>
-            ${q.answers?.length || 0} answers
+      <div class="doubt-info">
+        <h4>${escapeHTML(q.title)}</h4>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <span class="tag">${q.subject}</span>
+          <span style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
+            <i data-lucide="message-circle" style="width: 14px;"></i>
+            ${q.answers?.length || 0}
           </span>
         </div>
       </div>
-      <i data-lucide="arrow-right" style="width: 20px; color: var(--text-dim);"></i>
+      <i data-lucide="arrow-right" style="color: var(--p-500);"></i>
     `;
     container.appendChild(el);
   });
@@ -229,23 +247,23 @@ function renderHome() {
 
 async function renderLeaderboard() {
   const container = document.getElementById('leaderboard-list');
-  container.innerHTML = '<div class="card">Loading scholars...</div>';
+  container.innerHTML = '<div class="glass-card" style="padding: 2rem;">Fetching Hub elite...</div>';
   
   const { data } = await supabaseClient.from('users').select('name, points, role').order('points', { ascending: false }).limit(10);
   if (data) {
     container.innerHTML = '';
     data.forEach((u, i) => {
       container.innerHTML += `
-        <div class="question-card" style="padding: 1.25rem 2rem;">
+        <div class="doubt-card glass-card" style="margin-bottom: 1rem;">
           <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1;">
-            <span style="font-weight: 900; color: var(--text-dim); width: 24px; font-size: 1.25rem;">#${i+1}</span>
-            <div style="width: 44px; height: 44px; background: var(--bg-app); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--primary);">${u.name[0]}</div>
+            <span style="font-weight: 900; color: var(--p-400); width: 20px;">${i+1}</span>
+            <div style="width: 45px; height: 45px; background: var(--glass-border); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--p-500);">${u.name[0]}</div>
             <div>
-              <div style="font-weight: 700; color: var(--text-heading);">${u.name}</div>
-              <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">${u.role}</div>
+              <div style="font-weight: 700;">${u.name}</div>
+              <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">${u.role}</div>
             </div>
           </div>
-          <strong style="color: var(--primary); font-size: 1.1rem;">${u.points} pts</strong>
+          <strong style="color: var(--p-500); font-size: 1.1rem;">${u.points} PTS</strong>
         </div>
       `;
     });
@@ -266,40 +284,39 @@ function renderQuestionDetail() {
   if (!q) return;
 
   document.getElementById('qd-content').innerHTML = `
-    <div class="auth-card" style="text-align: left; padding: 2.5rem;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+    <div class="glass-card" style="padding: 3rem; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
         <div>
-          <span class="q-badge" style="padding: 6px 14px;">${q.subject}</span>
-          <h2 style="font-size: 2rem; font-weight: 800; color: var(--text-heading); margin-top: 1rem; letter-spacing: -0.5px;">${escapeHTML(q.title)}</h2>
+          <span class="tag" style="padding: 6px 16px; font-size: 0.8rem;">${q.subject}</span>
+          <h2 style="font-size: 2.25rem; font-weight: 800; margin-top: 1rem; letter-spacing: -1px;">${escapeHTML(q.title)}</h2>
         </div>
-        <div style="text-align: right; background: var(--primary-glow); padding: 10px 18px; border-radius: 14px;">
-          <div style="color: var(--primary); font-weight: 800; font-size: 1.1rem;">+5 pts</div>
-          <div style="font-size: 0.65rem; color: var(--primary); font-weight: 800; text-transform: uppercase;">Reward</div>
+        <div class="glass-card" style="padding: 12px 20px; text-align: center; border-color: var(--p-500);">
+          <div style="color: var(--p-600); font-weight: 800; font-size: 1.25rem;">+5</div>
+          <div style="font-size: 0.6rem; font-weight: 900; text-transform: uppercase; color: var(--text-secondary);">Potential</div>
         </div>
       </div>
-      <p style="color: var(--text-heading); white-space: pre-wrap; font-size: 1.15rem; line-height: 1.7; font-weight: 500;">${escapeHTML(q.body)}</p>
-      <div style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 0.75rem;">
-        <div style="width: 32px; height: 32px; background: var(--bg-app); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; color: var(--primary);">${q.asker_name[0]}</div>
-        <span style="font-size: 0.9rem; color: var(--text-dim); font-weight: 500;">Doubt by <strong>${q.asker_name}</strong></span>
+      <p style="font-size: 1.25rem; line-height: 1.8; font-weight: 500; color: var(--text-primary); white-space: pre-wrap;">${escapeHTML(q.body)}</p>
+      <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--glass-border); display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 35px; height: 35px; background: var(--p-400); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${q.asker_name[0]}</div>
+        <span style="font-weight: 600; color: var(--text-secondary);">Broadcasted by <strong style="color: var(--text-primary);">${q.asker_name}</strong></span>
       </div>
     </div>
   `;
 
   const ansCont = document.getElementById('qd-answers');
-  document.getElementById('qd-answers-title').innerText = `${q.answers?.length || 0} Answers`;
-  ansCont.innerHTML = '';
+  ansCont.innerHTML = `<h3 style="margin-bottom: 2rem; font-weight: 800;">${q.answers?.length || 0} Contributions</h3>`;
   
   (q.answers || []).forEach(a => {
     ansCont.innerHTML += `
-      <div class="question-card" style="cursor: default; align-items: flex-start; flex-direction: column; gap: 1rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <div style="width: 36px; height: 36px; background: var(--primary-glow); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem;">${a.author_name[0]}</div>
+      <div class="glass-card" style="padding: 2rem; margin-bottom: 1.5rem; border-left: 5px solid var(--p-500);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
+          <div style="width: 35px; height: 35px; background: rgba(0,0,0,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${a.author_name[0]}</div>
           <div>
-            <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-heading);">${a.author_name}</div>
-            <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">${a.author_role}</div>
+            <div style="font-size: 0.95rem; font-weight: 700;">${a.author_name}</div>
+            <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800;">${a.author_role}</div>
           </div>
         </div>
-        <p style="line-height: 1.6; color: var(--text-heading); font-weight: 500;">${escapeHTML(a.body)}</p>
+        <p style="line-height: 1.7; font-weight: 500;">${escapeHTML(a.body)}</p>
       </div>
     `;
   });
@@ -313,48 +330,7 @@ function renderQuestionDetail() {
   lucide.createIcons();
 }
 
-// Logic
-async function handleAsk(e) {
-  e.preventDefault();
-  const title = document.getElementById('ask-title').value;
-  const subject = document.getElementById('ask-subject').value;
-  const body = document.getElementById('ask-body').value;
-
-  const { error } = await supabaseClient.from('questions').insert([{
-    id: 'q_' + Date.now(),
-    title, subject, body,
-    asker_id: session.user.id, asker_name: profile.name,
-    reward: 5, status: 'open'
-  }]);
-
-  if (!error) {
-    showToast('Success! Your doubt is now live.', 'success');
-    document.getElementById('ask-form').reset();
-    await fetchQuestions();
-    navigateTo('home');
-  }
-}
-
-async function handleAnswer(e) {
-  e.preventDefault();
-  const body = document.getElementById('answer-body').value;
-  
-  const { error } = await supabaseClient.from('answers').insert([{
-    id: 'a_' + Date.now(),
-    question_id: currentQuestionId,
-    body, author_id: session.user.id, author_name: profile.name,
-    author_role: profile.role
-  }]);
-
-  if (!error) {
-    showToast('Answer submitted! +5 pts earned.', 'success');
-    document.getElementById('answer-form').reset();
-    await fetchQuestions();
-    await supabaseClient.from('users').update({ points: profile.points + 5 }).eq('id', session.user.id);
-    await fetchProfile();
-  }
-}
-
+// Global UI
 function toggleDarkMode() {
   isDarkMode = !isDarkMode;
   document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
@@ -375,7 +351,7 @@ function updateGlobalUI() {
   document.getElementById('top-points').innerText = profile.points;
   document.getElementById('welcome-name').innerText = profile.name.split(' ')[0];
   document.getElementById('dash-points').innerText = profile.points;
-  document.getElementById('dash-role').innerText = profile.role.replace('_', ' ');
+  document.getElementById('dash-role').innerText = profile.role;
 }
 
 function handleSearch(val) {
@@ -390,28 +366,64 @@ function setupSubscriptions() {
   }).subscribe();
 }
 
+async function handleAsk(e) {
+  e.preventDefault();
+  const title = document.getElementById('ask-title').value;
+  const subject = document.getElementById('ask-subject').value;
+  const body = document.getElementById('ask-body').value;
+
+  const { error } = await supabaseClient.from('questions').insert([{
+    id: 'q_' + Date.now(),
+    title, subject, body,
+    asker_id: session.user.id, asker_name: profile.name,
+    reward: 5, status: 'open'
+  }]);
+
+  if (!error) {
+    showToast('Broadcast successful!', 'success');
+    document.getElementById('ask-form').reset();
+    await fetchQuestions();
+    navigateTo('home');
+  }
+}
+
+async function handleAnswer(e) {
+  e.preventDefault();
+  const body = document.getElementById('answer-body').value;
+  
+  const { error } = await supabaseClient.from('answers').insert([{
+    id: 'a_' + Date.now(),
+    question_id: currentQuestionId,
+    body, author_id: session.user.id, author_name: profile.name,
+    author_role: profile.role
+  }]);
+
+  if (!error) {
+    showToast('Solution submitted! +5 Points.', 'success');
+    document.getElementById('answer-form').reset();
+    await fetchQuestions();
+    await supabaseClient.from('users').update({ points: profile.points + 5 }).eq('id', session.user.id);
+    await fetchProfile();
+  }
+}
+
 function showToast(msg, type = 'info') {
   const cont = document.getElementById('toast-container');
   const t = document.createElement('div');
-  t.style.background = (type === 'error') ? '#f43f5e' : '#10b981';
-  t.style.color = 'white';
-  t.style.padding = '12px 24px';
-  t.style.borderRadius = '14px';
-  t.style.marginBottom = '12px';
-  t.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1)';
+  t.className = 'glass-card';
+  t.style.padding = '14px 24px';
+  t.style.marginBottom = '10px';
   t.style.fontWeight = '700';
   t.style.fontSize = '0.9rem';
-  t.style.display = 'flex';
-  t.style.alignItems = 'center';
-  t.style.gap = '10px';
-  t.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" style="width: 18px;"></i> ${msg}`;
+  t.style.color = (type === 'error') ? '#ef4444' : '#10b981';
+  t.style.borderLeft = `5px solid ${(type === 'error') ? '#ef4444' : '#10b981'}`;
+  t.innerText = msg;
   cont.appendChild(t);
-  lucide.createIcons();
   setTimeout(() => {
     t.style.opacity = '0';
-    t.style.transform = 'translateX(20px)';
-    t.style.transition = 'all 0.3s ease';
-    setTimeout(() => t.remove(), 300);
+    t.style.transform = 'translateX(30px)';
+    t.style.transition = 'all 0.4s ease';
+    setTimeout(() => t.remove(), 400);
   }, 3000);
 }
 
