@@ -26,10 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   session = initialSession;
   
   if (session) {
-    const hasProfile = await fetchProfile();
-    await fetchQuestions();
-    setupSubscriptions();
     if (hasProfile) {
+      await handleDailyLogin();
+      await fetchQuestions();
+      setupSubscriptions();
       navigateTo('home');
     }
   } else {
@@ -110,7 +110,10 @@ function navigateTo(view, param = null) {
     setTimeout(() => viewEl.style.opacity = '1', 50);
   }
 
-  if (view === 'home') renderHome();
+  if (view === 'home') {
+    renderHome();
+    renderMicroTasks();
+  }
   if (view === 'leaderboard') renderLeaderboard();
   if (view === 'profile') renderProfile();
   if (view === 'marketplace') renderMarketplace();
@@ -481,7 +484,7 @@ async function handleAnswer(e) {
   const body = document.getElementById('answer-body').value;
   const q = questions.find(x => x.id === currentQuestionId);
   const isHighValue = ['PPT Design', 'Creative Work', 'Assignments'].includes(q.subject);
-  const reward = isHighValue ? 15 : 5;
+  const isScholar = profile.role === 'scholar';
   
   const { error } = await supabaseClient.from('answers').insert([{
     id: 'a_' + Date.now(),
@@ -492,10 +495,16 @@ async function handleAnswer(e) {
   }]);
 
   if (!error) {
-    showToast(`Solution submitted! +${reward} Points earned.`, 'success');
+    if (isScholar) {
+      const reward = isHighValue ? 15 : 5;
+      showToast(`Solution submitted! +${reward} Points earned.`, 'success');
+      await supabaseClient.from('users').update({ points: (profile.points || 0) + reward }).eq('id', session.user.id);
+    } else {
+      showToast('Solution submitted! Points will be awarded after validation (upvotes).', 'info');
+    }
+    
     document.getElementById('answer-form').reset();
     await fetchQuestions();
-    await supabaseClient.from('users').update({ points: (profile.points || 0) + reward }).eq('id', session.user.id);
     await fetchProfile();
   }
 }
@@ -514,20 +523,29 @@ function getTagColor(subject) {
 async function handleUpvote(answerId, authorId) {
   if (authorId === session.user.id) return showToast("You can't upvote your own answer!", 'error');
   
-  // Update answer upvotes
   const answer = questions.flatMap(q => q.answers).find(a => a.id === answerId);
   const newUpvotes = (answer.upvotes || 0) + 1;
   
   const { error: aError } = await supabaseClient.from('answers').update({ upvotes: newUpvotes }).eq('id', answerId);
   if (aError) return showToast("Vote failed", "error");
 
-  // Award points to author
-  const { data: authorData } = await supabaseClient.from('users').select('points').eq('id', authorId).single();
-  const newPoints = (authorData.points || 0) + 2;
-  await supabaseClient.from('users').update({ points: newPoints }).eq('id', authorId);
+  // Reward Author (Student rewards are now based on upvotes)
+  const { data: authorData } = await supabaseClient.from('users').select('points, role').eq('id', authorId).single();
+  let authorReward = 2; // Default for 1st upvote
+  if (newUpvotes === 3) authorReward = 5;
   
-  showToast('Upvoted! +2 pts awarded to author.', 'success');
+  await supabaseClient.from('users').update({ points: (authorData.points || 0) + authorReward }).eq('id', authorId);
+  
+  // Reward Voter (Student only, max 10/day)
+  if (profile.role !== 'scholar') {
+    await supabaseClient.from('users').update({ points: (profile.points || 0) + 1 }).eq('id', session.user.id);
+    showToast('Upvoted! +1 pt earned for helping moderation.', 'success');
+  } else {
+    showToast('Upvoted! Help recognized.', 'success');
+  }
+  
   fetchQuestions();
+  fetchProfile();
 }
 
 async function handleMarkBest(answerId, authorId) {
@@ -665,4 +683,91 @@ function openSellModal() {
 
 function closeSellModal() {
   document.getElementById('modal-sell').style.display = 'none';
+}
+
+// Phase 3 Progression Logic
+async function handleDailyLogin() {
+  const today = new Date().toISOString().split('T')[0];
+  if (profile.last_login === today) return;
+
+  let newPoints = (profile.points || 0) + 2;
+  let newStreak = (profile.streak || 0) + 1;
+  
+  // Check streak bonus
+  if (newStreak === 3) newPoints += 5;
+  if (newStreak === 7) newPoints += 15;
+
+  const { error } = await supabaseClient.from('users').update({
+    last_login: today,
+    streak: newStreak,
+    points: newPoints
+  }).eq('id', session.user.id);
+
+  if (!error) {
+    showToast(`Daily Login! +2 pts. Streak: ${newStreak} days 🔥`, 'success');
+    profile.points = newPoints;
+    profile.streak = newStreak;
+    updateGlobalUI();
+  }
+}
+
+function renderMicroTasks() {
+  const container = document.getElementById('challenges-list');
+  if (profile.role === 'scholar') {
+    document.getElementById('student-challenges').style.display = 'none';
+    return;
+  }
+  
+  document.getElementById('student-challenges').style.display = 'block';
+  container.innerHTML = `
+    <div class="glass-card" style="padding: 1rem; border-color: #10b981;">
+      <div style="font-size: 0.8rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">QUICK MCQ</div>
+      <p style="font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem;">Which law states F = ma?</p>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="handleMicroTask(true, 2)" class="btn glass-card" style="font-size: 0.7rem;">Newton's 2nd</button>
+        <button onclick="handleMicroTask(false, 0)" class="btn glass-card" style="font-size: 0.7rem;">Newton's 1st</button>
+      </div>
+    </div>
+    <div class="glass-card" style="padding: 1rem; border-color: #3b82f6;">
+      <div style="font-size: 0.8rem; font-weight: 800; color: #3b82f6; margin-bottom: 0.5rem;">CONCEPT POLL</div>
+      <p style="font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem;">Is light a wave or particle?</p>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="handleMicroTask(true, 1)" class="btn glass-card" style="font-size: 0.7rem;">Both</button>
+        <button onclick="handleMicroTask(true, 1)" class="btn glass-card" style="font-size: 0.7rem;">Wave only</button>
+      </div>
+    </div>
+  `;
+}
+
+async function handleMicroTask(isCorrect, reward) {
+  if (!isCorrect) return showToast('Incorrect! Try again tomorrow.', 'error');
+  
+  await supabaseClient.from('users').update({ points: (profile.points || 0) + reward }).eq('id', session.user.id);
+  showToast(`Challenge Complete! +${reward} pts.`, 'success');
+  await fetchProfile();
+  renderMicroTasks();
+}
+
+async function checkScholarPromotion() {
+  if (profile.role === 'scholar') return;
+  
+  const hasPoints = profile.points >= 100;
+  const hasAcademic = profile.percentage >= 80;
+  
+  const { data: answers } = await supabaseClient.from('answers').select('id').eq('author_id', session.user.id).gte('upvotes', 1);
+  const hasHelpful = (answers || []).length >= 5;
+
+  if (hasPoints && hasAcademic && hasHelpful) {
+    if (confirm("CONGRATULATIONS! You qualify for Scholar status. Ascend now?")) {
+      await supabaseClient.from('users').update({ role: 'scholar' }).eq('id', session.user.id);
+      showToast('You are now an Elite Scholar! 🏆', 'success');
+      await fetchProfile();
+    }
+  } else {
+    let msg = "Requirements for Scholar: ";
+    if (!hasPoints) msg += "100 pts, ";
+    if (!hasAcademic) msg += "80% score, ";
+    if (!hasHelpful) msg += "5 helpful answers.";
+    showToast(msg, 'info');
+  }
 }
