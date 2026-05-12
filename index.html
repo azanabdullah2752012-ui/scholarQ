@@ -22,6 +22,10 @@
           <i data-lucide="compass"></i>
           <span>Hub</span>
         </div>
+        <div class="nav-item" onclick="navigateTo('marketplace')" id="nav-marketplace">
+          <i data-lucide="shopping-cart"></i>
+          <span>Market</span>
+        </div>
         <div class="nav-item" onclick="navigateTo('leaderboard')" id="nav-leaderboard">
           <i data-lucide="star"></i>
           <span>Scholars</span>
@@ -31,6 +35,11 @@
           <span>Profile</span>
         </div>
       </nav>
+
+      <div class="glass-card" style="margin-top: auto; padding: 1rem; text-align: center;">
+        <div style="font-size: 0.6rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Help Streak</div>
+        <div id="side-streak" style="font-size: 1.25rem; font-weight: 800; color: #f97316;">🔥 0 Days</div>
+      </div>
 
       <div class="nav-item" onclick="logout()" style="margin-top: auto; color: #ef4444;">
         <i data-lucide="power"></i>
@@ -142,6 +151,17 @@
             </div>
           </div>
 
+          <!-- Daily Challenges (Micro Tasks) -->
+          <div id="student-challenges" class="glass-card" style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(139, 92, 246, 0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+              <h3 style="font-size: 1.1rem; font-weight: 800;">⚡ Daily Challenges</h3>
+              <span id="challenge-timer" style="font-size: 0.7rem; font-weight: 800; color: var(--text-secondary);">REFRESHES IN 12H</span>
+            </div>
+            <div id="challenges-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+              <!-- Tasks injected by JS -->
+            </div>
+          </div>
+
           <div class="stats-grid">
             <div class="stat-card glass-card">
               <span class="stat-label">Power Score</span>
@@ -178,6 +198,37 @@
           </div>
           <div id="home-questions"></div>
         </div>
+      </div>
+
+      <!-- Marketplace View -->
+      <div id="view-marketplace" class="view" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+          <div>
+            <h1 style="font-size: 2.75rem; font-weight: 800; letter-spacing: -1.5px;">Marketplace</h1>
+            <p style="color: var(--text-secondary); font-weight: 600;">Trade your C.W and notes for Knowledge Points.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openSellModal()">
+            <i data-lucide="shopping-bag"></i> Sell My Work
+          </button>
+        </div>
+
+        <div id="market-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+          <!-- Marketplace items injected by JS -->
+        </div>
+      </div>
+
+      <!-- Sell Modal (Simplified as a hidden div) -->
+      <div id="modal-sell" class="view auth-page glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; width: 500px;">
+        <h3 style="margin-bottom: 2rem;">List Classwork for Sale</h3>
+        <form id="sell-form">
+          <input type="text" id="sell-title" class="input-styled" placeholder="Title (e.g. Science Ch.5 Notes)" required>
+          <input type="number" id="sell-price" class="input-styled" placeholder="Price in Points (e.g. 50)" required>
+          <input type="text" id="sell-link" class="input-styled" placeholder="Link to document (Drive/PDF)" required>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn glass-card" style="flex: 1;" onclick="closeSellModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" style="flex: 1;">List Item</button>
+          </div>
+        </form>
       </div>
 
       <!-- Ask Doubt -->

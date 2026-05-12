@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('ask-form').addEventListener('submit', handleAsk);
   document.getElementById('answer-form').addEventListener('submit', handleAnswer);
   document.getElementById('finish-profile-form').addEventListener('submit', handleFinishProfile);
+  document.getElementById('sell-form').addEventListener('submit', handleSell);
   document.getElementById('finish-score').addEventListener('input', (e) => {
     const group = document.getElementById('finish-subject-group');
     group.style.display = (parseInt(e.target.value) >= 80) ? 'block' : 'none';
@@ -112,6 +113,7 @@ function navigateTo(view, param = null) {
   if (view === 'home') renderHome();
   if (view === 'leaderboard') renderLeaderboard();
   if (view === 'profile') renderProfile();
+  if (view === 'marketplace') renderMarketplace();
   if (view === 'question') {
     currentQuestionId = param;
     renderQuestionDetail();
@@ -417,10 +419,12 @@ function updateThemeIcon() {
 
 function updateGlobalUI() {
   if (!profile) return;
+  const rank = calculateRank(profile.points);
   document.getElementById('top-points').innerText = profile.points;
   document.getElementById('welcome-name').innerText = profile.name.split(' ')[0];
   document.getElementById('dash-points').innerText = profile.points;
-  document.getElementById('dash-role').innerText = profile.role;
+  document.getElementById('dash-role').innerText = rank;
+  document.getElementById('side-streak').innerText = `🔥 ${profile.streak || 0} Days`;
 
   // Scholar Features
   const isScholar = profile.role === 'scholar';
@@ -428,8 +432,15 @@ function updateGlobalUI() {
   document.getElementById('scholar-hub').style.display = isScholar ? 'block' : 'none';
   if (isScholar) {
     document.getElementById('dash-specialty').innerText = profile.specialty || 'Generalist';
-    document.getElementById('dash-rank').innerText = profile.points > 100 ? 'Master' : 'Rising Star';
+    document.getElementById('dash-rank').innerText = rank;
   }
+}
+
+function calculateRank(pts) {
+  if (pts >= 1000) return 'Sage';
+  if (pts >= 500) return 'Scholar';
+  if (pts >= 200) return 'Brainiac';
+  return 'Newbie';
 }
 
 function handleSearch(val) {
@@ -564,4 +575,94 @@ function escapeHTML(str) {
   return str.replace(/[&<>'"]/g, tag => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
   }[tag] || tag));
+}
+
+// Marketplace Logic
+async function renderMarketplace() {
+  const container = document.getElementById('market-list');
+  container.innerHTML = '<div class="glass-card">Loading marketplace...</div>';
+
+  const { data: items } = await supabaseClient.from('marketplace_items').select('*').order('created_at', { ascending: false });
+  const { data: myPurchases } = await supabaseClient.from('purchases').select('item_id').eq('user_id', session.user.id);
+  const purchasedIds = (myPurchases || []).map(p => p.item_id);
+
+  if (items) {
+    container.innerHTML = '';
+    items.forEach(item => {
+      const isOwner = item.seller_id === session.user.id;
+      const isBought = purchasedIds.includes(item.id) || isOwner;
+      
+      container.innerHTML += `
+        <div class="glass-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <h3 style="font-size: 1.25rem; font-weight: 800;">${escapeHTML(item.title)}</h3>
+            <span style="color: var(--p-500); font-weight: 800;">${item.price} PTS</span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">By <strong>${item.seller_name}</strong></p>
+          
+          ${isBought ? `
+            <a href="${item.link}" target="_blank" class="btn btn-primary" style="text-decoration: none; justify-content: center;">
+              <i data-lucide="external-link"></i> View Document
+            </a>
+          ` : `
+            <button onclick="handleBuyItem('${item.id}', ${item.price}, '${item.seller_id}')" class="btn glass-card" style="justify-content: center; color: var(--p-500);">
+              <i data-lucide="lock"></i> Buy with Points
+            </button>
+          `}
+        </div>
+      `;
+    });
+  }
+  lucide.createIcons();
+}
+
+async function handleSell(e) {
+  e.preventDefault();
+  const title = document.getElementById('sell-title').value;
+  const price = parseInt(document.getElementById('sell-price').value);
+  const link = document.getElementById('sell-link').value;
+
+  const { error } = await supabaseClient.from('marketplace_items').insert([{
+    id: 'm_' + Date.now(),
+    title, price, link,
+    seller_id: session.user.id, seller_name: profile.name
+  }]);
+
+  if (!error) {
+    showToast('Item listed successfully!', 'success');
+    closeSellModal();
+    renderMarketplace();
+  }
+}
+
+async function handleBuyItem(itemId, price, sellerId) {
+  if (profile.points < price) return showToast('Not enough points!', 'error');
+  if (!confirm(`Buy this item for ${price} points?`)) return;
+
+  // 1. Record purchase
+  const { error: pError } = await supabaseClient.from('purchases').insert([{
+    user_id: session.user.id,
+    item_id: itemId
+  }]);
+
+  if (pError) return showToast('Transaction failed', 'error');
+
+  // 2. Subtract points from buyer
+  await supabaseClient.from('users').update({ points: profile.points - price }).eq('id', session.user.id);
+  
+  // 3. Add points to seller
+  const { data: sellerData } = await supabaseClient.from('users').select('points').eq('id', sellerId).single();
+  await supabaseClient.from('users').update({ points: (sellerData.points || 0) + price }).eq('id', sellerId);
+
+  showToast('Purchase successful!', 'success');
+  await fetchProfile();
+  renderMarketplace();
+}
+
+function openSellModal() {
+  document.getElementById('modal-sell').style.display = 'block';
+}
+
+function closeSellModal() {
+  document.getElementById('modal-sell').style.display = 'none';
 }
