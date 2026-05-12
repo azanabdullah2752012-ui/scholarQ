@@ -1,7 +1,7 @@
 // Initialize Supabase
 const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // State
 let user = JSON.parse(localStorage.getItem('scholarq_user'));
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function fetchUserFromDB() {
   if (!user) return;
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('users')
     .select('*')
     .eq('id', user.id)
@@ -57,7 +57,7 @@ async function fetchUserFromDB() {
 }
 
 async function fetchQuestionsFromDB() {
-  const { data: qData, error: qError } = await supabase
+  const { data: qData, error: qError } = await supabaseClient
     .from('questions')
     .select('*')
     .order('created_at', { ascending: false });
@@ -67,7 +67,7 @@ async function fetchQuestionsFromDB() {
     return;
   }
 
-  const { data: aData, error: aError } = await supabase
+  const { data: aData, error: aError } = await supabaseClient
     .from('answers')
     .select('*')
     .order('created_at', { ascending: true });
@@ -95,7 +95,7 @@ async function updateUserPoints(newPoints) {
   localStorage.setItem('scholarq_user', JSON.stringify(user));
   updateNavbar();
   
-  await supabase
+  await supabaseClient
     .from('users')
     .update({ points: newPoints })
     .eq('id', user.id);
@@ -180,7 +180,7 @@ async function handleJoin(e) {
     points: 50
   };
 
-  const { error } = await supabase.from('users').insert([newUser]);
+  const { error } = await supabaseClient.from('users').insert([newUser]);
 
   btn.disabled = false;
   btn.innerText = 'Enter Ecosystem';
@@ -284,7 +284,7 @@ async function handleAsk(e) {
     status: 'open'
   };
 
-  const { error } = await supabase.from('questions').insert([newQuestion]);
+  const { error } = await supabaseClient.from('questions').insert([newQuestion]);
 
   if (!error) {
     await updateUserPoints(user.points - 2);
@@ -457,7 +457,7 @@ async function handleAnswer(e) {
     is_best: false
   };
 
-  const { error } = await supabase.from('answers').insert([newAnswer]);
+  const { error } = await supabaseClient.from('answers').insert([newAnswer]);
 
   if (!error) {
     await updateUserPoints(user.points + 5);
@@ -480,7 +480,7 @@ async function upvote(ansId) {
   ans.upvotes = newUpvotes; // Optimistic update
   renderQuestionDetail();
 
-  await supabase
+  await supabaseClient
     .from('answers')
     .update({ upvotes: newUpvotes })
     .eq('id', ansId);
@@ -499,13 +499,13 @@ async function markBest(ansId) {
   await updateUserPoints(user.points + 2);
 
   // Update question
-  await supabase
+  await supabaseClient
     .from('questions')
     .update({ status: 'resolved', best_answer_id: ansId })
     .eq('id', currentQuestionId);
 
   // Update answer
-  await supabase
+  await supabaseClient
     .from('answers')
     .update({ is_best: true })
     .eq('id', ansId);
