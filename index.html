@@ -141,6 +141,15 @@
           <div class="input-group">
             <label class="input-label">Question Details</label>
             <textarea id="ask-body" class="input-field" placeholder="Provide more context..." required></textarea>
+            <div class="quality-assistant mt-4">
+              <div class="flex justify-between items-center mb-2" style="font-size: 0.8rem; font-weight: 600;">
+                <span style="color: var(--text-muted);">AI Quality Assistant</span>
+                <span id="ask-quality-tips" style="color: var(--primary);">Start typing...</span>
+              </div>
+              <div style="height: 6px; background: var(--bg-color); border-radius: 3px; overflow: hidden;">
+                <div id="ask-quality-meter" style="height: 100%; width: 0%; transition: all 0.3s ease; background: var(--accent-danger);"></div>
+              </div>
+            </div>
           </div>
           <button type="submit" id="ask-submit-btn" class="btn btn-primary" style="width: 100%;">Post Question (-2 pts)</button>
         </form>
@@ -194,6 +203,15 @@
         </p>
         <form id="answer-form">
           <textarea id="answer-body" class="input-field mb-4" style="width: 100%;" placeholder="Write a clear, detailed answer..." required></textarea>
+          <div class="quality-assistant mb-4">
+            <div class="flex justify-between items-center mb-2" style="font-size: 0.8rem; font-weight: 600;">
+              <span style="color: var(--text-muted);">Answer Quality</span>
+              <span id="answer-quality-tips" style="color: var(--primary);">Keep writing...</span>
+            </div>
+            <div style="height: 6px; background: var(--bg-color); border-radius: 3px; overflow: hidden;">
+              <div id="answer-quality-meter" style="height: 100%; width: 0%; transition: all 0.3s ease; background: var(--accent-danger);"></div>
+            </div>
+          </div>
           <button type="submit" class="btn btn-primary">Submit Answer</button>
         </form>
       </div>
