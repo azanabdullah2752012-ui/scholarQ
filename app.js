@@ -246,6 +246,9 @@ function renderHome() {
           <i data-lucide="tag" style="width: 12px; height: 12px; margin-right: 0.25rem;"></i>
           ${q.subject}
         </span>
+        <span class="badge" style="background: rgba(139, 92, 246, 0.1); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.2); font-size: 0.75rem;">
+          ${q.category || 'Doubt Solving'}
+        </span>
         <div class="flex gap-4" style="color: var(--text-muted); font-size: 0.875rem;">
           <span class="flex items-center gap-2"><i data-lucide="message-square" style="width:16px; height:16px;"></i> ${q.answers?.length || 0}</span>
         </div>
@@ -259,12 +262,27 @@ function renderHome() {
 // Ask
 function renderAsk() {
   document.getElementById('ask-points').innerText = user.points;
+  updateAskCost();
+}
+
+function updateAskCost() {
+  const select = document.getElementById('ask-category');
+  const option = select.options[select.selectedIndex];
+  const cost = option.getAttribute('data-cost');
+  document.getElementById('ask-submit-btn').innerText = `Post Question (-${cost} pts)`;
 }
 
 async function handleAsk(e) {
   e.preventDefault();
-  if (user.points < 2) {
-    alert("Not enough points to ask a question! You need at least 2 points.");
+  
+  const categorySelect = document.getElementById('ask-category');
+  const option = categorySelect.options[categorySelect.selectedIndex];
+  const cost = parseInt(option.getAttribute('data-cost'));
+  const reward = parseInt(option.getAttribute('data-reward'));
+  const category = categorySelect.value;
+
+  if (user.points < cost) {
+    alert(`Not enough points! You need at least ${cost} points for this category.`);
     return;
   }
 
@@ -279,24 +297,31 @@ async function handleAsk(e) {
   const newQuestion = {
     id: 'q_' + Date.now().toString(),
     title, body, subject,
+    category, cost, reward,
     asker_id: user.id,
     asker_name: user.name,
     status: 'open'
   };
 
-  const { error } = await supabaseClient.from('questions').insert([newQuestion]);
+  try {
+    const { error } = await supabaseClient.from('questions').insert([newQuestion]);
 
-  if (!error) {
-    await updateUserPoints(user.points - 2);
-    document.getElementById('ask-form').reset();
-    await fetchQuestionsFromDB();
-    navigateTo('home');
-  } else {
-    alert("Failed to post question: " + error.message);
+    if (!error) {
+      await updateUserPoints(user.points - cost);
+      document.getElementById('ask-form').reset();
+      updateAskCost();
+      await fetchQuestionsFromDB();
+      navigateTo('home');
+    } else {
+      alert("Failed to post question: " + error.message);
+    }
+  } catch (err) {
+    alert("Unexpected error: " + err.message);
+    console.error("Ask Error:", err);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = `Post Question (-${cost} pts)`;
   }
-
-  btn.disabled = false;
-  btn.innerText = 'Post Question (-2 pts)';
 }
 
 // Dashboard
@@ -380,12 +405,16 @@ function renderQuestionDetail() {
       <h1 class="page-title" style="font-size: 1.75rem; margin-bottom: 0;">${escapeHTML(q.title)}</h1>
       ${q.status === 'resolved' ? `<span class="badge badge-success flex items-center gap-2" style="background: rgba(16, 185, 129, 0.1); color: var(--accent-success); padding: 0.5rem 1rem;"><i data-lucide="check-circle" style="width:16px;height:16px;"></i> Resolved</span>` : ''}
     </div>
-    <div class="flex items-center gap-4 mb-6 pb-6" style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+    <div class="flex items-center gap-4 mb-6 pb-6" style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); flex-wrap: wrap;">
       <span class="badge badge-subject">
         <i data-lucide="tag" style="width: 12px; height: 12px; margin-right: 0.25rem;"></i>
         ${q.subject}
       </span>
+      <span class="badge" style="background: rgba(139, 92, 246, 0.1); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.2);">
+        ${q.category || 'Doubt Solving'}
+      </span>
       <span>Asked by <strong style="color: var(--text-main);">${escapeHTML(q.asker_name)}</strong></span>
+      <span class="badge" style="margin-left: auto; background: rgba(16, 185, 129, 0.1); color: var(--accent-success);">Reward: +${q.reward || 5} pts</span>
     </div>
     <p style="white-space: pre-wrap; line-height: 1.6; font-size: 1.125rem;">${escapeHTML(q.body)}</p>
   `;
@@ -428,7 +457,14 @@ function renderQuestionDetail() {
   });
 
   const formCont = document.getElementById('qd-answer-form-container');
-  if (q.status === 'resolved') {
+  
+  // Update answer prompt dynamic reward text
+  const answerPrompt = formCont.querySelector('p');
+  if(answerPrompt) {
+    answerPrompt.innerHTML = `Earn <strong>+${q.reward || 5} points</strong> for answering, and a bonus if marked as Best Answer.`;
+  }
+
+  if (q.status === 'resolved' || q.asker_id === user.id) {
     formCont.style.display = 'none';
   } else {
     formCont.style.display = 'block';
@@ -460,7 +496,9 @@ async function handleAnswer(e) {
   const { error } = await supabaseClient.from('answers').insert([newAnswer]);
 
   if (!error) {
-    await updateUserPoints(user.points + 5);
+    const q = questions.find(x => x.id === currentQuestionId);
+    const reward = q?.reward || 5;
+    await updateUserPoints(user.points + reward);
     document.getElementById('answer-form').reset();
     await fetchQuestionsFromDB();
   } else {
@@ -474,7 +512,10 @@ async function handleAnswer(e) {
 async function upvote(ansId) {
   const q = questions.find(x => x.id === currentQuestionId);
   const ans = q.answers.find(x => x.id === ansId);
-  if (ans.author_id === user.id) return; // Cannot upvote self
+  if (ans.author_id === user.id) {
+    alert("You cannot upvote your own answer!");
+    return;
+  }
 
   const newUpvotes = (ans.upvotes || 0) + 1;
   ans.upvotes = newUpvotes; // Optimistic update
