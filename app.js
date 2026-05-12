@@ -327,15 +327,18 @@ function renderQuestionDetail() {
   const q = questions.find(x => x.id === currentQuestionId);
   if (!q) return;
 
+  const isHighValue = ['PPT Design', 'Creative Work', 'Assignments'].includes(q.subject);
+  const reward = isHighValue ? 15 : 5;
+
   document.getElementById('qd-content').innerHTML = `
     <div class="glass-card" style="padding: 3rem; text-align: left;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
         <div>
-          <span class="tag" style="padding: 6px 16px; font-size: 0.8rem;">${q.subject}</span>
+          <span class="tag" style="padding: 6px 16px; font-size: 0.8rem; background: ${getTagColor(q.subject)}">${q.subject}</span>
           <h2 style="font-size: 2.25rem; font-weight: 800; margin-top: 1rem; letter-spacing: -1px;">${escapeHTML(q.title)}</h2>
         </div>
-        <div class="glass-card" style="padding: 12px 20px; text-align: center; border-color: var(--p-500);">
-          <div style="color: var(--p-600); font-weight: 800; font-size: 1.25rem;">+5</div>
+        <div class="glass-card" style="padding: 12px 20px; text-align: center; border-color: ${isHighValue ? '#ec4899' : 'var(--p-500)'};">
+          <div style="color: ${isHighValue ? '#ec4899' : 'var(--p-600)'}; font-weight: 800; font-size: 1.25rem;">+${reward}</div>
           <div style="font-size: 0.6rem; font-weight: 900; text-transform: uppercase; color: var(--text-secondary);">Potential</div>
         </div>
       </div>
