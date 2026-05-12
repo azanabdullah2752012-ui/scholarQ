@@ -26,10 +26,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   session = initialSession;
   
   if (session) {
-    await fetchProfile();
+    const hasProfile = await fetchProfile();
     await fetchQuestions();
     setupSubscriptions();
-    navigateTo('home');
+    if (hasProfile) {
+      navigateTo('home');
+    }
   } else {
     navigateTo('auth');
   }
@@ -38,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('auth-form').addEventListener('submit', handleAuth);
   document.getElementById('ask-form').addEventListener('submit', handleAsk);
   document.getElementById('answer-form').addEventListener('submit', handleAnswer);
+  document.getElementById('finish-profile-form').addEventListener('submit', handleFinishProfile);
 });
 
 async function fetchProfile() {
@@ -47,19 +50,12 @@ async function fetchProfile() {
   if (data && !error) {
     profile = data;
     updateGlobalUI();
+    return true;
   } else if (error && error.code === 'PGRST116') {
-    // Profile recovery
-    const defaultProfile = {
-      id: session.user.id,
-      name: session.user.email.split('@')[0],
-      points: 50,
-      role: 'student',
-      percentage: 0,
-      email: session.user.email
-    };
-    await supabaseClient.from('users').insert([defaultProfile]);
-    profile = defaultProfile;
-    updateGlobalUI();
+    // Profile missing
+    console.log('Profile missing, redirecting to finish-profile...');
+    navigateTo('finish-profile');
+    return false;
   }
 }
 
@@ -91,7 +87,7 @@ function navigateTo(view, param = null) {
   const sidebar = document.getElementById('sidebar');
   const topBar = document.getElementById('top-bar');
 
-  if (view === 'auth') {
+  if (view === 'auth' || view === 'finish-profile') {
     sidebar.style.display = 'none';
     topBar.style.display = 'none';
     document.getElementById('main-layout').style.padding = '0';
@@ -188,6 +184,41 @@ async function logout() {
   session = null;
   profile = null;
   navigateTo('auth');
+}
+
+async function signInWithGoogle() {
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin + window.location.pathname
+    }
+  });
+  if (error) showToast(error.message, 'error');
+}
+
+async function handleFinishProfile(e) {
+  e.preventDefault();
+  const score = parseInt(document.getElementById('finish-score').value);
+  const name = session.user.user_metadata.full_name || session.user.email.split('@')[0];
+  
+  const role = (score >= 90) ? 'scholar' : 'student';
+  const newProfile = {
+    id: session.user.id,
+    name: name,
+    points: 50,
+    role: role,
+    percentage: score,
+    email: session.user.email
+  };
+
+  const { error } = await supabaseClient.from('users').insert([newProfile]);
+  if (!error) {
+    profile = newProfile;
+    showToast('Profile complete! Welcome.', 'success');
+    navigateTo('home');
+  } else {
+    showToast('Failed to save profile', 'error');
+  }
 }
 
 // Rendering
