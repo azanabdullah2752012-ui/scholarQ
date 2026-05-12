@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScholarQ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app-container" id="app">
+    <!-- Navbar (Injected via JS) -->
+    <nav class="navbar" id="navbar" style="display: none;">
+      <a href="#" class="nav-brand" onclick="navigateTo('home')">
+        <i data-lucide="book-open"></i> ScholarQ
+      </a>
+      <div class="nav-links">
+        <a href="#" class="nav-link" onclick="navigateTo('home')">Home Feed</a>
+        <a href="#" class="nav-link" id="nav-dashboard-link" onclick="navigateTo('dashboard')" style="display: none; align-items: center; gap: 8px;">
+          <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i> Dashboard
+        </a>
+        <button class="btn btn-primary" style="padding: 0.5rem 1rem;" onclick="navigateTo('ask')">
+          <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i> Ask (-2 pts)
+        </button>
+      </div>
+      <div class="nav-user">
+        <div class="user-points" title="Your Points">
+          <i data-lucide="award" style="width: 18px; height: 18px;"></i>
+          <span id="nav-points">0</span> pts
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; font-weight: 600;">
+          <i data-lucide="user" style="width: 18px; height: 18px;"></i>
+          <span id="nav-username">User</span>
+        </div>
+        <button onclick="logout()" class="btn btn-outline" style="padding: 0.5rem; border-radius: 50%;" title="Logout">
+          <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Views -->
+    <div id="view-auth" class="view">
+      <div class="auth-container">
+        <h1 class="auth-title">Join ScholarQ</h1>
+        <p class="text-center mb-8" style="color: var(--text-muted);">
+          Enter your academic details to get started. High scorers become Scholars!
+        </p>
+        <form id="auth-form">
+          <div class="input-group">
+            <label class="input-label">Your Name</label>
+            <input type="text" id="auth-name" class="input-field" required placeholder="John Doe">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Overall Exam Score (%)</label>
+            <input type="number" id="auth-score" class="input-field" required min="0" max="100" placeholder="e.g., 88">
+          </div>
+          <div class="input-group" id="auth-subject-group" style="display: none;">
+            <label class="input-label">Strongest Subject (You qualify as a Scholar!)</label>
+            <select id="auth-subject" class="input-field">
+              <option value="">Select a Subject...</option>
+              <option value="Math">Math</option>
+              <option value="Science">Science</option>
+              <option value="History">History</option>
+              <option value="Literature">Literature</option>
+              <option value="Computer Science">Computer Science</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+            Enter Ecosystem
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div id="view-home" class="view main-content" style="display: none;">
+      <div class="page-header">
+        <h1 class="page-title">Global Feed</h1>
+        <div class="flex gap-2" id="home-filters">
+          <!-- Filters injected by JS -->
+        </div>
+      </div>
+      <div id="home-questions" class="grid-cards"></div>
+    </div>
+
+    <div id="view-ask" class="view main-content" style="display: none; max-width: 800px;">
+      <h1 class="page-title mb-8">Ask a Question</h1>
+      <div class="card">
+        <div class="flex justify-between items-center mb-4">
+          <p style="color: var(--text-muted);">Asking a question costs <strong style="color: var(--accent-warning);">2 points</strong>.</p>
+          <span class="badge badge-points">Your balance: <span id="ask-points"></span> pts</span>
+        </div>
+        <form id="ask-form">
+          <div class="input-group">
+            <label class="input-label">Title</label>
+            <input type="text" id="ask-title" class="input-field" placeholder="e.g., How to solve x² + 5x + 6 = 0?" required>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Subject</label>
+            <select id="ask-subject" class="input-field" required>
+              <option value="">Select Subject...</option>
+              <option value="Math">Math</option>
+              <option value="Science">Science</option>
+              <option value="History">History</option>
+              <option value="Literature">Literature</option>
+              <option value="Computer Science">Computer Science</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Question Details</label>
+            <textarea id="ask-body" class="input-field" placeholder="Provide more context..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Post Question (-2 pts)</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="view-dashboard" class="view main-content" style="display: none;">
+      <h1 class="page-title mb-8">Scholar Dashboard</h1>
+      <div class="dashboard-grid">
+        <div class="sidebar">
+          <h3 class="mb-4" style="font-weight: 700;">Your Stats</h3>
+          <div class="stat-item">
+            <span style="color: var(--text-muted);">Role</span>
+            <span class="badge badge-status" id="dash-role" style="text-transform: capitalize;"></span>
+          </div>
+          <div class="stat-item">
+            <span style="color: var(--text-muted);">Points</span>
+            <strong style="color: var(--accent-warning);" id="dash-points"></strong>
+          </div>
+          <div class="stat-item">
+            <span style="color: var(--text-muted);">Specialties</span>
+            <div class="flex gap-2 flex-wrap justify-end" id="dash-specialties"></div>
+          </div>
+          <div class="mt-8">
+            <h3 class="mb-4" style="font-weight: 700;">Rewards</h3>
+            <ul style="color: var(--text-muted); font-size: 0.875rem; padding-left: 1.25rem;">
+              <li class="mb-2"><strong>+5 pts</strong> for answering</li>
+              <li class="mb-2"><strong>+10 pts</strong> if marked as Best Answer</li>
+            </ul>
+          </div>
+        </div>
+        <div>
+          <h2 class="mb-4" style="font-weight: 700; font-size: 1.25rem;">New Questions in Your Subjects</h2>
+          <div id="dash-new-questions" class="grid-cards mb-8"></div>
+          <h2 class="mb-4" style="font-weight: 700; font-size: 1.25rem;">Resolved Questions</h2>
+          <div id="dash-resolved-questions" class="grid-cards"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-question" class="view main-content" style="display: none; max-width: 800px;">
+      <button onclick="navigateTo('home')" class="btn btn-secondary mb-4" style="padding: 0.5rem 1rem;">&larr; Back</button>
+      <div id="qd-header"></div>
+      <h3 class="mb-4" style="font-weight: 700; font-size: 1.25rem;"><span id="qd-answer-count">0</span> Answers</h3>
+      <div id="qd-answers" class="mb-8"></div>
+      
+      <div class="card" id="qd-answer-form-container">
+        <h3 class="mb-4" style="font-weight: 700;">Your Answer</h3>
+        <p class="mb-4" style="color: var(--text-muted); font-size: 0.875rem;">
+          Earn <strong>+5 points</strong> for answering, and <strong>+10 points</strong> if marked as Best Answer.
+        </p>
+        <form id="answer-form">
+          <textarea id="answer-body" class="input-field mb-4" style="width: 100%;" placeholder="Write a clear, detailed answer..." required></textarea>
+          <button type="submit" class="btn btn-primary">Submit Answer</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

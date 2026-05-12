@@ -1,0 +1,530 @@
+// Initialize Supabase
+const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
+const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+// State
+let user = JSON.parse(localStorage.getItem('scholarq_user'));
+let questions = [];
+
+let currentView = 'auth';
+let currentQuestionId = null;
+
+// Initialization
+document.addEventListener('DOMContentLoaded', async () => {
+  lucide.createIcons();
+  
+  document.getElementById('auth-score').addEventListener('input', (e) => {
+    const val = parseInt(e.target.value);
+    const subjectGroup = document.getElementById('auth-subject-group');
+    const subjectSelect = document.getElementById('auth-subject');
+    if (val >= 80) {
+      subjectGroup.style.display = 'flex';
+      subjectSelect.required = true;
+    } else {
+      subjectGroup.style.display = 'none';
+      subjectSelect.required = false;
+    }
+  });
+
+  document.getElementById('auth-form').addEventListener('submit', handleJoin);
+  document.getElementById('ask-form').addEventListener('submit', handleAsk);
+  document.getElementById('answer-form').addEventListener('submit', handleAnswer);
+
+  if (user) {
+    // Refresh user points from DB
+    await fetchUserFromDB();
+    await fetchQuestionsFromDB();
+    navigateTo('home');
+  } else {
+    navigateTo('auth');
+  }
+});
+
+async function fetchUserFromDB() {
+  if (!user) return;
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+  
+  if (data && !error) {
+    user = data;
+    localStorage.setItem('scholarq_user', JSON.stringify(user));
+    updateNavbar();
+  }
+}
+
+async function fetchQuestionsFromDB() {
+  const { data: qData, error: qError } = await supabase
+    .from('questions')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (qError) {
+    console.error('Error fetching questions:', qError);
+    return;
+  }
+
+  const { data: aData, error: aError } = await supabase
+    .from('answers')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (aError) {
+    console.error('Error fetching answers:', aError);
+    return;
+  }
+
+  // Combine answers into questions
+  questions = qData.map(q => {
+    return {
+      ...q,
+      answers: aData.filter(a => a.question_id === q.id)
+    };
+  });
+
+  if (currentView === 'home') renderHome();
+  if (currentView === 'dashboard') renderDashboard();
+  if (currentView === 'question') renderQuestionDetail();
+}
+
+async function updateUserPoints(newPoints) {
+  user.points = newPoints;
+  localStorage.setItem('scholarq_user', JSON.stringify(user));
+  updateNavbar();
+  
+  await supabase
+    .from('users')
+    .update({ points: newPoints })
+    .eq('id', user.id);
+}
+
+// Navigation
+function navigateTo(view, param = null) {
+  document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
+  
+  if (!user && view !== 'auth') {
+    view = 'auth';
+  }
+
+  if (view === 'auth' && user) {
+    view = 'home';
+  }
+
+  currentView = view;
+  document.getElementById(`view-${view}`).style.display = 'block';
+
+  const navbar = document.getElementById('navbar');
+  if (user) {
+    navbar.style.display = 'flex';
+    updateNavbar();
+    if(view === 'home' || view === 'dashboard' || view === 'question') {
+      fetchQuestionsFromDB(); // Refresh data when navigating to data-heavy pages
+    }
+  } else {
+    navbar.style.display = 'none';
+  }
+
+  if (view === 'home') renderHome();
+  if (view === 'ask') renderAsk();
+  if (view === 'dashboard') renderDashboard();
+  if (view === 'question') {
+    currentQuestionId = param;
+    renderQuestionDetail();
+  }
+  
+  lucide.createIcons();
+}
+
+function updateNavbar() {
+  if (!user) return;
+  document.getElementById('nav-points').innerText = user.points;
+  document.getElementById('nav-username').innerText = `${user.name} (${user.role.replace('_', ' ')})`;
+  
+  const dashLink = document.getElementById('nav-dashboard-link');
+  if (user.role === 'scholar' || user.role === 'elite' || user.role === 'junior_scholar') {
+    dashLink.style.display = 'flex';
+  } else {
+    dashLink.style.display = 'none';
+  }
+}
+
+// Auth
+async function handleJoin(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.innerText = 'Joining...';
+
+  const name = document.getElementById('auth-name').value;
+  const score = parseInt(document.getElementById('auth-score').value);
+  const subject = document.getElementById('auth-subject').value;
+
+  let role = 'student';
+  let userSubject = subject;
+
+  if (score >= 92) role = 'elite';
+  else if (score >= 85) role = 'scholar';
+  else if (score >= 80) role = 'junior_scholar';
+
+  if (score < 80) userSubject = '';
+
+  const newUser = {
+    id: 'user_' + Date.now().toString(),
+    name,
+    percentage: score,
+    role,
+    subjects: userSubject ? [userSubject] : [],
+    points: 50
+  };
+
+  const { error } = await supabase.from('users').insert([newUser]);
+
+  btn.disabled = false;
+  btn.innerText = 'Enter Ecosystem';
+
+  if (error) {
+    alert("Error joining: " + error.message);
+    return;
+  }
+
+  user = newUser;
+  localStorage.setItem('scholarq_user', JSON.stringify(user));
+  
+  await fetchQuestionsFromDB();
+  navigateTo('home');
+}
+
+function logout() {
+  user = null;
+  localStorage.removeItem('scholarq_user');
+  navigateTo('auth');
+}
+
+// Home
+let currentFilter = 'All';
+function renderHome() {
+  const subjects = ['All', 'Math', 'Science', 'History', 'Literature', 'Computer Science'];
+  const filterContainer = document.getElementById('home-filters');
+  filterContainer.innerHTML = '';
+  
+  subjects.forEach(sub => {
+    const btn = document.createElement('button');
+    btn.className = `btn ${currentFilter === sub ? 'btn-primary' : 'btn-secondary'}`;
+    btn.style.padding = '0.5rem 1rem';
+    btn.style.fontSize = '0.875rem';
+    btn.innerText = sub;
+    btn.onclick = () => { currentFilter = sub; renderHome(); };
+    filterContainer.appendChild(btn);
+  });
+
+  const filtered = currentFilter === 'All' ? questions : questions.filter(q => q.subject === currentFilter);
+  const qContainer = document.getElementById('home-questions');
+  qContainer.innerHTML = '';
+
+  if (filtered.length === 0) {
+    qContainer.innerHTML = '<div class="text-center mt-8" style="grid-column: 1/-1; color: var(--text-muted);"><p>No questions found for this subject.</p></div>';
+    return;
+  }
+
+  filtered.forEach(q => {
+    const card = document.createElement('a');
+    card.href = "#";
+    card.className = "card";
+    card.onclick = (e) => { e.preventDefault(); navigateTo('question', q.id); };
+    
+    card.innerHTML = `
+      <div class="card-header">
+        <h3 class="card-title">${escapeHTML(q.title)}</h3>
+        ${q.status === 'resolved' ? '<span class="badge badge-success" style="background: var(--accent-success); color: white;">Resolved</span>' : ''}
+      </div>
+      <p class="card-body">${escapeHTML(q.body.length > 100 ? q.body.substring(0, 100) + '...' : q.body)}</p>
+      <div class="card-footer">
+        <span class="badge badge-subject">
+          <i data-lucide="tag" style="width: 12px; height: 12px; margin-right: 0.25rem;"></i>
+          ${q.subject}
+        </span>
+        <div class="flex gap-4" style="color: var(--text-muted); font-size: 0.875rem;">
+          <span class="flex items-center gap-2"><i data-lucide="message-square" style="width:16px; height:16px;"></i> ${q.answers?.length || 0}</span>
+        </div>
+      </div>
+    `;
+    qContainer.appendChild(card);
+  });
+  lucide.createIcons();
+}
+
+// Ask
+function renderAsk() {
+  document.getElementById('ask-points').innerText = user.points;
+}
+
+async function handleAsk(e) {
+  e.preventDefault();
+  if (user.points < 2) {
+    alert("Not enough points to ask a question! You need at least 2 points.");
+    return;
+  }
+
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.innerText = 'Posting...';
+
+  const title = document.getElementById('ask-title').value;
+  const subject = document.getElementById('ask-subject').value;
+  const body = document.getElementById('ask-body').value;
+
+  const newQuestion = {
+    id: 'q_' + Date.now().toString(),
+    title, body, subject,
+    asker_id: user.id,
+    asker_name: user.name,
+    status: 'open'
+  };
+
+  const { error } = await supabase.from('questions').insert([newQuestion]);
+
+  if (!error) {
+    await updateUserPoints(user.points - 2);
+    document.getElementById('ask-form').reset();
+    await fetchQuestionsFromDB();
+    navigateTo('home');
+  } else {
+    alert("Failed to post question: " + error.message);
+  }
+
+  btn.disabled = false;
+  btn.innerText = 'Post Question (-2 pts)';
+}
+
+// Dashboard
+function renderDashboard() {
+  if (user.role === 'student') return;
+
+  document.getElementById('dash-role').innerText = user.role.replace('_', ' ');
+  document.getElementById('dash-points').innerText = user.points;
+  
+  const specContainer = document.getElementById('dash-specialties');
+  specContainer.innerHTML = '';
+  (user.subjects || []).forEach(s => {
+    specContainer.innerHTML += `<span class="badge badge-subject">${s}</span>`;
+  });
+
+  const relevantQuestions = questions.filter(q => (user.subjects || []).includes(q.subject));
+  const newQs = relevantQuestions.filter(q => q.status === 'open');
+  const resQs = relevantQuestions.filter(q => q.status === 'resolved');
+
+  const newCont = document.getElementById('dash-new-questions');
+  const resCont = document.getElementById('dash-resolved-questions');
+  
+  newCont.innerHTML = '';
+  resCont.innerHTML = '';
+
+  if (newQs.length === 0) {
+    newCont.innerHTML = `
+      <div class="card mb-8 text-center" style="padding: 3rem 1rem; grid-column: 1/-1;">
+        <i data-lucide="check-circle" style="width:48px; height:48px; color: var(--accent-success); margin: 0 auto 1rem; opacity: 0.5;"></i>
+        <p style="color: var(--text-muted);">You're all caught up! No new questions.</p>
+      </div>
+    `;
+  } else {
+    newQs.forEach(q => newCont.appendChild(createDashCard(q, 'Open')));
+  }
+
+  resQs.forEach(q => {
+    const c = createDashCard(q, 'Resolved');
+    c.style.opacity = '0.7';
+    resCont.appendChild(c);
+  });
+  
+  lucide.createIcons();
+}
+
+function createDashCard(q, statusLabel) {
+  const card = document.createElement('a');
+  card.href = "#";
+  card.className = "card";
+  card.onclick = (e) => { e.preventDefault(); navigateTo('question', q.id); };
+  
+  const statusStyle = statusLabel === 'Open' ? 'badge-status' : 'badge-success';
+  const statusColor = statusLabel === 'Resolved' ? 'background: rgba(16, 185, 129, 0.1); color: var(--accent-success);' : '';
+
+  card.innerHTML = `
+    <h3 class="card-title">${escapeHTML(q.title)}</h3>
+    <div class="card-footer mt-4">
+      <span class="badge badge-subject">
+        <i data-lucide="tag" style="width: 12px; height: 12px; margin-right: 0.25rem;"></i>
+        ${q.subject}
+      </span>
+      <span class="badge ${statusStyle}" style="${statusColor}">${statusLabel}</span>
+    </div>
+  `;
+  return card;
+}
+
+// Question Detail
+function renderQuestionDetail() {
+  const q = questions.find(x => x.id === currentQuestionId);
+  if (!q) {
+    document.getElementById('qd-header').innerHTML = "<p>Question not found.</p>";
+    document.getElementById('qd-answer-form-container').style.display = 'none';
+    return;
+  }
+
+  const header = document.getElementById('qd-header');
+  header.className = "card mb-8";
+  header.innerHTML = `
+    <div class="flex justify-between items-start mb-4">
+      <h1 class="page-title" style="font-size: 1.75rem; margin-bottom: 0;">${escapeHTML(q.title)}</h1>
+      ${q.status === 'resolved' ? `<span class="badge badge-success flex items-center gap-2" style="background: rgba(16, 185, 129, 0.1); color: var(--accent-success); padding: 0.5rem 1rem;"><i data-lucide="check-circle" style="width:16px;height:16px;"></i> Resolved</span>` : ''}
+    </div>
+    <div class="flex items-center gap-4 mb-6 pb-6" style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+      <span class="badge badge-subject">
+        <i data-lucide="tag" style="width: 12px; height: 12px; margin-right: 0.25rem;"></i>
+        ${q.subject}
+      </span>
+      <span>Asked by <strong style="color: var(--text-main);">${escapeHTML(q.asker_name)}</strong></span>
+    </div>
+    <p style="white-space: pre-wrap; line-height: 1.6; font-size: 1.125rem;">${escapeHTML(q.body)}</p>
+  `;
+
+  document.getElementById('qd-answer-count').innerText = q.answers?.length || 0;
+  
+  const aContainer = document.getElementById('qd-answers');
+  aContainer.innerHTML = '';
+  
+  (q.answers || []).forEach(ans => {
+    const aCard = document.createElement('div');
+    aCard.className = `answer-card ${ans.is_best ? 'best-answer' : ''}`;
+    
+    let markBestBtn = '';
+    if (user.id === q.asker_id && !q.best_answer_id) {
+      markBestBtn = `<button class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.875rem; margin-left: auto;" onclick="markBest('${ans.id}')"><i data-lucide="award" style="width:14px;height:14px;"></i> Mark as Best</button>`;
+    }
+
+    const canUpvote = ans.author_id !== user.id;
+
+    aCard.innerHTML = `
+      ${ans.is_best ? `<div class="best-answer-badge"><i data-lucide="award" style="width:14px;height:14px;"></i> Best Answer</div>` : ''}
+      <div class="answer-header">
+        <span class="flex items-center gap-2">
+          <i data-lucide="user" style="width:14px;height:14px;"></i> 
+          <strong style="color: var(--text-main);">${escapeHTML(ans.author_name)}</strong> 
+          <span class="badge" style="font-size: 0.7rem; padding: 0.1rem 0.5rem; background: var(--bg-color);">${ans.author_role.replace('_', ' ')}</span>
+        </span>
+      </div>
+      <p class="answer-body" style="white-space: pre-wrap;">${escapeHTML(ans.body)}</p>
+      <div class="answer-footer">
+        <button class="vote-btn" onclick="upvote('${ans.id}')" ${!canUpvote ? 'disabled' : ''}>
+          <i data-lucide="thumbs-up" style="width:16px;height:16px; color:${ans.upvotes > 0 ? 'var(--accent-success)' : 'currentColor'};"></i> 
+          <span style="color: ${ans.upvotes > 0 ? 'var(--accent-success)' : 'inherit'}">${ans.upvotes || 0} Upvotes</span>
+        </button>
+        ${markBestBtn}
+      </div>
+    `;
+    aContainer.appendChild(aCard);
+  });
+
+  const formCont = document.getElementById('qd-answer-form-container');
+  if (q.status === 'resolved') {
+    formCont.style.display = 'none';
+  } else {
+    formCont.style.display = 'block';
+  }
+
+  lucide.createIcons();
+}
+
+async function handleAnswer(e) {
+  e.preventDefault();
+  const body = document.getElementById('answer-body').value;
+  if (!body) return;
+
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.innerText = 'Submitting...';
+
+  const newAnswer = {
+    id: 'a_' + Date.now().toString(),
+    question_id: currentQuestionId,
+    body,
+    author_id: user.id,
+    author_name: user.name,
+    author_role: user.role,
+    upvotes: 0,
+    is_best: false
+  };
+
+  const { error } = await supabase.from('answers').insert([newAnswer]);
+
+  if (!error) {
+    await updateUserPoints(user.points + 5);
+    document.getElementById('answer-form').reset();
+    await fetchQuestionsFromDB();
+  } else {
+    alert("Failed to post answer: " + error.message);
+  }
+
+  btn.disabled = false;
+  btn.innerText = 'Submit Answer';
+}
+
+async function upvote(ansId) {
+  const q = questions.find(x => x.id === currentQuestionId);
+  const ans = q.answers.find(x => x.id === ansId);
+  if (ans.author_id === user.id) return; // Cannot upvote self
+
+  const newUpvotes = (ans.upvotes || 0) + 1;
+  ans.upvotes = newUpvotes; // Optimistic update
+  renderQuestionDetail();
+
+  await supabase
+    .from('answers')
+    .update({ upvotes: newUpvotes })
+    .eq('id', ansId);
+}
+
+async function markBest(ansId) {
+  const q = questions.find(x => x.id === currentQuestionId);
+  const ans = q.answers.find(x => x.id === ansId);
+  
+  q.status = 'resolved';
+  q.best_answer_id = ansId;
+  ans.is_best = true;
+  renderQuestionDetail(); // Optimistic update
+
+  // Reward asker +2 points
+  await updateUserPoints(user.points + 2);
+
+  // Update question
+  await supabase
+    .from('questions')
+    .update({ status: 'resolved', best_answer_id: ansId })
+    .eq('id', currentQuestionId);
+
+  // Update answer
+  await supabase
+    .from('answers')
+    .update({ is_best: true })
+    .eq('id', ansId);
+    
+  // Note: we should theoretically reward the scholar +10 points here, 
+  // but since we don't have server-side functions set up, we'd have to 
+  // fetch that user and update them. For MVP we skip updating the offline scholar's points.
+}
+
+// Utilities
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/[&<>'"]/g, 
+    tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag)
+  );
+}
