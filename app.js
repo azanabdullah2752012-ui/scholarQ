@@ -740,6 +740,20 @@ function renderMicroTasks() {
   }
   
   document.getElementById('student-challenges').style.display = 'block';
+  const today = new Date().toISOString().split('T')[0];
+
+  if (profile.last_challenge_date === today) {
+    container.innerHTML = `
+      <div class="glass-card" style="padding: 2rem; text-align: center; width: 100%; border-color: #10b981;">
+        <i data-lucide="check-circle" style="width: 32px; color: #10b981; margin-bottom: 1rem;"></i>
+        <h4 style="font-weight: 800;">Daily Challenges Complete!</h4>
+        <p style="font-size: 0.8rem; color: var(--text-secondary);">Come back tomorrow for new tasks.</p>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
   container.innerHTML = `
     <div class="glass-card" style="padding: 1rem; border-color: #10b981;">
       <div style="font-size: 0.8rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">QUICK MCQ</div>
@@ -761,12 +775,20 @@ function renderMicroTasks() {
 }
 
 async function handleMicroTask(isCorrect, reward) {
+  const today = new Date().toISOString().split('T')[0];
+  if (profile.last_challenge_date === today) return showToast('Challenge already completed today!', 'error');
   if (!isCorrect) return showToast('Incorrect! Try again tomorrow.', 'error');
   
-  await supabaseClient.from('users').update({ points: (profile.points || 0) + reward }).eq('id', session.user.id);
-  showToast(`Challenge Complete! +${reward} pts.`, 'success');
-  await fetchProfile();
-  renderMicroTasks();
+  const { error } = await supabaseClient.from('users').update({ 
+    points: (profile.points || 0) + reward,
+    last_challenge_date: today
+  }).eq('id', session.user.id);
+
+  if (!error) {
+    showToast(`Challenge Complete! +${reward} pts.`, 'success');
+    await fetchProfile();
+    renderMicroTasks();
+  }
 }
 
 async function checkScholarPromotion() {
