@@ -26,10 +26,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   session = initialSession;
   
   if (session) {
-    await fetchProfile();
+    const hasProfile = await fetchProfile();
     await fetchQuestions();
     setupSubscriptions();
-    navigateTo('home');
+    if (hasProfile) {
+      navigateTo('home');
+    }
   } else {
     navigateTo('auth');
   }
