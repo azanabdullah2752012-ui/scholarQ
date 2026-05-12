@@ -3,296 +3,299 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ScholarQ</title>
+  <title>ScholarQ | Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="app-container" id="app">
-    <!-- Navbar (Injected via JS) -->
-    <nav class="navbar" id="navbar" style="display: none;">
-      <a href="#" class="nav-brand" onclick="navigateTo('home')">
-        <i data-lucide="book-open"></i> ScholarQ
-      </a>
-      <div class="nav-links">
-        <a href="#" class="nav-link" onclick="navigateTo('home')">Home Feed</a>
-        <a href="#" class="nav-link" id="nav-dashboard-link" onclick="navigateTo('dashboard')" style="display: none; align-items: center; gap: 8px;">
-          <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i> Dashboard
-        </a>
-        <a href="#" class="nav-link" onclick="navigateTo('leaderboard')" style="display: flex; align-items: center; gap: 8px;">
-          <i data-lucide="trophy" style="width: 18px; height: 18px;"></i> Leaderboard
-        </a>
-        <a href="#" class="nav-link" onclick="navigateTo('settings')" style="display: flex; align-items: center; gap: 8px;">
-          <i data-lucide="settings" style="width: 18px; height: 18px;"></i> Customize
-        </a>
-        <button class="btn btn-primary" style="padding: 0.5rem 1rem;" onclick="navigateTo('ask')">
-          <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i> Ask (-2 pts)
-        </button>
+  <div class="app-wrapper" id="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar" style="display: none;">
+      <div class="sidebar-logo">
+        <i data-lucide="graduation-cap"></i>
+        <span>ScholarQ</span>
       </div>
-      <div class="nav-user">
-        <div class="user-points" title="Your Points">
-          <i data-lucide="award" style="width: 18px; height: 18px;"></i>
-          <span id="nav-points">0</span> pts
+      
+      <nav class="sidebar-nav">
+        <div class="nav-item active" onclick="navigateTo('home')" id="nav-home">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;" onclick="navigateTo('profile')" class="nav-link">
-          <i data-lucide="user" style="width: 18px; height: 18px;"></i>
-          <span id="nav-username">User</span>
+        <div class="nav-item" onclick="navigateTo('profile')" id="nav-profile">
+          <i data-lucide="user-circle"></i>
+          <span>Personal Info</span>
         </div>
-        <button onclick="logout()" class="btn btn-outline" style="padding: 0.5rem; border-radius: 50%;" title="Logout">
-          <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
-        </button>
-      </div>
-    </nav>
+        <div class="nav-item" onclick="navigateTo('dashboard')" id="nav-scholar-dashboard" style="display: none;">
+          <i data-lucide="book-open"></i>
+          <span>Scholar Portal</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('leaderboard')" id="nav-leaderboard">
+          <i data-lucide="trophy"></i>
+          <span>Achievements</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('settings')" id="nav-settings">
+          <i data-lucide="palette"></i>
+          <span>Customization</span>
+        </div>
+      </nav>
 
-    <!-- Views -->
-    <div id="view-auth" class="view">
-      <div class="auth-container">
-        <h1 class="auth-title">Join ScholarQ</h1>
-        <p class="text-center mb-8" style="color: var(--text-muted);">
-          Enter your academic details to get started. High scorers become Scholars!
-        </p>
-        <form id="auth-form">
-          <div class="input-group">
-            <label class="input-label">Your Name</label>
-            <input type="text" id="auth-name" class="input-field" required placeholder="John Doe">
-          </div>
-          <div class="input-group">
-            <label class="input-label">Overall Exam Score (%)</label>
-            <input type="number" id="auth-score" class="input-field" required min="0" max="100" placeholder="e.g., 88">
-          </div>
-          <div class="input-group" id="auth-subject-group" style="display: none;">
-            <label class="input-label">Strongest Subject (You qualify as a Scholar!)</label>
-            <select id="auth-subject" class="input-field">
-              <option value="">Select a Subject...</option>
-              <option value="Math">Math</option>
-              <option value="Science">Science</option>
-              <option value="History">History</option>
-              <option value="Literature">Literature</option>
-              <option value="Computer Science">Computer Science</option>
-            </select>
-          </div>
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-            Enter Ecosystem
+      <div class="sidebar-footer">
+        <div class="nav-item" onclick="logout()" style="color: rgba(255,255,255,0.7);">
+          <i data-lucide="log-out"></i>
+          <span>Logout</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Layout -->
+    <main class="main-layout" id="main-layout">
+      <!-- Top Bar -->
+      <header class="top-bar" id="top-bar" style="display: none;">
+        <div class="search-container">
+          <i data-lucide="search"></i>
+          <input type="text" id="global-search" placeholder="Search for doubts, subjects or scholars..." oninput="handleSearch(this.value)">
+        </div>
+        
+        <div class="top-user-area">
+          <button class="btn btn-primary" onclick="navigateTo('ask')">
+            <i data-lucide="plus"></i> Ask Doubt
           </button>
-        </form>
-      </div>
-    </div>
+          
+          <div class="user-info-pill">
+            <span style="font-weight: 700; color: var(--primary);" id="top-points">0 pts</span>
+            <div class="user-avatar-sm" id="top-avatar">U</div>
+            <span style="font-weight: 600;" id="top-username">User</span>
+          </div>
+          
+          <i data-lucide="bell" style="color: var(--text-muted); cursor: pointer;"></i>
+          <i data-lucide="settings" style="color: var(--text-muted); cursor: pointer;" onclick="navigateTo('settings')"></i>
+        </div>
+      </header>
 
-    <div id="view-home" class="view main-content" style="display: none;">
-      <div class="page-header" style="flex-direction: column; align-items: stretch; gap: 1.5rem;">
-        <div class="flex justify-between items-center">
-          <h1 class="page-title">Global Feed</h1>
-          <div class="flex gap-4">
-            <div class="search-wrapper" style="position: relative; width: 300px;">
-              <i data-lucide="search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-muted);"></i>
-              <input type="text" id="home-search" class="input-field" style="padding-left: 2.75rem; width: 100%;" placeholder="Search questions..." oninput="handleSearch(this.value)">
+      <!-- Content Views -->
+      <div id="view-auth" class="view" style="width: 100%; max-width: 450px; margin: 4rem auto;">
+        <div class="card" style="padding: 3rem;">
+          <div class="text-center mb-8">
+            <i data-lucide="graduation-cap" style="width: 64px; height: 64px; color: var(--primary); margin-bottom: 1rem;"></i>
+            <h1 class="auth-title">Welcome to ScholarQ</h1>
+            <p style="color: var(--text-muted);">The student-to-student ecosystem.</p>
+          </div>
+          <form id="auth-form">
+            <div class="input-group" style="margin-bottom: 1.5rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Your Full Name</label>
+              <input type="text" id="auth-name" class="input-field" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm);" required>
             </div>
-            <select id="home-sort" class="input-field" style="width: 180px;" onchange="handleSort(this.value)">
-              <option value="newest">Newest First</option>
-              <option value="reward">Highest Reward</option>
-              <option value="answers">Most Answered</option>
-            </select>
-          </div>
-        </div>
-        <div class="flex gap-2" id="home-filters" style="padding-bottom: 0.5rem; overflow-x: auto;">
-          <!-- Filters injected by JS -->
-        </div>
-      </div>
-      <div id="home-questions" class="grid-cards"></div>
-    </div>
-
-    <div id="view-ask" class="view main-content" style="display: none; max-width: 800px;">
-      <h1 class="page-title mb-8">Ask a Question</h1>
-      <div class="card">
-        <div class="flex justify-between items-center mb-4">
-          <p style="color: var(--text-muted);">Asking a question costs <strong style="color: var(--accent-warning);">2 points</strong>.</p>
-          <span class="badge badge-points">Your balance: <span id="ask-points"></span> pts</span>
-        </div>
-        <form id="ask-form">
-          <div class="input-group">
-            <label class="input-label">Title</label>
-            <input type="text" id="ask-title" class="input-field" placeholder="e.g., How to solve x² + 5x + 6 = 0?" required>
-          </div>
-          <div class="input-group">
-            <label class="input-label">Help Category</label>
-            <select id="ask-category" class="input-field" required onchange="updateAskCost()">
-              <option value="Doubt Solving" data-cost="2" data-reward="5">❓ Doubt Solving (Cost: 2 pts | Reward: 5 pts)</option>
-              <option value="Homework Help" data-cost="3" data-reward="7">📝 Homework Help (Cost: 3 pts | Reward: 7 pts)</option>
-              <option value="Assignment Help" data-cost="5" data-reward="10">📄 Assignment Help (Cost: 5 pts | Reward: 10 pts)</option>
-              <option value="PPT Creation" data-cost="8" data-reward="15">📊 PPT Creation (Cost: 8 pts | Reward: 15 pts)</option>
-              <option value="Creative Project" data-cost="10" data-reward="20">🎨 Creative Project (Cost: 10 pts | Reward: 20 pts)</option>
-            </select>
-          </div>
-          <div class="input-group">
-            <label class="input-label">Subject</label>
-            <select id="ask-subject" class="input-field" required>
-              <option value="">Select Subject...</option>
-              <option value="Math">Math</option>
-              <option value="Science">Science</option>
-              <option value="History">History</option>
-              <option value="Literature">Literature</option>
-              <option value="Computer Science">Computer Science</option>
-            </select>
-          </div>
-          <div class="input-group">
-            <label class="input-label">Question Details</label>
-            <textarea id="ask-body" class="input-field" placeholder="Provide more context..." required></textarea>
-          </div>
-          <button type="submit" id="ask-submit-btn" class="btn btn-primary" style="width: 100%;">Post Question (-2 pts)</button>
-        </form>
-      </div>
-    </div>
-
-    <div id="view-dashboard" class="view main-content" style="display: none;">
-      <h1 class="page-title mb-8">Scholar Dashboard</h1>
-      <div class="dashboard-grid">
-        <div class="sidebar">
-          <h3 class="mb-4" style="font-weight: 700;">Your Stats</h3>
-          <div class="stat-item">
-            <span style="color: var(--text-muted);">Role</span>
-            <span class="badge badge-status" id="dash-role" style="text-transform: capitalize;"></span>
-          </div>
-          <div class="stat-item">
-            <span style="color: var(--text-muted);">Points</span>
-            <strong style="color: var(--accent-warning);" id="dash-points"></strong>
-          </div>
-          <div class="stat-item">
-            <span style="color: var(--text-muted);">Specialties</span>
-            <div class="flex gap-2 flex-wrap justify-end" id="dash-specialties"></div>
-          </div>
-          <div class="mt-8">
-            <h3 class="mb-4" style="font-weight: 700;">Rewards</h3>
-            <ul style="color: var(--text-muted); font-size: 0.875rem; padding-left: 1.25rem;">
-              <li class="mb-2"><strong>+5 pts</strong> for answering</li>
-              <li class="mb-2"><strong>+10 pts</strong> if marked as Best Answer</li>
-            </ul>
-          </div>
-        </div>
-        <div>
-          <h2 class="mb-4" style="font-weight: 700; font-size: 1.25rem;">New Questions in Your Subjects</h2>
-          <div id="dash-new-questions" class="grid-cards mb-8"></div>
-          <h2 class="mb-4" style="font-weight: 700; font-size: 1.25rem;">Resolved Questions</h2>
-          <div id="dash-resolved-questions" class="grid-cards"></div>
+            <div class="input-group" style="margin-bottom: 1.5rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Latest Exam Score (%)</label>
+              <input type="number" id="auth-score" class="input-field" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm);" required min="0" max="100">
+            </div>
+            <div id="auth-subject-group" style="display: none; margin-bottom: 1.5rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Your Specialty</label>
+              <select id="auth-subject" class="input-field" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                <option value="">Select Subject...</option>
+                <option value="Math">Math</option>
+                <option value="Science">Science</option>
+                <option value="History">History</option>
+                <option value="Literature">Literature</option>
+                <option value="Computer Science">Computer Science</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Enter Ecosystem</button>
+          </form>
         </div>
       </div>
-    </div>
 
-    <div id="view-question" class="view main-content" style="display: none; max-width: 800px;">
-      <button onclick="navigateTo('home')" class="btn btn-secondary mb-4" style="padding: 0.5rem 1rem;">&larr; Back</button>
-      <div id="qd-header"></div>
-      <h3 class="mb-4" style="font-weight: 700; font-size: 1.25rem;"><span id="qd-answer-count">0</span> Answers</h3>
-      <div id="qd-answers" class="mb-8"></div>
-      
-      <div class="card" id="qd-answer-form-container">
-        <h3 class="mb-4" style="font-weight: 700;">Your Answer</h3>
-        <p class="mb-4" style="color: var(--text-muted); font-size: 0.875rem;">
-          Earn <strong>+5 points</strong> for answering, and <strong>+10 points</strong> if marked as Best Answer.
-        </p>
-        <form id="answer-form">
-          <textarea id="answer-body" class="input-field mb-4" style="width: 100%;" placeholder="Write a clear, detailed answer..." required></textarea>
-          <button type="submit" class="btn btn-primary">Submit Answer</button>
-        </form>
-      </div>
-    </div>
+      <div id="view-home" class="view" style="display: none;">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner mb-8">
+          <div class="welcome-content">
+            <div class="banner-date">
+              <i data-lucide="calendar"></i>
+              <span id="banner-date-text">October 10th, 2024</span>
+            </div>
+            <h2>Welcome back, <span id="welcome-name">Student</span>!!</h2>
+            <p>Stay updated and solve doubts in your student portal</p>
+          </div>
+          <img src="https://img.freepik.com/free-vector/hand-drawn-college-student-illustration_23-2149021200.jpg" alt="Student" class="banner-illustration">
+        </div>
 
-    <div id="view-leaderboard" class="view main-content" style="display: none; max-width: 800px;">
-      <h1 class="page-title mb-8">🏆 Global Leaderboard</h1>
-      <div class="card">
-        <p class="mb-4" style="color: var(--text-muted);">The top minds in the ScholarQ ecosystem.</p>
-        <div id="leaderboard-container" style="display: flex; flex-direction: column; gap: 1rem;">
-          <!-- Leaderboard items injected here -->
+        <div class="dashboard-grid-main">
+          <div>
+            <div class="stats-row">
+              <div class="card">
+                <div class="card-title-row">
+                  <h3>Basic Info</h3>
+                </div>
+                <div class="data-list">
+                  <div class="stat-item" style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);">Status</span>
+                    <span id="dash-role-badge" class="badge-status">Student</span>
+                  </div>
+                  <div class="stat-item" style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);">Points</span>
+                    <strong id="dash-points-val">50</strong>
+                  </div>
+                  <div class="stat-item" style="display: flex; justify-content: space-between; padding: 0.75rem 0;">
+                    <span style="color: var(--text-muted);">Current GPA</span>
+                    <strong id="dash-gpa-val">0.0</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="card text-center">
+                <h3>Daily Activity</h3>
+                <div class="attendance-circle mt-4">
+                  <div class="attendance-value" id="dash-attendance">90%</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title-row">
+                <h3>Global Feed</h3>
+                <div class="flex gap-2" id="home-filters"></div>
+              </div>
+              <div id="home-questions" class="data-list"></div>
+            </div>
+          </div>
+
+          <div class="flex flex-direction-column gap-8">
+            <div class="card">
+              <div class="card-title-row">
+                <h3>Top Scholars</h3>
+                <a href="#" onclick="navigateTo('leaderboard')" style="color: var(--primary); font-size: 0.8rem;">See all</a>
+              </div>
+              <div id="mini-leaderboard" class="data-list"></div>
+            </div>
+            
+            <div class="card">
+              <div class="card-title-row">
+                <h3>Daily Notice</h3>
+              </div>
+              <div class="data-list">
+                <div class="data-item">
+                  <i data-lucide="info" style="color: var(--primary);"></i>
+                  <div>
+                    <h4 style="font-size: 0.9rem;">New Math Doubt!</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Calculus help needed in Science.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div id="view-settings" class="view main-content" style="display: none; max-width: 800px;">
-      <h1 class="page-title mb-8">🎨 Personalize Your Workspace</h1>
-      
-      <div class="card mb-8">
-        <h2 class="mb-4" style="font-weight: 700; font-size: 1.25rem;">Theme Presets</h2>
-        <p class="mb-6" style="color: var(--text-muted);">Choose a professionally curated color palette.</p>
+      <div id="view-ask" class="view" style="display: none; max-width: 800px;">
+        <h1 class="page-title mb-8">Ask a Question</h1>
+        <div class="card">
+          <form id="ask-form">
+            <div class="input-group" style="margin-bottom: 1.5rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Title</label>
+              <input type="text" id="ask-title" class="input-field" style="width: 100%;" placeholder="e.g., How to solve quadratic equations?" required>
+            </div>
+            <div class="input-group" style="margin-bottom: 1.5rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Subject</label>
+              <select id="ask-subject" class="input-field" style="width: 100%;" required>
+                <option value="Math">Math</option>
+                <option value="Science">Science</option>
+                <option value="History">History</option>
+                <option value="Literature">Literature</option>
+                <option value="Computer Science">Computer Science</option>
+              </select>
+            </div>
+            <div class="input-group" style="margin-bottom: 1.5rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Category</label>
+              <select id="ask-category" class="input-field" style="width: 100%;" onchange="updateAskCost()">
+                <option value="Doubt Solving" data-cost="2" data-reward="5">❓ Doubt Solving (2 pts)</option>
+                <option value="Homework Help" data-cost="3" data-reward="7">📝 Homework Help (3 pts)</option>
+                <option value="Assignment Help" data-cost="5" data-reward="10">📄 Assignment Help (5 pts)</option>
+                <option value="PPT Creation" data-cost="8" data-reward="15">📊 PPT Creation (8 pts)</option>
+              </select>
+            </div>
+            <div class="input-group" style="margin-bottom: 2rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Details</label>
+              <textarea id="ask-body" class="input-field" style="width: 100%; min-height: 150px;" required></textarea>
+            </div>
+            <button type="submit" id="ask-submit-btn" class="btn btn-primary" style="width: 100%; justify-content: center;">Post Question (-2 pts)</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="view-profile" class="view" style="display: none; max-width: 900px;">
+        <div class="card mb-8">
+          <div class="flex items-center gap-6">
+            <div id="profile-avatar-lg" class="user-avatar-sm" style="width: 100px; height: 100px; font-size: 2.5rem;">U</div>
+            <div>
+              <h1 id="profile-name" style="font-size: 2.5rem; font-weight: 800;">User Name</h1>
+              <span id="profile-role-text" class="badge-status">Student</span>
+            </div>
+          </div>
+        </div>
         
-        <div class="theme-presets" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
-          <button class="preset-btn" onclick="updateCustomColor('#6366f1')" style="background: #6366f1;">Indigo Neon</button>
-          <button class="preset-btn" onclick="updateCustomColor('#10b981')" style="background: #10b981;">Emerald City</button>
-          <button class="preset-btn" onclick="updateCustomColor('#f43f5e')" style="background: #f43f5e;">Rose Quartz</button>
-          <button class="preset-btn" onclick="updateCustomColor('#8b5cf6')" style="background: #8b5cf6;">Royal Purple</button>
-          <button class="preset-btn" onclick="updateCustomColor('#f59e0b')" style="background: #f59e0b;">Amber Glow</button>
-          <button class="preset-btn" onclick="updateCustomColor('#06b6d4')" style="background: #06b6d4;">Cyber Cyan</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2 class="mb-4" style="font-weight: 700; font-size: 1.25rem;">Custom Color</h2>
-        <p class="mb-6" style="color: var(--text-muted);">Pick any color to perfectly match your style.</p>
-        
-        <div class="flex items-center gap-4">
-          <input type="color" id="custom-color-picker" class="input-field" style="width: 80px; height: 50px; padding: 4px; cursor: pointer;" onchange="updateCustomColor(this.value)">
-          <div style="flex: 1;">
-            <p id="current-hex-label" style="font-family: monospace; font-weight: 700; font-size: 1.125rem;">#6366f1</p>
-            <p style="font-size: 0.875rem; color: var(--text-muted);">Dynamic accents and glows will update automatically.</p>
+        <div class="stats-row mb-8">
+          <div class="card">
+            <h3>Update Academic Standing</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Enter your latest exam percentage to update your status.</p>
+            <form onsubmit="handleUpdateScore(event)" class="flex gap-4">
+              <input type="number" id="profile-new-score" class="input-field" style="width: 120px;" placeholder="Score %" required>
+              <button type="submit" class="btn btn-primary">Update</button>
+            </form>
           </div>
-        </div>
-    </div>
-
-    <div id="view-profile" class="view main-content" style="display: none; max-width: 900px;">
-      <div class="profile-header card mb-8" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border-color: var(--primary);">
-        <div class="flex items-center gap-6">
-          <div class="profile-avatar" style="width: 80px; height: 80px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; color: white; box-shadow: var(--shadow-glow);">
-            <span id="profile-initial">S</span>
-          </div>
-          <div style="flex: 1;">
-            <div class="flex justify-between items-start">
+          <div class="card text-center">
+            <h3>Stats</h3>
+            <div class="flex justify-around mt-4">
               <div>
-                <h1 id="profile-name" class="page-title" style="font-size: 1.75rem; margin: 0;">User Name</h1>
-                <span id="profile-role-badge" class="badge badge-status" style="margin-top: 0.5rem; text-transform: capitalize;">Scholar</span>
+                <div id="profile-stat-asked" style="font-size: 1.5rem; font-weight: 700;">0</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Asked</div>
               </div>
-              <div class="text-right">
-                <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-warning);"><span id="profile-points">0</span> pts</div>
-                <div style="font-size: 0.875rem; color: var(--text-muted);">Total Balance</div>
+              <div>
+                <div id="profile-stat-answered" style="font-size: 1.5rem; font-weight: 700;">0</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Answered</div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="grid-cards mb-8" style="grid-template-columns: repeat(3, 1fr);">
-        <div class="card text-center">
-          <div style="font-size: 1.5rem; font-weight: 700;" id="profile-stat-asked">0</div>
-          <div style="color: var(--text-muted); font-size: 0.875rem;">Questions Asked</div>
-        </div>
-        <div class="card text-center">
-          <div style="font-size: 1.5rem; font-weight: 700;" id="profile-stat-answered">0</div>
-          <div style="color: var(--text-muted); font-size: 0.875rem;">Answers Given</div>
-        </div>
-        <div class="card text-center">
-          <div style="font-size: 1.5rem; font-weight: 700;" id="profile-stat-best">0</div>
-          <div style="color: var(--text-muted); font-size: 0.875rem;">Best Answers</div>
+        <div class="card">
+          <h3>Achievements</h3>
+          <div id="profile-badges" class="flex gap-4 flex-wrap mt-4"></div>
         </div>
       </div>
 
-      <div class="card mb-8">
-        <h2 class="mb-4" style="font-weight: 700; font-size: 1.25rem;">Update Academic Standing</h2>
-        <p class="mb-6" style="color: var(--text-muted);">Enter your latest exam percentage to update your role.</p>
-        <form onsubmit="handleUpdateScore(event)" class="flex gap-4">
-          <input type="number" id="profile-new-score" class="input-field" min="0" max="100" placeholder="New Score %" required style="width: 150px;">
-          <button type="submit" class="btn btn-primary">Update Score</button>
-        </form>
-      </div>
-
-      <div class="card">
-        <h2 class="mb-6" style="font-weight: 700; font-size: 1.25rem;">Badges & Achievements</h2>
-        <div id="profile-badges" class="flex gap-4 flex-wrap">
-          <!-- Badges injected here -->
+      <!-- Settings and others keep existing structure inside card -->
+      <div id="view-settings" class="view" style="display: none;">
+        <div class="card">
+          <h2>Customization</h2>
+          <div id="theme-options" class="mt-8"></div>
         </div>
       </div>
-    </div>
+
+      <div id="view-question" class="view" style="display: none;">
+        <button onclick="navigateTo('home')" class="btn btn-secondary mb-4">&larr; Back to Feed</button>
+        <div id="qd-header"></div>
+        <div id="qd-answers" class="mt-8"></div>
+        <div class="card mt-8" id="qd-answer-form-container">
+          <h3>Your Answer</h3>
+          <form id="answer-form">
+            <textarea id="answer-body" class="input-field mt-4" style="width: 100%; min-height: 120px;" required></textarea>
+            <button type="submit" class="btn btn-primary mt-4">Submit Answer</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="view-leaderboard" class="view" style="display: none;">
+        <h1 class="page-title mb-8">Global Achievements</h1>
+        <div id="leaderboard-container" class="data-list"></div>
+      </div>
+
+    </main>
+
+    <!-- Toast -->
+    <div id="toast-container"></div>
   </div>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
