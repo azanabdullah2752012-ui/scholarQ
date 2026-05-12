@@ -130,6 +130,7 @@ function navigateTo(view, param = null) {
   if (view === 'home') renderHome();
   if (view === 'ask') renderAsk();
   if (view === 'dashboard') renderDashboard();
+  if (view === 'leaderboard') renderLeaderboard();
   if (view === 'question') {
     currentQuestionId = param;
     renderQuestionDetail();
@@ -554,6 +555,50 @@ async function markBest(ansId) {
   // Note: we should theoretically reward the scholar +10 points here, 
   // but since we don't have server-side functions set up, we'd have to 
   // fetch that user and update them. For MVP we skip updating the offline scholar's points.
+}
+
+// Leaderboard
+async function renderLeaderboard() {
+  const container = document.getElementById('leaderboard-container');
+  container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Loading ranks...</p>';
+
+  const { data, error } = await supabaseClient
+    .from('users')
+    .select('name, points, role')
+    .order('points', { ascending: false })
+    .limit(10);
+
+  if (error || !data) {
+    container.innerHTML = `<p style="color: red;">Error loading leaderboard: ${error?.message}</p>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  data.forEach((u, index) => {
+    let rankMedal = `#${index + 1}`;
+    if (index === 0) rankMedal = '🥇';
+    if (index === 1) rankMedal = '🥈';
+    if (index === 2) rankMedal = '🥉';
+
+    const item = document.createElement('div');
+    item.className = 'card flex items-center justify-between';
+    item.style.padding = '1rem 1.5rem';
+    
+    item.innerHTML = `
+      <div class="flex items-center gap-4">
+        <span style="font-size: 1.5rem; font-weight: bold; width: 40px; text-align: center;">${rankMedal}</span>
+        <div>
+          <h4 style="margin: 0; font-size: 1.125rem;">${escapeHTML(u.name)}</h4>
+          <span class="badge" style="font-size: 0.7rem; padding: 0.1rem 0.5rem; background: var(--bg-color); margin-top: 0.25rem; display: inline-block;">${u.role.replace('_', ' ')}</span>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <span style="font-size: 1.25rem; font-weight: bold; color: var(--accent-success);">${u.points}</span>
+        <span style="font-size: 0.875rem; color: var(--text-muted);">pts</span>
+      </div>
+    `;
+    container.appendChild(item);
+  });
 }
 
 // Utilities

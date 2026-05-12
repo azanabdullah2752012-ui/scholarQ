@@ -23,6 +23,9 @@
         <a href="#" class="nav-link" id="nav-dashboard-link" onclick="navigateTo('dashboard')" style="display: none; align-items: center; gap: 8px;">
           <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i> Dashboard
         </a>
+        <a href="#" class="nav-link" onclick="navigateTo('leaderboard')" style="display: flex; align-items: center; gap: 8px;">
+          <i data-lucide="trophy" style="width: 18px; height: 18px;"></i> Leaderboard
+        </a>
         <button class="btn btn-primary" style="padding: 0.5rem 1rem;" onclick="navigateTo('ask')">
           <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i> Ask (-2 pts)
         </button>
@@ -177,6 +180,16 @@
           <textarea id="answer-body" class="input-field mb-4" style="width: 100%;" placeholder="Write a clear, detailed answer..." required></textarea>
           <button type="submit" class="btn btn-primary">Submit Answer</button>
         </form>
+      </div>
+    </div>
+
+    <div id="view-leaderboard" class="view main-content" style="display: none; max-width: 800px;">
+      <h1 class="page-title mb-8">🏆 Global Leaderboard</h1>
+      <div class="card">
+        <p class="mb-4" style="color: var(--text-muted);">The top minds in the ScholarQ ecosystem.</p>
+        <div id="leaderboard-container" style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Leaderboard items injected here -->
+        </div>
       </div>
     </div>
   </div>
