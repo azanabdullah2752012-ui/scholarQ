@@ -1,4 +1,4 @@
-// ScholarQ - No-Fail Engine (V127)
+// ScholarQ - Master OS Engine (V129)
 const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -11,70 +11,43 @@ const SUBJECT_MAP = {
   'Computer Science': '</>', 'Science': '🧪', 'Physics': '🧪', 'Fluid Mechanics': '🧪', 'History': '🏛️', 'General': '🧠'
 };
 
-// V127: IMMEDIATE SHIELD DISMISSAL ENGINE
 function dismissShield() {
   const shield = document.getElementById('init-shield');
-  if (shield) {
-    shield.style.opacity = '0';
-    setTimeout(() => { shield.style.display = 'none'; }, 500);
-  }
+  if (shield) { shield.style.opacity = '0'; setTimeout(() => { shield.style.display = 'none'; }, 500); }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   lucide.createIcons();
-  
-  // V127: FORCE DISMISS AFTER 1.2s NO MATTER WHAT
   setTimeout(dismissShield, 1200);
-
   const { data: { session: s } } = await supabaseClient.auth.getSession();
-  handleSessionUpdate(s); // Removed 'await' to prevent blocking
-  
-  supabaseClient.auth.onAuthStateChange((e, s) => { 
-    if (e === 'SIGNED_IN' || e === 'SIGNED_OUT') handleSessionUpdate(s); 
-  });
-  
+  handleSessionUpdate(s);
+  supabaseClient.auth.onAuthStateChange((e, s) => { if (e === 'SIGNED_IN' || e === 'SIGNED_OUT') handleSessionUpdate(s); });
   bindForms();
 });
 
 async function handleSessionUpdate(newS) {
   session = newS;
-  const app = document.getElementById('app');
-  const auth = document.getElementById('view-auth');
-
-  if (session) {
-    try {
+  const app = document.getElementById('app'), auth = document.getElementById('view-auth');
+  try {
+    if (session) {
       const ok = await fetchProfile();
       if (ok) {
         await fetchQuestions(); await fetchBookmarks(); await fetchMarketplace(); await fetchTransactions(); setupSubscriptions();
         if (currentView === 'auth') currentView = 'home';
         if (auth) auth.style.display = 'none';
         if (app) { app.style.display = 'flex'; setTimeout(() => app.style.opacity = '1', 50); }
-      } else { 
-        await handleFinishProfile(); 
-      }
-    } catch (e) {
-      console.error("OS Update Error:", e);
-      // Fallback: If profile fails, show Hub anyway or redirect to auth
-      if (app) { app.style.display = 'flex'; app.style.opacity = '1'; }
+      } else await handleFinishProfile();
+    } else {
+      if (app) { app.style.display = 'none'; app.style.opacity = '0'; }
+      if (auth) auth.style.display = 'flex';
     }
-  } else {
-    if (app) { app.style.display = 'none'; app.style.opacity = '0'; }
-    if (auth) auth.style.display = 'flex';
-  }
-  dismissShield(); // Redundant check
+  } catch (e) { console.error("OS Update Error:", e); }
+  dismissShield();
 }
 
-function bindForms() {
-  document.getElementById('auth-form')?.addEventListener('submit', handleAuth);
-  document.getElementById('ask-form')?.addEventListener('submit', handleAsk);
-  document.getElementById('answer-form')?.addEventListener('submit', handleAnswer);
-  document.getElementById('sell-form')?.addEventListener('submit', handleSell);
-}
-
-// ... (Rest of the app.js functions remain identical, ensuring feature parity) ...
 async function fetchProfile() {
   if (!session) return false;
-  const { data, error } = await supabaseClient.from('users').select('*').eq('id', session.user.id).maybeSingle();
+  const { data } = await supabaseClient.from('users').select('*').eq('id', session.user.id).maybeSingle();
   if (data) { profile = data; updateGlobalUI(); return true; }
   return false;
 }
@@ -87,115 +60,106 @@ async function fetchQuestions() {
   if (currentView === 'warroom') renderWarRoom();
 }
 
-async function fetchTransactions() {
-  const { data } = await supabaseClient.from('transactions').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false });
-  transactions = data || [];
-  if (currentView === 'transactions') renderTransactions();
-}
-
-async function logTransaction(amount, description, type) {
-  await supabaseClient.from('transactions').insert([{ user_id: session.user.id, amount, description, type }]);
-  fetchTransactions();
-}
-
-function navigateTo(view, param = null) {
-  if (!session && view !== 'auth') view = 'auth';
-  currentView = view;
-  document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
-  const target = document.getElementById(`view-${view}`);
-  if (target) target.style.display = 'block';
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`nav-${view}`)?.classList.add('active');
-  if (view === 'home') renderHome();
-  if (view === 'warroom') renderWarRoom();
-  if (view === 'marketplace') renderMarketplace();
-  if (view === 'library') renderLibrary();
-  if (view === 'gauntlet') renderGauntlet();
-  if (view === 'transactions') renderTransactions();
-  if (view === 'leaderboard') renderLeaderboard();
-  if (view === 'profile') renderProfile();
-  if (view === 'question') renderQuestionDetail(param);
-  lucide.createIcons();
-}
-
 function renderHome() {
   const cont = document.getElementById('home-feed');
   const list = questions.filter(q => q.title.toLowerCase().includes(currentSearch.toLowerCase())).slice(0, 5);
   if(document.getElementById('hub-user-name')) document.getElementById('hub-user-name').innerText = profile?.name || 'Scholar';
   updateInstitutionalMetrics();
   renderContributors();
-  if (cont) cont.innerHTML = list.length === 0 ? `<div style="padding:40px; text-align:center; opacity:0.5; color:white;">Academy Signal Idle.</div>` : list.map(q => renderQuestionCard(q)).join('');
-  lucide.createIcons();
-}
-
-function renderWarRoom() {
-  const cont = document.getElementById('warroom-feed');
   if (!cont) return;
-  const list = questions.filter(q => {
-    const matchSearch = q.title.toLowerCase().includes(currentSearch.toLowerCase());
-    const matchFilt = currentFilter === 'All' || q.subject === currentFilter;
-    return matchSearch && matchFilt;
-  });
-  cont.innerHTML = list.map(q => renderQuestionCard(q)).join('');
+  if (list.length === 0) {
+    cont.innerHTML = `
+      <div class="empty-state">
+        <i data-lucide="radio" style="width:40px; color:var(--zinc-500); margin-bottom:16px;"></i>
+        <h3 style="margin-bottom:8px;">Broadcast Signal Idle</h3>
+        <p class="text-muted" style="margin-bottom:24px;">No active doubts in your proximity. Be the first to start a discussion.</p>
+        <button class="btn-primary" onclick="navigateTo('ask')">+ Broadcast First Doubt</button>
+      </div>
+    `;
+  } else {
+    cont.innerHTML = list.map(q => renderQuestionCard(q)).join('');
+  }
   lucide.createIcons();
 }
 
 function updateInstitutionalMetrics() {
   if(!profile) return;
-  const s = document.getElementById('stat-streak'), t = document.getElementById('stat-trust'), m = document.getElementById('stat-multiplier'), st = document.getElementById('stat-status');
+  const s = document.getElementById('stat-streak'), t = document.getElementById('stat-trust'), m = document.getElementById('stat-multiplier'), st = document.getElementById('stat-status'), p = document.getElementById('side-points');
   if(s) s.innerText = `${profile.streak || 0} Days`;
   if(t) t.innerText = `${profile.trust_score || 75}%`;
-  if(m) m.innerText = `${profile.multiplier || '1.00'}x`;
+  if(m) m.innerText = `${parseFloat(profile.multiplier || 1.0).toFixed(2)}x`;
   if(st) st.innerText = profile.status_badge || 'SCHOLAR';
-  const fill = document.getElementById('gauntlet-fill');
+  if(p) p.innerText = profile.points || 0;
+  const fill = document.getElementById('gauntlet-fill'), count = document.getElementById('gauntlet-count');
   if(fill) fill.style.width = `${Math.min(((profile.gauntlet_progress || 0) / 3) * 100, 100)}%`;
-  if(document.getElementById('gauntlet-count')) document.getElementById('gauntlet-count').innerText = `${profile.gauntlet_progress || 0} / 3`;
+  if(count) count.innerText = `${profile.gauntlet_progress || 0} / 3`;
+}
+
+async function renderContributors() {
+  const { data } = await supabaseClient.from('users').select('*').order('points', { ascending: false }).limit(3);
+  const cont = document.getElementById('top-contributors-list');
+  if(!cont || !data) return;
+  cont.innerHTML = data.map((u, i) => `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface); padding:16px; border-radius:16px; border:1px solid var(--border);">
+        <div style="display:flex; gap:12px; align-items:center;">
+            <div style="width:36px; height:36px; background:var(--grad-main); border-radius:10px; display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:0.85rem;">${u.name[0]}</div>
+            <div>
+                <div style="font-size:0.85rem; font-weight:700; color:white;">${u.name}</div>
+                <div class="label-eyebrow" style="font-size:0.55rem; color:var(--p-500);">${u.status_badge || 'SCHOLAR'}</div>
+            </div>
+        </div>
+        <div style="font-size:0.9rem; font-weight:800; color:var(--zinc-400); font-family:'Outfit';">${(u.points/1000).toFixed(1)}k</div>
+    </div>
+  `).join('');
 }
 
 function renderQuestionCard(q) {
-  const isBookmarked = bookmarks.includes(q.id);
-  const isBlitz = q.answers.length === 0;
-  const symbol = SUBJECT_MAP[q.subject] || '🧠';
+  const isBlitz = q.answers.length === 0, symbol = SUBJECT_MAP[q.subject] || '🧠';
   const mult = isBoosted ? parseFloat(profile?.multiplier || 1.0) + 0.5 : parseFloat(profile?.multiplier || 1.0);
   const reward = Math.floor(20 * mult);
   return `
     <div class="doubt-card" onclick="navigateTo('question', '${q.id}')">
       <div class="subject-icon-box">${symbol}</div>
       <div>
-        <div style="display:flex; align-items:center; margin-bottom:4px;">
-            ${isBlitz ? '<span class="blitz-tag">BLITZ</span>' : ''}
-            <h3 style="font-size:0.95rem; font-weight:700; color:white;">${q.title}</h3>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+            <h3 style="font-size:1rem; font-weight:700; color:white;">${q.title}</h3>
+            ${isBlitz ? '<span style="background:var(--danger); color:white; font-size:0.5rem; padding:2px 6px; border-radius:4px; font-weight:900; letter-spacing:1px;">BLITZ</span>' : ''}
         </div>
         <div style="display:flex; align-items:center; gap:12px;">
-            <span class="subject-badge">${q.subject}</span>
-            <span style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">${getTimeAgo(q.created_at)}</span>
+            <span class="label-eyebrow" style="font-size:0.6rem;">${q.subject}</span>
+            <span class="text-muted" style="font-size:0.7rem;">${getTimeAgo(q.created_at)}</span>
         </div>
       </div>
-      <div class="pts-badge">${reward} PTS</div>
+      <div class="pts-badge">+${reward} <span style="font-size:0.6rem; color:var(--zinc-500);">PTS</span></div>
     </div>
   `;
+}
+
+function navigateTo(v, p = null) {
+  if (!session && v !== 'auth') v = 'auth';
+  currentView = v;
+  document.querySelectorAll('.view').forEach(x => x.style.display = 'none');
+  const t = document.getElementById(`view-${v}`); if (t) t.style.display = 'block';
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+  document.getElementById(`nav-${v}`)?.classList.add('active');
+  if (v === 'home') renderHome();
+  if (v === 'warroom') renderWarRoom();
+  if (v === 'marketplace') renderMarketplace();
+  if (v === 'transactions') renderTransactions();
+  if (v === 'profile') renderProfile();
+  if (v === 'question') renderQuestionDetail(p);
+  lucide.createIcons();
 }
 
 async function handleAnswer(e) {
   e.preventDefault();
   const b = document.getElementById('answer-body').value;
-  const { data: ans } = await supabaseClient.from('answers').insert([{ id: 'a_'+Date.now(), question_id: currentQuestionId, author_id: session.user.id, author_name: profile.name, body: b }]).select().single();
-  const mult = isBoosted ? parseFloat(profile.multiplier)+0.5 : parseFloat(profile.multiplier);
-  const reward = Math.floor(20 * mult);
-  await supabaseClient.from('users').update({ points: profile.points + reward, gauntlet_progress: (profile.gauntlet_progress || 0) + 1 }).eq('id', session.user.id);
-  await logTransaction(reward, "Provided Solution", "EARN");
-  showToast(`Solution Published! +${reward} PTS`);
+  await supabaseClient.from('answers').insert([{ id: 'a_'+Date.now(), question_id: currentQuestionId, author_id: session.user.id, author_name: profile.name, body: b }]);
+  const reward = Math.floor(20 * (isBoosted ? parseFloat(profile.multiplier)+0.5 : parseFloat(profile.multiplier)));
+  await supabaseClient.from('users').update({ points: (profile.points || 0) + reward, gauntlet_progress: (profile.gauntlet_progress || 0) + 1 }).eq('id', session.user.id);
+  await logTransaction(reward, "Solved Doubt", "EARN");
+  showToast(`Solution Broadcasted! +${reward} PTS`);
   document.getElementById('answer-form').reset(); fetchQuestions(); fetchProfile(); navigateTo('question', currentQuestionId);
-}
-
-async function handleAuth(e) {
-  e.preventDefault();
-  const em = document.getElementById('auth-email').value, pw = document.getElementById('auth-password').value;
-  const { error } = await supabaseClient.auth.signInWithPassword({ email: em, password: pw });
-  if (error) {
-    const { error: upErr } = await supabaseClient.auth.signUp({ email: em, password: pw });
-    if (upErr) showToast(upErr.message); else showToast("Institutional Email sent!");
-  } else showToast("Access Verified!");
 }
 
 async function handleAsk(e) {
@@ -205,30 +169,31 @@ async function handleAsk(e) {
   showToast("Doubt Broadcasted!"); fetchQuestions(); navigateTo('home');
 }
 
-async function handleSell(e) {
+async function handleAuth(e) {
   e.preventDefault();
-  const t = document.getElementById('sell-title').value, p = parseInt(document.getElementById('sell-price').value), l = document.getElementById('sell-link').value;
-  await supabaseClient.from('marketplace').insert([{ id: 'm_'+Date.now(), title: t, price: p, link: l, seller_id: session.user.id, seller_name: profile.name }]);
-  showToast("Published to Vault!"); closeSellModal(); fetchMarketplace();
+  const em = document.getElementById('auth-email').value, pw = document.getElementById('auth-password').value;
+  const { error } = await supabaseClient.auth.signInWithPassword({ email: em, password: pw });
+  if (error) {
+    const { error: upErr } = await supabaseClient.auth.signUp({ email: em, password: pw });
+    if (upErr) showToast(upErr.message); else showToast("Verification Signal Sent!");
+  } else showToast("Access Verified.");
 }
 
-function openSellModal() { document.getElementById('modal-sell').style.display = 'flex'; }
-function closeSellModal() { document.getElementById('modal-sell').style.display = 'none'; }
-function handleSearch(val) { currentSearch = val; if(currentView === 'home') renderHome(); if(currentView === 'warroom') renderWarRoom(); if(currentView === 'marketplace') renderMarketplace(); }
+function handleSearch(val) { currentSearch = val; if(currentView === 'home') renderHome(); if(currentView === 'warroom') renderWarRoom(); }
 function setFilter(f) { currentFilter = f; renderWarRoom(); }
 async function logout() { await supabaseClient.auth.signOut(); window.location.reload(); }
 async function signInWithGoogle() { await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } }); }
-function getTimeAgo(d) { const s = Math.floor((new Date() - new Date(d)) / 1000); if (s < 60) return 'Just now'; if (s < 3600) return Math.floor(s/60) + 'm ago'; return Math.floor(s/3600) + 'h ago'; }
+function getTimeAgo(d) { const s = Math.floor((new Date() - new Date(d)) / 1000); if (s < 60) return 'Now'; if (s < 3600) return Math.floor(s/60) + 'm'; return Math.floor(s/3600) + 'h'; }
 function showToast(m) { const c = document.getElementById('toast-container'); const t = document.createElement('div'); t.className = 'toast'; t.innerText = m; c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000); }
-function toggleBoost() { isBoosted = !isBoosted; showToast(isBoosted ? "Hyper-Boost Activated!" : "Hyper-Boost Expired."); renderHome(); }
-function showInvite() { showToast("Invite Link Copied!"); }
+function toggleBoost() { isBoosted = !isBoosted; showToast(isBoosted ? "Hyper-Boost Active!" : "Boost Offline."); renderHome(); }
+function showInvite() { showToast("Invite Signal Copied!"); }
 function showNotifications() { showToast("No new alerts."); }
-function setupSubscriptions() { supabaseClient.channel('any').on('postgres_changes', { event: '*', schema: 'public' }, () => { fetchQuestions(); fetchProfile(); fetchMarketplace(); fetchTransactions(); }).subscribe(); }
+async function fetchTransactions() { const { data } = await supabaseClient.from('transactions').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }); transactions = data || []; if (currentView === 'transactions') renderTransactions(); }
+function setupSubscriptions() { supabaseClient.channel('any').on('postgres_changes', { event: '*', schema: 'public' }, () => { fetchQuestions(); fetchProfile(); }).subscribe(); }
 
-// ... OTHER RENDER FUNCTIONS (LEADERBOARD, PROFILE, ETC) REMAIN SAME ...
 async function handleFinishProfile() {
   const nm = session.user.user_metadata.full_name || (session.user.email ? session.user.email.split('@')[0] : 'Scholar');
-  const newP = { id: session.user.id, email: session.user.email, name: nm, points: 50, streak: 1, trust_score: 75, multiplier: 1.00, status_badge: 'SCHOLAR' };
+  const newP = { id: session.user.id, email: session.user.email, name: nm, points: 50, streak: 1, trust_score: 75, multiplier: 1.00, status_badge: 'SCHOLAR', gauntlet_progress: 0 };
   await supabaseClient.from('users').upsert([newP]);
   profile = newP; navigateTo('home');
 }
