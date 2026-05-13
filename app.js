@@ -1,4 +1,4 @@
-// ScholarQ - Master OS Engine V132
+// ScholarQ - Master OS Engine V132 (Immediate Gateway)
 const SUPA_URL = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const SUPA_KEY = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -11,22 +11,30 @@ const ICONS = { 'Calculus':'$fx$','Math':'$fx$','Biology':'🍃','Data Structure
 
 // ─── BOOT ────────────────────────────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   if (window.lucide) lucide.createIcons();
 
-  // Safety Timeout: Force show auth if it hangs for 4 seconds
-  setTimeout(() => {
+  // Safety Timeout: Force show auth if it hangs for 2 seconds
+  const safety = setTimeout(() => {
     const app = document.getElementById('app');
     const auth = document.getElementById('view-auth');
     if (app && auth && app.style.display === 'none' && auth.style.display === 'none') {
-      console.warn("Boot timeout: showing auth gateway.");
+      console.warn("Safety: Showing gateway due to latency.");
       auth.style.display = 'flex';
     }
-  }, 4000);
+  }, 2000);
 
-  db.auth.getSession().then(({ data: { session: s } }) => boot(s));
+  try {
+    const { data: { session: s } } = await db.auth.getSession();
+    clearTimeout(safety);
+    boot(s);
+  } catch (e) {
+    console.error("Auth init error:", e);
+    clearTimeout(safety);
+    document.getElementById('view-auth').style.display = 'flex';
+  }
+
   db.auth.onAuthStateChange((_, s) => {
-    // Only reboot if session state actually changed to/from null
     if (!session && s) boot(s);
     else if (session && !s) window.location.reload();
   });
@@ -82,6 +90,8 @@ async function refreshData() {
       db.from('answers').select('*')
     ]);
     questions = (q || []).map(x => ({ ...x, answers: (a || []).filter(ans => ans.question_id === x.id) }));
+    if (currentView === 'home') renderHome();
+    if (currentView === 'warroom') renderWarRoom();
   } catch (e) { 
     console.error('Data refresh error:', e);
     questions = []; 
