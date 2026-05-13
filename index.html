@@ -11,12 +11,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* ScholarQ Singularity CSS - Pixel Perfect Reference Match */
+        /* ScholarQ Singularity CSS - Master OS V403 */
         :root {
             --bg: #0b0e14; --sidebar: #12151d; --card: #161922; --border: rgba(255, 255, 255, 0.06);
             --primary: #6366f1; --primary-glow: rgba(99, 102, 241, 0.2);
             --text: #f1f5f9; --text-muted: #94a3b8;
-            --math: #8b5cf6; --chem: #10b981; --phys: #f59e0b; --hist: #3b82f6;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
@@ -25,91 +24,42 @@
 
         /* LAYOUT */
         .app-shell { display: grid; grid-template-columns: 260px 1fr 340px; height: 100vh; }
-        
-        /* SIDEBAR */
         aside.sidebar { background: var(--sidebar); border-right: 1px solid var(--border); padding: 32px 24px; display: flex; flex-direction: column; }
         .brand-logo { font-size: 1.5rem; display: flex; align-items: center; gap: 12px; margin-bottom: 48px; cursor: pointer; }
-        .brand-sub { font-size: 0.6rem; color: var(--text-muted); font-weight: 400; letter-spacing: 1px; }
-        
         .side-nav { display: flex; flex-direction: column; gap: 8px; flex: 1; }
         .nav-item { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-radius: 12px; color: var(--text-muted); cursor: pointer; transition: 0.2s; font-weight: 500; }
-        .nav-item i { width: 20px; height: 20px; }
-        .nav-item:hover { background: rgba(255,255,255,0.03); color: white; }
         .nav-item.active { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
 
-        .sidebar-status-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-top: auto; }
-        .sidebar-status-card h3 { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 16px; }
-        .status-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; margin-bottom: 20px; }
-        .status-line { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 12px; }
-        .status-line span { color: var(--text-muted); }
-        .btn-side-profile { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 8px; }
-
-        /* WORKSPACE */
-        .main-workspace { display: flex; flex-direction: column; height: 100vh; }
-        .top-bar { padding: 24px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .search-container { position: relative; width: 60%; }
-        .search-container i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; }
-        .search-container input { width: 100%; background: #161922; border: 1px solid var(--border); padding: 14px 16px 14px 48px; border-radius: 12px; color: white; outline: none; }
-        .btn-ask-doubt { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-
-        .scroll-view { flex: 1; overflow-y: auto; padding: 40px; }
-        .dashboard-greeting h1 { font-size: 2.2rem; margin-bottom: 8px; }
-        .dashboard-greeting p { color: var(--text-muted); margin-bottom: 40px; }
-
-        /* STATS */
-        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px; }
-        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; display: flex; gap: 20px; align-items: center; }
-        .stat-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-        .stat-icon.purple { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
-        .stat-icon.green { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-        .stat-icon.yellow { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-        .stat-val { font-size: 1.8rem; font-weight: 800; }
-        .stat-label { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
-
-        /* FEED */
-        .feed-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .feed-header h2 { font-size: 1.2rem; }
-        .btn-view-all { background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; font-size: 0.85rem; }
-
-        .doubt-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; margin-bottom: 16px; position: relative; transition: 0.3s; cursor: pointer; }
-        .doubt-card:hover { border-color: var(--primary); transform: translateX(8px); }
-        .pts-badge { position: absolute; top: 24px; right: 24px; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
-        .card-flex { display: flex; gap: 20px; }
-        .subject-circle { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-        .circle-math { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
-        .doubt-title { font-size: 1.1rem; margin-bottom: 8px; line-height: 1.4; }
-        .doubt-meta { display: flex; align-items: center; gap: 12px; font-size: 0.8rem; color: var(--text-muted); }
-        .author-pill { display: flex; align-items: center; gap: 8px; }
-        .author-av { width: 24px; height: 24px; border-radius: 50%; background: #4f46e5; }
-
-        /* RIGHT PANEL */
-        .right-panel { background: var(--sidebar); border-left: 1px solid var(--border); padding: 40px 24px; overflow-y: auto; }
-        .panel-section { margin-bottom: 48px; }
-        .panel-section h3 { font-size: 1rem; margin-bottom: 24px; }
-        .scholar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-        .rank-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 900; background: rgba(255,255,255,0.05); }
-        .rank-1 { background: #f59e0b; color: #000; }
-        .scholar-av { width: 40px; height: 40px; border-radius: 12px; background: #334155; }
-        .scholar-name { font-size: 0.9rem; font-weight: 700; flex: 1; }
-        .scholar-pct { color: #10b981; font-weight: 700; font-size: 0.85rem; }
-
-        /* TIMELINE */
-        .timeline { position: relative; padding-left: 32px; }
-        .timeline::before { content: ''; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: var(--border); }
-        .t-item { position: relative; margin-bottom: 32px; }
-        .t-dot { position: absolute; left: -32px; width: 28px; height: 28px; border-radius: 50%; background: #1e293b; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border: 2px solid var(--bg); z-index: 2; color: #6366f1; font-weight: 800; }
-        .t-item h4 { font-size: 0.85rem; margin-bottom: 4px; }
-        .t-item p { font-size: 0.75rem; color: var(--text-muted); }
-
-        /* AUTH (Reference Match V401) */
+        /* AUTH OVERLAY SPLIT */
         .auth-overlay { position: fixed; inset: 0; background: #000; z-index: 50000; display: flex; }
-        .auth-split { display: flex; width: 100%; }
+        .auth-split { display: flex; width: 100%; height: 100%; }
         .auth-left { flex: 1.1; background: radial-gradient(circle at top right, #1e1b4b 0%, #000 100%); padding: 60px 80px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
         .auth-right { flex: 0.9; background: #0c0d12; padding: 40px 80px; display: flex; flex-direction: column; border-left: 1px solid var(--border); }
-        .btn-auth-main { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: 24px; }
         
-        /* SHIELD */
+        .auth-input { width: 100%; background: #161922; border: 1px solid var(--border); padding: 16px; border-radius: 12px; color: white; margin-bottom: 16px; outline: none; }
+        .auth-input:focus { border-color: var(--primary); }
+        .btn-auth-main { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 1rem; }
+        
+        .sidebar-status-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-top: auto; }
+        .status-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; margin-bottom: 20px; }
+        .status-line { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 12px; }
+        .btn-side-profile { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+
+        .top-bar { padding: 24px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .search-container { position: relative; width: 60%; }
+        .search-container input { width: 100%; background: #161922; border: 1px solid var(--border); padding: 14px 16px 14px 48px; border-radius: 12px; color: white; outline: none; }
+        .scroll-view { flex: 1; overflow-y: auto; padding: 40px; }
+
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; display: flex; gap: 20px; align-items: center; }
+        .stat-val { font-size: 1.8rem; font-weight: 800; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); }
+
+        .doubt-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; margin-bottom: 16px; transition: 0.3s; cursor: pointer; }
+        .doubt-card:hover { border-color: var(--primary); transform: translateX(8px); }
+        .subject-circle { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        
         #init-shield { position: fixed; inset: 0; background: #000; z-index: 100000; display: flex; align-items: center; justify-content: center; transition: 0.8s; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -117,11 +67,11 @@
     <div id="init-shield">
         <div style="text-align:center;">
             <h1 style="color:var(--primary); font-size:3.5rem; margin-bottom:12px;">ScholarQ</h1>
-            <p style="color:var(--text-muted); letter-spacing:4px; font-size:0.8rem;">MASTER SYSTEM INITIALIZING</p>
+            <p style="color:var(--text-muted); letter-spacing:4px; font-size:0.8rem;">ESTABLISHING LIVE CONNECTION</p>
         </div>
     </div>
 
-    <!-- AUTH GATEWAY -->
+    <!-- AUTH GATEWAY (VERIFICATION EDITION) -->
     <div id="view-auth" class="auth-overlay" style="display:none;">
         <div class="auth-split">
             <div class="auth-left">
@@ -132,15 +82,26 @@
             </div>
             <div class="auth-right">
                 <div style="margin:auto; width:100%; max-width:400px;">
-                    <h2 style="font-size:2.5rem; margin-bottom:12px;">Welcome Back</h2>
-                    <p style="color:var(--text-muted); margin-bottom:32px;">Log in to continue your journey</p>
+                    <h2 id="auth-title" style="font-size:2.5rem; margin-bottom:12px;">Welcome Back</h2>
+                    <p id="auth-subtitle" style="color:var(--text-muted); margin-bottom:32px;">Log in to continue your journey</p>
+                    
                     <form id="auth-form">
-                        <div style="margin-bottom:20px;"><label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">Email Address</label><input type="email" id="auth-email" placeholder="Enter your email" style="width:100%; background:#161922; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; outline:none;" required></div>
-                        <div style="margin-bottom:20px;"><label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">Password</label><input type="password" id="auth-password" placeholder="Enter your password" style="width:100%; background:#161922; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; outline:none;" required></div>
-                        <button type="submit" class="btn-auth-main">Log In</button>
+                        <div id="signup-fields" class="hidden">
+                            <input type="text" id="auth-name" placeholder="Full Name" class="auth-input">
+                            <input type="number" id="auth-score" placeholder="Recent Score %" class="auth-input" min="0" max="100">
+                        </div>
+                        <input type="email" id="auth-email" placeholder="Email Address" class="auth-input" required>
+                        <input type="password" id="auth-password" placeholder="Password" class="auth-input" required>
+                        <button type="submit" id="auth-btn" class="btn-auth-main">Log In</button>
                     </form>
+
                     <div style="text-align:center; margin:32px 0; color:var(--text-muted); font-size:0.8rem;">or continue with</div>
                     <button onclick="loginWithGoogle()" style="width:100%; background:#161922; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:12px;"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo.svg" style="width:18px;"> Google</button>
+                    
+                    <p style="text-align:center; margin-top:32px; font-size:0.9rem;">
+                        <span id="auth-switch-text">Don't have an account?</span> 
+                        <a href="#" onclick="toggleAuthMode()" style="color:var(--primary); font-weight:700; text-decoration:none;" id="auth-switch-link">Sign up</a>
+                    </p>
                 </div>
             </div>
         </div>
@@ -149,62 +110,71 @@
     <!-- MAIN OS -->
     <div id="app" class="app-shell" style="display:none; opacity:0; transition:0.5s;">
         <aside class="sidebar">
-            <div class="brand-logo"><i data-lucide="graduation-cap"></i> <div>ScholarQ<div class="brand-sub">Ask. Learn. Excel.</div></div></div>
+            <div class="brand-logo" onclick="go('home')"><i data-lucide="graduation-cap"></i> <div>ScholarQ</div></div>
             <nav class="side-nav">
-                <div class="nav-item active"><i data-lucide="home"></i> <span>Home</span></div>
-                <div class="nav-item"><i data-lucide="edit-2"></i> <span>Ask Doubt</span></div>
-                <div class="nav-item"><i data-lucide="message-square"></i> <span>My Doubts</span></div>
-                <div class="nav-item"><i data-lucide="award"></i> <span>Top Scholars</span></div>
-                <div class="nav-item"><i data-lucide="user"></i> <span>Profile</span></div>
+                <div class="nav-item active" id="nav-home" onclick="go('home')"><i data-lucide="home"></i> <span>Home</span></div>
+                <div class="nav-item" id="nav-ask" onclick="go('ask')"><i data-lucide="edit-2"></i> <span>Ask Doubt</span></div>
+                <div class="nav-item" id="nav-profile" onclick="go('profile')"><i data-lucide="user"></i> <span>Profile</span></div>
             </nav>
             <div class="sidebar-status-card">
                 <h3>YOUR STATUS</h3>
-                <div class="status-pill"><i data-lucide="shield-check"></i> Scholar</div>
-                <div class="status-line"><span>Score</span><b id="side-score">92%</b></div>
-                <div class="status-line"><span>Reputation</span><b>A+</b></div>
-                <button class="btn-side-profile">View Profile</button>
+                <div id="status-pill" class="status-pill">Scholar</div>
+                <div class="status-line"><span>Score</span><b id="side-score">0%</b></div>
+                <button class="btn-side-profile" onclick="go('profile')">View Profile</button>
             </div>
         </aside>
 
         <main class="main-workspace">
             <header class="top-bar">
-                <div class="search-container"><i data-lucide="search"></i><input type="text" placeholder="Search doubts, subjects or topics..."></div>
-                <button class="btn-ask-doubt"><i data-lucide="edit-3"></i> Ask Doubt</button>
+                <div class="search-container"><i data-lucide="search" style="position:absolute; left:16px; top:18px; color:var(--text-muted);"></i><input type="text" placeholder="Search doubts..."></div>
+                <button class="btn-ask-doubt" onclick="go('ask')"><i data-lucide="edit-3"></i> Ask Doubt</button>
             </header>
             <div class="scroll-view">
-                <div class="dashboard-greeting">
-                    <h1 id="user-greeting">Good evening, Azan! 👋</h1>
-                    <p>Need help with something? Our scholars are here for you.</p>
+                <div id="view-home" class="view">
+                    <h1 id="user-greeting" style="font-size:2.2rem; margin-bottom:8px;">Good evening! 👋</h1>
+                    <div class="stats-row" style="margin-top:40px;">
+                        <div class="stat-card"><div class="stat-icon" style="color:var(--primary);">?</div><div><div class="stat-val" id="stat-unanswered">0</div><div class="stat-label">Unanswered</div></div></div>
+                        <div class="stat-card"><div class="stat-icon" style="color:#10b981;"><i data-lucide="check"></i></div><div><div class="stat-val" id="stat-solved">0</div><div class="stat-label">Solved</div></div></div>
+                        <div class="stat-card"><div class="stat-icon" style="color:#f59e0b;">★</div><div><div class="stat-val" id="stat-rep">4.8</div><div class="stat-label">Reputation</div></div></div>
+                    </div>
+                    <div id="home-feed" style="margin-top:48px;"></div>
                 </div>
-                <div class="stats-row">
-                    <div class="stat-card"><div class="stat-icon purple">?</div><div><div class="stat-val">18</div><div class="stat-label">Unanswered<br>Doubts</div></div></div>
-                    <div class="stat-card"><div class="stat-icon green"><i data-lucide="check"></i></div><div><div class="stat-val">126</div><div class="stat-label">Doubts Solved<br>by You</div></div></div>
-                    <div class="stat-card"><div class="stat-icon yellow">★</div><div><div class="stat-val">4.8</div><div class="stat-label">Your Reputation<br>(Excellent)</div></div></div>
+
+                <div id="view-ask" class="view hidden">
+                    <h1 style="margin-bottom:32px;">Ask a Doubt</h1>
+                    <form id="ask-form" style="background:var(--card); padding:32px; border-radius:20px;">
+                        <input type="text" id="ask-title" placeholder="Title" class="auth-input">
+                        <select id="ask-subject" class="auth-input"><option>Mathematics</option><option>Science</option><option>Physics</option></select>
+                        <textarea id="ask-body" placeholder="Describe your doubt..." class="auth-input" style="min-height:150px;"></textarea>
+                        <button type="submit" class="btn-auth-main">Broadcast Doubt</button>
+                    </form>
                 </div>
-                <div class="feed-header"><h2>Recent Doubts</h2><button class="btn-view-all">View All</button></div>
-                <div id="home-feed">
-                    <!-- Cards will be injected -->
+
+                <div id="view-question" class="view hidden">
+                    <div id="qd-content"></div>
+                    <div id="qd-answers" style="margin-top:40px;"></div>
+                    <form id="answer-form" style="margin-top:40px;">
+                        <textarea id="answer-body" placeholder="Write your solution..." class="auth-input" style="min-height:100px;"></textarea>
+                        <button type="submit" class="btn-auth-main">Submit Answer</button>
+                    </form>
+                </div>
+
+                <div id="view-profile" class="view hidden">
+                    <div style="background:var(--card); padding:40px; border-radius:24px; text-align:center;">
+                        <div id="p-avatar" style="width:80px; height:80px; background:var(--primary); margin:0 auto 20px; border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:900;">A</div>
+                        <h2 id="p-name">Scholar Name</h2>
+                        <div style="display:flex; justify-content:center; gap:40px; margin-top:32px;">
+                            <div><div id="p-total" style="font-size:1.8rem; font-weight:900;">0</div><div style="color:var(--text-muted); font-size:0.7rem;">ANSWERS</div></div>
+                            <div><div id="p-best" style="font-size:1.8rem; font-weight:900;">0</div><div style="color:var(--text-muted); font-size:0.7rem;">BEST</div></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
-
         <aside class="right-panel">
             <div class="panel-section">
-                <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><h3>Top Scholars</h3><span style="color:var(--primary); font-size:0.8rem; font-weight:700;">View All</span></div>
+                <h3>Top Scholars</h3>
                 <div id="top-scholars"></div>
-            </div>
-            <div class="panel-section">
-                <h3>How it works</h3>
-                <div class="timeline">
-                    <div class="t-item"><div class="t-dot">1</div><h4>Ask your doubt</h4><p>Post your question clearly.</p></div>
-                    <div class="t-item"><div class="t-dot">2</div><h4>Scholars answer</h4><p>Top scoring students help you.</p></div>
-                    <div class="t-item"><div class="t-dot">3</div><h4>Best answer chosen</h4><p>Mark the best answer.</p></div>
-                </div>
-            </div>
-            <div style="background:rgba(99,102,241,0.05); padding:24px; border-radius:20px; position:relative;">
-                <i data-lucide="quote" style="position:absolute; top:20px; left:20px; opacity:0.1; width:40px; height:40px;"></i>
-                <p style="font-style:italic; font-size:0.9rem; margin-top:20px;">The beautiful thing about learning is that no one can take it away from you.</p>
-                <p style="text-align:right; margin-top:12px; font-weight:700; font-size:0.8rem;">- B.B. King</p>
             </div>
         </aside>
     </div>
@@ -214,103 +184,149 @@
         const SUPA_KEY = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
         const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-        let session = null, profile = null;
+        let session = null, profile = null, questions = [], currentQId = null, authMode = 'login';
 
         document.addEventListener('DOMContentLoaded', async () => {
             if (window.lucide) lucide.createIcons();
-            
             const { data: { session: s } } = await db.auth.getSession();
             if (s) boot(s); else {
-                dismissShield();
+                document.getElementById('init-shield').style.display = 'none';
                 document.getElementById('view-auth').style.display = 'flex';
             }
-
-            db.auth.onAuthStateChange((event, s) => {
-                if (event === 'SIGNED_IN') boot(s);
-            });
-            
             document.getElementById('auth-form').addEventListener('submit', handleAuth);
-            
-            // EMERGENCY FAILSAFE
-            setTimeout(() => {
-                const s = document.getElementById('init-shield');
-                if (s.style.display !== 'none') {
-                    s.style.opacity = '0';
-                    setTimeout(() => s.style.display = 'none', 800);
-                    document.getElementById('view-auth').style.display = 'flex';
-                }
-            }, 5000);
+            document.getElementById('ask-form').addEventListener('submit', handleAsk);
+            document.getElementById('answer-form').addEventListener('submit', handleAnswer);
         });
 
-        function dismissShield() {
-            const s = document.getElementById('init-shield');
-            s.style.opacity = '0';
-            setTimeout(() => s.style.display = 'none', 800);
-        }
-
-        async function boot(s) {
-            session = s;
-            const { data } = await db.from('users').select('*').eq('id', s.user.id).maybeSingle();
-            profile = data || { name: 'Azan', role: 'SCHOLAR', score_percentage: 92 };
-            
-            dismissShield();
-            document.getElementById('view-auth').style.display = 'none';
-            const app = document.getElementById('app');
-            app.style.display = 'grid';
-            setTimeout(() => app.style.opacity = '1', 50);
-            
-            renderFeed();
-            renderScholars();
-            if (window.lucide) lucide.createIcons();
-        }
-
-        function renderFeed() {
-            const feed = document.getElementById('home-feed');
-            const questions = [
-                { title: "How to solve trigonometric equations of the form sin(x) = k?", sub: "Mathematics", pts: 10, answers: 3 },
-                { title: "Why does aspirin reduce pain and inflammation?", sub: "Chemistry", pts: 15, answers: 5 },
-                { title: "Explain the photoelectric effect with a neat diagram.", sub: "Physics", pts: 10, answers: 2 }
-            ];
-            feed.innerHTML = questions.map(q => `
-                <div class="doubt-card">
-                    <div class="pts-badge">${q.pts} pts</div>
-                    <div class="card-flex">
-                        <div class="subject-circle circle-math"><i data-lucide="function-square"></i></div>
-                        <div>
-                            <div style="display:flex; gap:8px; margin-bottom:8px;"><span style="background:var(--primary-glow); color:var(--primary); font-size:0.6rem; font-weight:800; padding:2px 8px; border-radius:4px;">Blitz</span><span style="color:var(--text-muted); font-size:0.7rem;">10 min ago</span></div>
-                            <h3 class="doubt-title">${q.title}</h3>
-                            <div class="doubt-meta">
-                                <span style="color:var(--primary); font-weight:700;">${q.sub}</span><span>•</span><span>Class 12</span><span>•</span><div class="author-pill"><div class="author-av"></div><span>Scholar</span></div>
-                                <span style="margin-left:auto; color:var(--primary);">${q.answers} Answers</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderScholars() {
-            const list = document.getElementById('top-scholars');
-            const data = [
-                { name: "Arjun Dev", sub: "Physics, Math", pct: 96, rank: 1 },
-                { name: "Meera Verma", sub: "Chemistry, Bio", pct: 95, rank: 2 },
-                { name: "Rohan Iyer", sub: "Math, CS", pct: 94, rank: 3 }
-            ];
-            list.innerHTML = data.map(s => `
-                <div class="scholar-row">
-                    <div class="rank-circle ${s.rank <= 3 ? 'rank-'+s.rank : ''}">${s.rank}</div>
-                    <div class="scholar-av"></div>
-                    <div style="flex:1;"><div class="scholar-name">${s.name}</div><div style="font-size:0.65rem; color:var(--text-muted);">${s.sub}</div></div>
-                    <div class="scholar-pct">${s.pct}%</div>
-                </div>
-            `).join('');
+        function toggleAuthMode() {
+            authMode = authMode === 'login' ? 'signup' : 'login';
+            document.getElementById('auth-title').innerText = authMode === 'login' ? 'Welcome Back' : 'Join ScholarQ';
+            document.getElementById('auth-subtitle').innerText = authMode === 'login' ? 'Log in to continue' : 'Enter your academic credentials';
+            document.getElementById('auth-btn').innerText = authMode === 'login' ? 'Log In' : 'Create Account';
+            document.getElementById('signup-fields').classList.toggle('hidden');
+            document.getElementById('auth-switch-text').innerText = authMode === 'login' ? "Don't have an account?" : "Already have an account?";
+            document.getElementById('auth-switch-link').innerText = authMode === 'login' ? 'Sign up' : 'Log in';
         }
 
         async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('auth-email').value, password = document.getElementById('auth-password').value;
-            const { error } = await db.auth.signInWithPassword({ email, password });
-            if (error) alert(error.message);
+            if (authMode === 'login') {
+                const { error } = await db.auth.signInWithPassword({ email, password });
+                if (error) alert(error.message);
+            } else {
+                const name = document.getElementById('auth-name').value, score = parseInt(document.getElementById('auth-score').value);
+                const role = score >= 85 ? 'SCHOLAR' : 'STUDENT';
+                const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: name, score, role } } });
+                if (error) { alert(error.message); return; }
+                if (data.user) {
+                    await db.from('users').upsert([{ id: data.user.id, email, name, score_percentage: score, role }]);
+                    alert("Account Created. Please Login."); toggleAuthMode();
+                }
+            }
+        }
+
+        async function boot(s) {
+            session = s;
+            const { data } = await db.from('users').select('*').eq('id', s.user.id).maybeSingle();
+            profile = data || { name: s.user.user_metadata.full_name || 'Student', role: s.user.user_metadata.role || 'STUDENT', score_percentage: s.user.user_metadata.score || 0 };
+            
+            await refreshData();
+            document.getElementById('init-shield').style.opacity = '0';
+            setTimeout(() => document.getElementById('init-shield').style.display = 'none', 800);
+            document.getElementById('view-auth').style.display = 'none';
+            document.getElementById('app').style.display = 'grid';
+            setTimeout(() => document.getElementById('app').style.opacity = '1', 50);
+            
+            updateMetrics();
+            go('home');
+        }
+
+        async function refreshData() {
+            const { data: q } = await db.from('questions').select('*').order('created_at', { ascending: false });
+            const { data: a } = await db.from('answers').select('*');
+            questions = (q || []).map(x => ({ ...x, answers: (a || []).filter(ans => ans.question_id === x.id) }));
+            renderHome();
+            renderScholars();
+        }
+
+        function go(v, p) {
+            document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-' + v).classList.remove('hidden');
+            if (v === 'question') renderQuestion(p);
+            if (v === 'profile') renderProfile();
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function updateMetrics() {
+            document.getElementById('user-greeting').innerText = `Good evening, ${profile.name.split(' ')[0]}! 👋`;
+            document.getElementById('side-score').innerText = (profile.score_percentage || 0) + '%';
+            document.getElementById('stat-unanswered').innerText = questions.filter(q => !q.best_answer_id).length;
+            document.getElementById('stat-solved').innerText = profile.total_answers_count || 0;
+            const pill = document.getElementById('status-pill');
+            pill.innerText = profile.role;
+            pill.style.color = profile.role === 'SCHOLAR' ? '#10b981' : '#6366f1';
+        }
+
+        function renderHome() {
+            const feed = document.getElementById('home-feed');
+            feed.innerHTML = questions.slice(0, 10).map(q => `
+                <div class="doubt-card" onclick="go('question', '${q.id}')">
+                    <div style="display:flex; gap:20px;">
+                        <div class="subject-circle" style="background:rgba(99,102,241,0.1); color:var(--primary);"><i data-lucide="help-circle"></i></div>
+                        <div style="flex:1;">
+                            <h3 style="font-size:1.1rem; margin-bottom:8px;">${q.title}</h3>
+                            <div style="display:flex; gap:12px; font-size:0.75rem; color:var(--text-muted);">
+                                <span style="color:var(--primary); font-weight:700;">${q.subject}</span>
+                                <span>•</span><span>${q.asker_name}</span>
+                                <span style="margin-left:auto; color:var(--primary);">${q.answers.length} Answers</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function renderQuestion(id) {
+            currentQId = id; const q = questions.find(x => x.id === id);
+            document.getElementById('qd-content').innerHTML = `<h1>${q.title}</h1><p style="margin-top:20px; color:var(--text-muted); line-height:1.6;">${q.body}</p>`;
+            document.getElementById('qd-answers').innerHTML = q.answers.map(a => `
+                <div style="background:rgba(255,255,255,0.03); padding:20px; border-radius:12px; margin-bottom:12px; border:1px solid var(--border);">
+                    <div style="font-weight:700; margin-bottom:8px;">${a.author_name}</div>
+                    <div style="color:var(--text-muted);">${a.body}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderProfile() {
+            document.getElementById('p-name').innerText = profile.name;
+            document.getElementById('p-avatar').innerText = profile.name[0];
+            document.getElementById('p-total').innerText = profile.total_answers_count || 0;
+            document.getElementById('p-best').innerText = profile.best_answers_count || 0;
+        }
+
+        async function renderScholars() {
+            const { data } = await db.from('users').select('*').order('best_answers_count', { ascending: false }).limit(5);
+            document.getElementById('top-scholars').innerHTML = (data || []).map((u, i) => `
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                    <div style="width:24px; height:24px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem;">${i+1}</div>
+                    <div style="flex:1;"><b>${u.name}</b></div>
+                    <div style="color:#10b981;">${u.score_percentage || 0}%</div>
+                </div>
+            `).join('');
+        }
+
+        async function handleAsk(e) {
+            e.preventDefault();
+            await db.from('questions').insert([{ id: 'q_'+Date.now(), title: document.getElementById('ask-title').value, subject: document.getElementById('ask-subject').value, body: document.getElementById('ask-body').value, asker_id: session.user.id, asker_name: profile.name }]);
+            await refreshData(); go('home');
+        }
+
+        async function handleAnswer(e) {
+            e.preventDefault();
+            await db.from('answers').insert([{ id: 'a_'+Date.now(), question_id: currentQId, author_id: session.user.id, author_name: profile.name, body: document.getElementById('answer-body').value }]);
+            await refreshData(); go('question', currentQId);
         }
 
         async function loginWithGoogle() {
