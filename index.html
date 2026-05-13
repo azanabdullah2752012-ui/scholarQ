@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScholarQ | Academy OS</title>
-    <link rel="stylesheet" href="styles.css?v=118">
+    <link rel="stylesheet" href="styles.css?v=123">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
@@ -12,204 +12,122 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
+    <div id="auth-backdrop"></div>
+
     <!-- Institutional Loading Shield -->
-    <div id="init-shield" style="position:fixed; inset:0; background:#0b0d12; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:24px; transition: opacity 0.5s;">
+    <div id="init-shield" style="position:fixed; inset:0; background:#050505; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:24px; transition: opacity 0.5s;">
         <div style="width:48px; height:48px; border:4px solid rgba(255,255,255,0.03); border-top-color:#6366f1; border-radius:50%; animation: spin 1s linear infinite;"></div>
-        <div style="font-family:'Outfit'; font-weight:800; font-size:0.75rem; color:#94a3b8; letter-spacing:3px;">INITIALIZING ACADEMY OS</div>
+        <div style="font-family:'Outfit'; font-weight:800; font-size:0.75rem; color:#52525b; letter-spacing:3px;">CALIBRATING ACADEMY OS</div>
     </div>
 
     <!-- Notification Toast Hub -->
     <div id="toast-container"></div>
 
-    <div id="app" style="display:none; opacity:0; transition: opacity 0.5s;">
-        <!-- ELITE SIDEBAR (Desktop Only) -->
-        <nav id="sidebar">
-            <div style="margin-bottom: 48px; display:flex; align-items:center; gap:14px; padding:0 8px;">
-                <div style="width:40px; height:40px; background:linear-gradient(135deg, #6366f1, #4f46e5); border-radius:12px; display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);">
-                    <i data-lucide="graduation-cap" style="color:white; width:24px;"></i>
+    <!-- VIEW: AUTH / ONBOARDING -->
+    <div id="view-auth" class="view auth-container" style="display:none;">
+        <div class="glass-card">
+            <div style="margin-bottom: 32px;">
+                <div style="width:56px; height:56px; background:var(--grad-main); border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);">
+                    <i data-lucide="graduation-cap" style="color:white; width:32px;"></i>
                 </div>
-                <h2 class="logo-text" style="font-size:1.5rem; font-weight:800; letter-spacing:-1.5px; color:white;">ScholarQ</h2>
-            </div>
-            
-            <div style="flex:1;">
-                <div id="nav-home" class="nav-item active" onclick="navigateTo('home')">
-                    <i data-lucide="layout-grid" style="width:20px;"></i> Academy Hub
-                </div>
-                <div id="nav-marketplace" class="nav-item" onclick="navigateTo('marketplace')">
-                    <i data-lucide="database" style="width:20px;"></i> The Vault
-                </div>
-                <div id="nav-library" class="nav-item" onclick="navigateTo('library')">
-                    <i data-lucide="library" style="width:20px;"></i> My Library
-                </div>
-                <div id="nav-leaderboard" class="nav-item" onclick="navigateTo('leaderboard')">
-                    <i data-lucide="award" style="width:20px;"></i> Leaderboard
-                </div>
-                <div id="nav-profile" class="nav-item" onclick="navigateTo('profile')">
-                    <i data-lucide="user" style="width:20px;"></i> My Profile
-                </div>
+                <h1 style="font-size:2.2rem; font-weight:800; color:white; margin-bottom:8px;">ScholarQ</h1>
+                <p style="color:var(--text-secondary); font-size:0.9rem;">Join 1,000+ elite scholars in the War Room.</p>
             </div>
 
-            <div class="card-elite" style="padding:20px; border:none; background:rgba(255,255,255,0.03);">
-                <div style="font-size:0.65rem; color:var(--text-secondary); font-weight:800; margin-bottom:6px; letter-spacing:1px;">ACADEMY POINTS</div>
-                <div id="side-points" style="font-size:1.6rem; font-weight:800; color:#6366f1; font-family:'Outfit';">0</div>
-            </div>
-
-            <button onclick="logout()" class="nav-item" style="color:#f87171; margin-top:32px; border:none; background:none; width:100%; text-align:left;">
-                <i data-lucide="log-out" style="width:20px;"></i> Logout
+            <button class="btn-google" onclick="signInWithGoogle()">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z" fill="#EA4335"/></svg>
+                Continue with Google
             </button>
+
+            <div class="divider">OR USE ACADEMY SIGNAL</div>
+
+            <form id="auth-form" style="display:flex; flex-direction:column;">
+                <input type="email" id="auth-email" placeholder="Scholar Email" class="auth-input" required>
+                <input type="password" id="auth-password" placeholder="Access Code" class="auth-input" required>
+                <button type="submit" class="btn-primary" style="padding:16px; border-radius:14px; font-size:1rem;">Initiate Session</button>
+            </form>
+
+            <div style="margin-top:32px; font-size:0.75rem; color:var(--text-muted); font-weight:600; letter-spacing:0.5px;">
+                Institutional access is monitored. Stay curious.
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP STRUCTURE (V122 preserved) -->
+    <div id="app" style="display:none; opacity:0; transition: opacity 0.5s;">
+        <nav id="sidebar">
+            <div style="margin-bottom: 40px; display:flex; align-items:center; gap:12px; padding-left:8px;">
+                <div style="width:36px; height:36px; background:var(--grad-main); border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                    <i data-lucide="graduation-cap" style="color:white; width:22px;"></i>
+                </div>
+                <h2 class="logo-text" style="font-size:1.4rem; font-weight:800; color:white;">ScholarQ</h2>
+            </div>
+            <div style="flex:1;">
+                <div id="nav-home" class="nav-item active" onclick="navigateTo('home')"><i data-lucide="layout-grid" style="width:20px;"></i> Academy Hub</div>
+                <div id="nav-warroom" class="nav-item" onclick="navigateTo('warroom')"><i data-lucide="sword" style="width:20px;"></i> War Room</div>
+                <div id="nav-marketplace" class="nav-item" onclick="navigateTo('marketplace')"><i data-lucide="database" style="width:20px;"></i> The Vault</div>
+                <div id="nav-library" class="nav-item" onclick="navigateTo('library')"><i data-lucide="library" style="width:20px;"></i> My Library</div>
+                <div id="nav-gauntlet" class="nav-item" onclick="navigateTo('gauntlet')"><i data-lucide="crosshair" style="width:20px;"></i> Gauntlet</div>
+                <div id="nav-leaderboard" class="nav-item" onclick="navigateTo('leaderboard')"><i data-lucide="award" style="width:20px;"></i> Leaderboard</div>
+                <div id="nav-profile" class="nav-item" onclick="navigateTo('profile')"><i data-lucide="user" style="width:20px;"></i> My Profile</div>
+                <div class="sidebar-group-title">QUICK ACTIONS</div>
+                <div class="quick-action" onclick="toggleBoost()"><i data-lucide="zap" style="width:16px;"></i> Hyper-Boost</div>
+                <div class="quick-action" onclick="navigateTo('gauntlet')"><i data-lucide="target" style="width:16px;"></i> Daily Gauntlet</div>
+                <div class="quick-action" onclick="showInvite()"><i data-lucide="user-plus" style="width:16px;"></i> Invite & Earn</div>
+            </div>
+            <div class="economy-panel">
+                <div style="font-size:0.6rem; color:var(--text-secondary); font-weight:800; margin-bottom:8px; letter-spacing:1px;">ACADEMY POINTS</div>
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                    <i data-lucide="coins" style="color:#fbbf24; width:24px;"></i>
+                    <div id="side-points" style="font-size:1.8rem; font-weight:800; font-family:'Outfit'; color:white;">0</div>
+                </div>
+                <button class="btn-ghost" style="width:100%; font-size:0.75rem;" onclick="navigateTo('transactions')">View Transactions</button>
+            </div>
+            <button onclick="logout()" class="nav-item" style="color:var(--danger); border:none; background:none; text-align:left; margin-top:24px;"><i data-lucide="log-out" style="width:20px;"></i> Logout</button>
         </nav>
 
-        <!-- MOBILE COMMAND BAR -->
-        <div id="mobile-nav">
-            <div id="m-nav-home" class="m-nav-item active" onclick="navigateTo('home')">
-                <i data-lucide="layout-grid" style="width:24px;"></i>
-                <span>Hub</span>
-            </div>
-            <div id="m-nav-marketplace" class="m-nav-item" onclick="navigateTo('marketplace')">
-                <i data-lucide="database" style="width:24px;"></i>
-                <span>Vault</span>
-            </div>
-            <div id="m-nav-library" class="m-nav-item" onclick="navigateTo('library')">
-                <i data-lucide="library" style="width:24px;"></i>
-                <span>Library</span>
-            </div>
-            <div id="m-nav-leaderboard" class="m-nav-item" onclick="navigateTo('leaderboard')">
-                <i data-lucide="award" style="width:24px;"></i>
-                <span>Awards</span>
-            </div>
-            <div id="m-nav-profile" class="m-nav-item" onclick="navigateTo('profile')">
-                <i data-lucide="user" style="width:24px;"></i>
-                <span>Profile</span>
-            </div>
-        </div>
-
-        <!-- MOBILE FLOATING ACTION -->
-        <div id="fab-post" onclick="handleFabClick()">
-            <i data-lucide="plus" style="width:28px;"></i>
-        </div>
-
-        <main id="main-content">
-            <!-- TOP COMMAND BAR -->
+        <main id="main-scroll">
             <header class="top-bar">
-                <div class="search-container">
-                    <i data-lucide="search" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:#475569; width:18px;"></i>
-                    <input type="text" id="global-search" placeholder="Search Academy..." class="search-input" style="padding-left:48px;" oninput="handleSearch(this.value)">
-                </div>
-                <button id="main-action-btn" onclick="navigateTo('ask')" class="btn-primary" style="white-space:nowrap;">+ Post Doubt</button>
+                <div class="search-box"><i data-lucide="search" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--text-muted); width:18px;"></i><input type="text" placeholder="Search for doubts, subjects, topics..." oninput="handleSearch(this.value)"></div>
+                <div style="display:flex; gap:16px; align-items:center;"><i data-lucide="bell" style="color:var(--text-secondary); cursor:pointer; width:20px;" onclick="showNotifications()"></i><button onclick="navigateTo('ask')" class="btn-primary">+ Post Doubt</button></div>
             </header>
-
-            <!-- VIEW: HUB -->
+            <!-- VIEWS (V122 preserved) -->
             <div id="view-home" class="view">
-                <div class="view-grid" style="display:grid; grid-template-columns: 1fr 340px; gap:40px;">
-                    <div id="home-feed" style="display:flex; flex-direction:column; gap:20px;"></div>
-                    <div>
-                        <!-- NOTICE BOARD -->
-                        <div class="card-elite" style="margin-bottom:32px; background:linear-gradient(135deg, rgba(99,102,241,0.05), transparent); border:1px solid rgba(99,102,241,0.2);">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                                <h3 style="font-size:0.95rem;">Notice Board</h3>
-                                <div class="dot-pulse"></div>
-                            </div>
-                            <div id="notice-list" style="display:flex; flex-direction:column; gap:12px;"></div>
-                        </div>
-
-                        <div class="card-elite" style="margin-bottom:32px; border-left:4px solid #6366f1;">
-                            <h3 style="font-size:0.95rem; margin-bottom:16px;">Academy Pulse</h3>
-                            <div style="font-size:0.8rem; color:#94a3b8; display:flex; flex-direction:column; gap:12px;">
-                                <div style="display:flex; justify-content:space-between;"><span>Active Doubts</span><span id="pulse-doubts" style="color:white; font-weight:700;">0</span></div>
-                                <div style="display:flex; justify-content:space-between;"><span>Institutional Status</span><span style="color:#10b981; font-weight:800;">ELITE</span></div>
-                            </div>
-                        </div>
-                    </div>
+                <div style="margin-bottom:48px;"><h1 style="font-size:2.4rem; font-weight:800; margin-bottom:6px;">Good Evening, <span id="hub-user-name" style="color:var(--p-500);">Scholar</span></h1><p style="color:var(--text-secondary); font-size:1rem; font-weight:500;">"Stay curious. Keep learning."</p></div>
+                <div class="metrics-row">
+                    <div class="metric-card"><i data-lucide="shield-check" class="icon-elite"></i><span class="metric-label">Status</span><span class="metric-val" id="stat-status">ELITE</span></div>
+                    <div class="metric-card"><i data-lucide="flame" class="icon-streak"></i><span class="metric-label">Streak</span><span class="metric-val" id="stat-streak">3 Days</span></div>
+                    <div class="metric-card"><i data-lucide="trending-up" class="icon-trust"></i><span class="metric-label">Trust</span><span class="metric-val" id="stat-trust">72%</span></div>
+                    <div class="metric-card"><i data-lucide="gem" class="icon-multiplier"></i><span class="metric-label">Multiplier</span><span class="metric-val" id="stat-multiplier">1.00x</span></div>
                 </div>
+                <div class="gauntlet-card"><div style="display:flex; justify-content:space-between; align-items:center;"><div><h3 style="font-size:1rem; font-weight:700;">Daily Gauntlet</h3><p style="font-size:0.8rem; color:var(--text-secondary);">Complete 3 questions to earn bonuses</p></div><button class="btn-ghost" onclick="navigateTo('gauntlet')">Continue Gauntlet</button></div><div class="progress-bar"><div id="gauntlet-fill" class="progress-fill"></div></div><div id="gauntlet-count" style="display:flex; justify-content:flex-end; font-size:0.8rem; color:var(--text-muted); font-weight:800;">0 / 3</div></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px;"><h2 style="font-size:1.4rem; font-weight:800;">Recent Doubts</h2><span style="font-size:0.85rem; color:var(--p-500); font-weight:800; cursor:pointer;" onclick="navigateTo('warroom')">View All</span></div>
+                <div id="home-feed"></div>
             </div>
-
-            <!-- VIEW: VAULT -->
-            <div id="view-marketplace" class="view" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:48px;">
-                    <h1 style="font-size:2rem; font-weight:800; letter-spacing:-1.5px;">The Vault</h1>
-                </div>
-                <div id="market-list" class="view-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:24px;"></div>
-            </div>
-
-            <!-- VIEW: LIBRARY -->
-            <div id="view-library" class="view" style="display:none;">
-                <h1 style="font-size:2rem; margin-bottom:12px; font-weight:800;">My Library</h1>
-                <div id="library-feed" style="display:flex; flex-direction:column; gap:20px;"></div>
-            </div>
-
-            <!-- VIEW: ASK & DETAIL -->
-            <div id="view-ask" class="view" style="display:none;">
-                <div class="card-elite" style="max-width:700px; margin:0 auto;">
-                    <h2 style="margin-bottom:24px;">Broadcast Doubt</h2>
-                    <form id="ask-form" style="display:flex; flex-direction:column; gap:20px;">
-                        <input type="text" id="ask-title" placeholder="What is your doubt?" class="search-input" required>
-                        <select id="ask-subject" class="search-input"><option value="Math">Math</option><option value="Science">Science</option><option value="History">History</option></select>
-                        <textarea id="ask-body" placeholder="Context..." class="search-input" style="min-height:150px;"></textarea>
-                        <button type="submit" class="btn-primary">Publish Doubt</button>
-                    </form>
-                </div>
-            </div>
-
-            <div id="view-question" class="view" style="display:none;">
-                <button onclick="navigateTo('home')" style="background:none; border:none; color:#94a3b8; cursor:pointer; margin-bottom:32px; font-weight:700; display:flex; align-items:center; gap:8px;">
-                    <i data-lucide="arrow-left" style="width:18px;"></i> Back
-                </button>
-                <div id="qd-content" class="card-elite" style="margin-bottom:40px;"></div>
-                <div id="qd-answers"></div>
-                <div class="card-elite" style="margin-top:48px; border-top:4px solid #6366f1;">
-                    <h3 style="margin-bottom:20px;">Solve Doubt</h3>
-                    <form id="answer-form" style="display:flex; flex-direction:column; gap:20px;">
-                        <textarea id="answer-body" placeholder="Write your solution..." class="search-input" style="min-height:120px;" required></textarea>
-                        <button type="submit" class="btn-primary">Post Solution</button>
-                    </form>
-                </div>
-            </div>
-
+            <div id="view-warroom" class="view" style="display:none;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;"><h1 style="font-size:2.2rem; font-weight:800;">The War Room</h1><div style="display:flex; gap:12px;"><button class="btn-ghost" onclick="setFilter('All')">All</button><button class="btn-ghost" onclick="setFilter('Math')">Math</button><button class="btn-ghost" onclick="setFilter('Science')">Science</button></div></div><div id="warroom-feed" style="display:flex; flex-direction:column; gap:12px;"></div></div>
+            <div id="view-transactions" class="view" style="display:none;"><h1 style="font-size:2.2rem; font-weight:800; margin-bottom:40px;">Transaction Ledger</h1><div id="transaction-list" style="display:flex; flex-direction:column; gap:12px;"></div></div>
+            <div id="view-marketplace" class="view" style="display:none;"><h1 style="font-size:2.2rem; font-weight:800; margin-bottom:40px;">The Vault</h1><div id="market-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:20px;"></div></div>
+            <div id="view-library" class="view" style="display:none;"><h1 style="font-size:2.2rem; font-weight:800; margin-bottom:40px;">Academy Library</h1><div id="library-feed" style="display:flex; flex-direction:column; gap:16px;"></div></div>
+            <div id="view-gauntlet" class="view" style="display:none;"><h1 style="font-size:2.2rem; font-weight:800; margin-bottom:40px;">Daily Gauntlet</h1><div class="card-elite" style="padding:40px; text-align:center;"><h2 style="margin-bottom:16px;">Today's Mission</h2><p style="color:var(--text-secondary); margin-bottom:32px;">Provide 3 professional solutions to earn a 50 PTS bonus.</p><div id="gauntlet-status-detailed" style="font-size:3rem; font-weight:800; font-family:'Outfit'; color:var(--p-500); margin-bottom:20px;">0 / 3</div><button class="btn-primary" onclick="navigateTo('warroom')">Find Doubts to Solve</button></div></div>
+            <div id="view-profile" class="view" style="display:none;"><div id="profile-container" class="card-elite" style="text-align:center; padding:60px 40px;"></div></div>
+            <div id="view-question" class="view" style="display:none;"><button onclick="navigateTo('home')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; margin-bottom:32px; font-weight:800; display:flex; align-items:center; gap:8px;"><i data-lucide="arrow-left" style="width:18px;"></i> Back to Hub</button><div id="qd-content" class="card-elite" style="margin-bottom:40px;"></div><div id="qd-answers"></div><div class="card-elite" style="margin-top:40px; border-top:4px solid var(--p-500);"><h3 style="margin-bottom:20px;">Solve Doubt</h3><form id="answer-form" style="display:flex; flex-direction:column; gap:20px;"><textarea id="answer-body" placeholder="Write your solution..." class="search-input" style="width:100%; min-height:120px;" required></textarea><button type="submit" class="btn-primary">Post Solution</button></form></div></div>
             <div id="view-leaderboard" class="view" style="display:none;"></div>
-            <div id="view-profile" class="view" style="display:none;">
-                <div class="card-elite" style="text-align:center; max-width:600px; margin:0 auto;">
-                    <div id="profile-avatar" style="width:80px; height:80px; background:var(--grad-indigo); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:2rem; font-weight:800; color:white; margin-bottom:24px;">S</div>
-                    <h1 id="profile-name">Student</h1>
-                    <p id="profile-email" style="color:#94a3b8; margin-bottom:32px;"></p>
-                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; border-top:1px solid var(--border); padding-top:32px;">
-                        <div><div id="profile-points" style="font-size:1.8rem; font-weight:800; color:#6366f1;">0</div><div style="font-size:0.65rem; color:#94a3b8; font-weight:800;">POINTS</div></div>
-                        <div><div id="profile-asked" style="font-size:1.8rem; font-weight:800;">0</div><div style="font-size:0.65rem; color:#94a3b8; font-weight:800;">DOUBTS</div></div>
-                        <div><div id="profile-solved" style="font-size:1.8rem; font-weight:800;">0</div><div style="font-size:0.65rem; color:#94a3b8; font-weight:800;">SOLUTIONS</div></div>
-                    </div>
-                </div>
-            </div>
+            <div id="view-ask" class="view" style="display:none;"><div class="card-elite" style="max-width:700px; margin:0 auto; padding:40px;"><h2 style="margin-bottom:24px; font-size:2rem;">Broadcast Doubt</h2><form id="ask-form" style="display:flex; flex-direction:column; gap:20px;"><input type="text" id="ask-title" placeholder="What is your doubt?" class="search-input" required><select id="ask-subject" class="search-input"><option value="Calculus">Calculus</option><option value="Biology">Biology</option><option value="Data Structures">Data Structures</option><option value="General">General</option></select><textarea id="ask-body" placeholder="Context..." class="search-input" style="min-height:150px;"></textarea><button type="submit" class="btn-primary">Publish Doubt</button></form></div></div>
         </main>
 
-        <!-- AUTH -->
-        <div id="view-auth" class="view" style="display:none; position:fixed; inset:0; background:#0b0d12; z-index:1000; align-items:center; justify-content:center;">
-            <div class="card-elite" style="max-width:400px; width:90%; padding:40px; text-align:center;">
-                <div style="width:64px; height:64px; background:var(--grad-indigo); border-radius:18px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:24px;">
-                    <i data-lucide="graduation-cap" style="color:white; width:36px;"></i>
-                </div>
-                <h1 style="font-size:2.2rem; font-weight:800; margin-bottom:40px;">ScholarQ</h1>
-                <form id="auth-form" style="display:flex; flex-direction:column; gap:16px;">
-                    <input type="email" id="auth-email" placeholder="Email" class="search-input" required>
-                    <input type="password" id="auth-password" placeholder="Password" class="search-input" required>
-                    <button type="submit" class="btn-primary">Access Academy</button>
-                </form>
-            </div>
-        </div>
+        <aside id="intelligence-panel">
+            <div class="widget"><div class="widget-title"><h3>Notice Board</h3><span style="color:var(--p-500); font-size:0.75rem; font-weight:800; cursor:pointer;">View All</span></div><div class="widget-card"><div style="display:flex; flex-direction:column; gap:16px;"><div style="font-size:0.85rem; border-left:2px solid var(--p-500); padding-left:14px;"><div style="color:var(--text-muted); font-size:0.7rem; margin-bottom:4px;">May 15</div><div style="font-weight:600; color:white;">Gauntlet Hard Mode unlocked!</div></div><div style="font-size:0.85rem; border-left:2px solid var(--text-muted); padding-left:14px;"><div style="color:var(--text-muted); font-size:0.7rem; margin-bottom:4px;">May 14</div><div style="font-weight:600; color:white;">Vault maintenance scheduled.</div></div></div></div></div>
+            <div class="widget"><div class="widget-title"><h3>Academy Pulse</h3><i data-lucide="activity" class="pulse-icon" style="width:16px; color:var(--success);"></i></div><div class="widget-card pulse-widget"><div class="pulse-item"><span>Active Doubts</span><span id="pulse-doubts">128</span></div><div class="pulse-item"><span>Scholars Online</span><span>42</span></div><div class="pulse-item"><span>Newcomer Hope</span><span style="color:var(--success);">68%</span></div><div class="pulse-item"><span>System Health</span><span style="color:var(--success);">Stable</span></div></div></div>
+            <div class="widget"><div class="widget-title"><h3>Top Contributors</h3><span style="color:var(--p-500); font-size:0.75rem; font-weight:800; cursor:pointer;">View All</span></div><div id="top-contributors-list" style="display:flex; flex-direction:column; gap:12px;"></div></div>
+        </aside>
     </div>
 
     <!-- VAULT MODAL -->
-    <div id="modal-sell" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); z-index:1001; align-items:center; justify-content:center;">
-        <div class="card-elite" style="max-width:400px; width:90%; padding:32px;">
-            <h2 style="margin-bottom:20px;">Publish Resource</h2>
-            <form id="sell-form" style="display:flex; flex-direction:column; gap:12px;">
-                <input type="text" id="sell-title" placeholder="Title" class="search-input" required>
-                <input type="number" id="sell-price" placeholder="Price (PTS)" class="search-input" required>
-                <input type="url" id="sell-link" placeholder="Drive Link" class="search-input" required>
-                <button type="submit" class="btn-primary">Submit Resource</button>
-                <button type="button" onclick="closeSellModal()" style="background:none; border:none; color:#94a3b8; font-weight:700; padding:10px;">Cancel</button>
-            </form>
-        </div>
+    <div id="modal-sell" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:1001; align-items:center; justify-content:center;">
+        <div class="card-elite" style="max-width:400px; width:90%; padding:40px;"><h2 style="margin-bottom:24px; font-size:1.6rem; font-weight:800;">Publish to Vault</h2><form id="sell-form" style="display:flex; flex-direction:column; gap:16px;"><input type="text" id="sell-title" placeholder="Title" class="search-input" required><input type="number" id="sell-price" placeholder="Price (PTS)" class="search-input" required><input type="url" id="sell-link" placeholder="Drive Link" class="search-input" required><button type="submit" class="btn-primary" style="width:100%; padding:16px;">Submit Resource</button><button type="button" onclick="closeSellModal()" style="background:none; border:none; color:var(--text-secondary); font-weight:700; width:100%; margin-top:8px;">Cancel</button></form></div>
     </div>
 
-    <script src="app.js?v=118"></script>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    <script src="app.js?v=123"></script>
 </body>
 </html>
