@@ -1,4 +1,4 @@
-// ScholarQ - Premium Academic Ecosystem (Final Stable Version)
+// ScholarQ - Full Academic Ecosystem (RESTORED & STABILIZED)
 const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -20,20 +20,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   lucide.createIcons();
   
   console.log("App Initializing...");
-
-  // Give the OAuth redirect a moment to settle
   setTimeout(async () => {
     const { data: { session: initialSession } } = await supabaseClient.auth.getSession();
     await handleSessionUpdate(initialSession);
 
     supabaseClient.auth.onAuthStateChange(async (event, newSession) => {
       console.log('Auth Event:', event);
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+      if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event)) {
         await handleSessionUpdate(newSession);
       } else if (event === 'SIGNED_OUT') {
-        session = null;
-        profile = null;
-        navigateTo('auth');
+        session = null; profile = null; navigateTo('auth');
       }
     });
   }, 500);
@@ -43,18 +39,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('answer-form')?.addEventListener('submit', handleAnswer);
   document.getElementById('finish-profile-form')?.addEventListener('submit', handleFinishProfile);
   document.getElementById('sell-form')?.addEventListener('submit', handleSell);
-  
-  document.getElementById('finish-score')?.addEventListener('input', (e) => {
-    const v = parseInt(e.target.value);
-    document.getElementById('finish-subject-group').style.display = (v >= 80) ? 'block' : 'none';
-  });
 });
 
 async function handleSessionUpdate(newS) {
   session = newS;
   const isInitializing = window.location.hash.includes('access_token');
-  console.log("Session Update:", session ? "Active" : "None", " | Hash detected:", isInitializing);
-
   if (session) {
     const ok = await fetchProfile();
     if (ok) {
@@ -64,12 +53,7 @@ async function handleSessionUpdate(newS) {
       if (currentView === 'auth') navigateTo('home');
     }
   } else {
-    // DO NOT redirect to auth if we are in the middle of a hash-login (OAuth)
-    if (!isInitializing && currentView !== 'auth') {
-      navigateTo('auth');
-    } else {
-      console.log("Login in progress via URL hash, holding redirect...");
-    }
+    if (!isInitializing && currentView !== 'auth') navigateTo('auth');
   }
 }
 
@@ -85,9 +69,7 @@ async function fetchProfile() {
       navigateTo('finish-profile');
       return false;
     }
-  } catch (e) {
-    console.error("Profile fetch error:", e);
-  }
+  } catch (e) { console.error(e); }
   return false;
 }
 
@@ -100,26 +82,15 @@ async function fetchQuestions() {
 }
 
 function navigateTo(view, param = null) {
-  console.log('Navigating:', view);
-  document.querySelectorAll('.view').forEach(v => { v.style.display = 'none'; v.style.opacity = '0'; });
-  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-
-  // Enhanced Auth Guard
   const isInitializing = window.location.hash.includes('access_token');
-
   if (!session && view !== 'auth') {
-    if (isInitializing) {
-      console.log("OAuth hash detected, holding redirect to ensure session completes...");
-      return; // Stop the redirect to let Supabase finish
-    }
-    console.log("No session found, redirecting to auth...");
+    if (isInitializing) return;
     view = 'auth';
   }
-  
-  if (session && view === 'auth') {
-    console.log("Session active, skipping auth page...");
-    view = 'home';
-  }
+  if (session && view === 'auth') view = 'home';
+
+  document.querySelectorAll('.view').forEach(v => { v.style.display = 'none'; v.style.opacity = '0'; });
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
 
   currentView = view;
   const sidebar = document.getElementById('sidebar');
@@ -146,7 +117,7 @@ function navigateTo(view, param = null) {
   lucide.createIcons();
 }
 
-// RENDERERS
+// RENDERING
 function renderHome() {
   const cont = document.getElementById('home-questions');
   const filt = document.getElementById('home-filters');
@@ -161,7 +132,7 @@ function renderHome() {
   });
 
   const list = questions.filter(q => (currentFilter === 'All' || q.subject === currentFilter) && q.title.toLowerCase().includes(currentSearch.toLowerCase()));
-  if (list.length === 0) { cont.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center;">No broadcasted doubts found.</div>'; return; }
+  if (list.length === 0) { cont.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center;">No doubts broadcasted yet.</div>'; return; }
   list.forEach(q => {
     const isHV = ['PPT Design', 'Creative Work', 'Assignments'].includes(q.subject);
     const isR = q.status === 'resolved';
@@ -186,7 +157,7 @@ function renderHome() {
 
 async function renderLeaderboard() {
   const cont = document.getElementById('view-leaderboard');
-  cont.innerHTML = '<div class="glass-card" style="padding: 2rem;">Tallying the best...</div>';
+  cont.innerHTML = '<div class="glass-card">Tallying the best scholars...</div>';
   const { data } = await supabaseClient.from('users').select('*').order('points', { ascending: false }).limit(20);
   if (data) {
     cont.innerHTML = `
@@ -196,7 +167,7 @@ async function renderLeaderboard() {
           <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; gap: 20px; border-left: 5px solid ${i < 3 ? '#fbbf24' : 'transparent'}">
             <div style="font-weight: 800; color: ${i < 3 ? '#fbbf24' : 'inherit'}; width: 30px;">#${i+1}</div>
             <div style="flex: 1;"><strong>${u.name}</strong><br><small>${calculateRank(u.points)}</small></div>
-            <div style="color: var(--p-500); font-weight: 800;">${u.points} PTS</div>
+            <div style="text-align: right;"><strong style="color: var(--p-500);">${u.points} PTS</strong></div>
           </div>
         `).join('')}
       </div>
@@ -214,14 +185,14 @@ function renderProfile() {
   
   const badgeCont = document.getElementById('profile-badges');
   badgeCont.innerHTML = '';
-  if (profile.points >= 100) badgeCont.innerHTML += `<div class="glass-card" style="padding: 5px 10px; font-size: 0.6rem; border-color: #3b82f6; color: #3b82f6;">⭐ RISING STAR</div>`;
-  if (profile.points >= 500) badgeCont.innerHTML += `<div class="glass-card" style="padding: 5px 10px; font-size: 0.6rem; border-color: #fbbf24; color: #fbbf24;">🏆 ELITE SCHOLAR</div>`;
-  if (profile.streak >= 7) badgeCont.innerHTML += `<div class="glass-card" style="padding: 5px 10px; font-size: 0.6rem; border-color: #f97316; color: #f97316;">🔥 UNSTOPPABLE</div>`;
+  if (profile.points >= 100) badgeCont.innerHTML += `<div class="badge glass-card">⭐ Rising Star</div>`;
+  if (profile.points >= 500) badgeCont.innerHTML += `<div class="badge glass-card">🏆 Elite Scholar</div>`;
+  if (profile.streak >= 7) badgeCont.innerHTML += `<div class="badge glass-card">🔥 Unstoppable</div>`;
 }
 
 async function renderMarketplace() {
   const cont = document.getElementById('market-list');
-  cont.innerHTML = '<div class="glass-card">Opening shop...</div>';
+  cont.innerHTML = '<div class="glass-card">Loading marketplace...</div>';
   const { data: items } = await supabaseClient.from('marketplace_items').select('*').order('created_at', { ascending: false });
   const { data: myP } = await supabaseClient.from('purchases').select('item_id').eq('user_id', session.user.id);
   const pIds = (myP || []).map(p => p.item_id);
@@ -232,13 +203,10 @@ async function renderMarketplace() {
       const isB = pIds.includes(it.id) || it.seller_id === session.user.id;
       cont.innerHTML += `
         <div class="glass-card" style="padding: 2rem;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-            <h3 style="font-weight: 800;">${escapeHTML(it.title)}</h3>
-            <strong style="color: var(--p-500);">${it.price} PTS</strong>
-          </div>
-          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.5rem;">By ${it.seller_name}</p>
-          ${isB ? `<a href="${it.link}" target="_blank" class="btn btn-primary" style="width: 100%; text-decoration: none; justify-content: center;">Download</a>` : `
-            <button onclick="handleBuyItem('${it.id}', ${it.price}, '${it.seller_id}')" class="btn glass-card" style="width: 100%; justify-content: center;">Purchase Access</button>
+          <h3 style="font-weight: 800; margin-bottom: 0.5rem;">${escapeHTML(it.title)}</h3>
+          <p style="color: var(--p-500); font-weight: 800; margin-bottom: 1.5rem;">${it.price} PTS</p>
+          ${isB ? `<a href="${it.link}" target="_blank" class="btn btn-primary" style="width: 100%; text-decoration: none; justify-content: center;">View Document</a>` : `
+            <button onclick="handleBuyItem('${it.id}', ${it.price}, '${it.seller_id}')" class="btn glass-card" style="width: 100%; justify-content: center;">Purchase with Points</button>
           `}
         </div>
       `;
@@ -266,40 +234,15 @@ function renderMicroTasks() {
 
 // HANDLERS
 async function handleMicroTask(correct, reward) {
-  console.log("Challenge attempt:", correct, reward);
   if (!correct) return showToast('Incorrect! Try again.', 'error');
-  
   const today = new Date().toISOString().split('T')[0];
-  const newPoints = (profile.points || 0) + reward;
-
-  const { error } = await supabaseClient.from('users').update({ 
-    points: newPoints, 
-    last_challenge_date: today 
-  }).eq('id', session.user.id);
-
-  if (!error) {
-    showToast(`Correct! +${reward} points awarded.`, 'success');
-    await fetchProfile(); // Refresh global profile state
-    renderMicroTasks();   // Update the challenge view
-    updateGlobalUI();    // Update the top bar
-  } else {
-    console.error("Challenge Error:", error);
-    showToast("Failed to save points. Try again.", "error");
-  }
-}
-
-async function handleBuyItem(id, price, sId) {
-  if (profile.points < price) return showToast('Not enough points!', 'error');
-  if (!confirm(`Spend ${price} points?`)) return;
-  await supabaseClient.from('purchases').insert([{ user_id: session.user.id, item_id: id }]);
-  await supabaseClient.from('users').update({ points: profile.points - price }).eq('id', session.user.id);
-  const { data: s } = await supabaseClient.from('users').select('points').eq('id', sId).single();
-  await supabaseClient.from('users').update({ points: (s.points || 0) + price }).eq('id', sId);
-  showToast('Purchased!', 'success'); fetchProfile(); renderMarketplace();
+  await supabaseClient.from('users').update({ points: (profile.points || 0) + reward, last_challenge_date: today }).eq('id', session.user.id);
+  showToast('Correct! Points awarded.', 'success');
+  await fetchProfile(); renderMicroTasks();
 }
 
 async function handleMarkBest(aId, auId) {
-  if (!confirm("Award Best Answer?")) return;
+  if (!confirm("Is this the best solution?")) return;
   await supabaseClient.from('questions').update({ best_answer_id: aId, status: 'resolved' }).eq('id', currentQuestionId);
   const { data: au } = await supabaseClient.from('users').select('points').eq('id', auId).single();
   await supabaseClient.from('users').update({ points: (au.points || 0) + 20 }).eq('id', auId);
@@ -314,19 +257,13 @@ async function handleUpvote(aId, auId) {
   showToast('Upvoted! +1 pt earned.', 'success'); fetchQuestions(); fetchProfile();
 }
 
-async function handleSell(e) {
-  e.preventDefault();
-  const title = document.getElementById('sell-title').value;
-  const price = parseInt(document.getElementById('sell-price').value);
-  const file = document.getElementById('sell-file').files[0];
-  if (!file) return showToast('Pick a file', 'error');
-  showToast('Uploading...', 'info');
-  const path = `${Date.now()}_${file.name}`;
-  const { error: upErr } = await supabaseClient.storage.from('marketplace').upload(path, file);
-  if (upErr) return showToast(upErr.message, 'error');
-  const { data: { publicUrl: url } } = supabaseClient.storage.from('marketplace').getPublicUrl(path);
-  const { error } = await supabaseClient.from('marketplace_items').insert([{ id: 'm_'+Date.now(), title, price, link: url, seller_id: session.user.id, seller_name: profile.name }]);
-  if (!error) { showToast('Listed!', 'success'); closeSellModal(); renderMarketplace(); }
+async function handleBuyItem(id, price, sId) {
+  if (profile.points < price) return showToast('Not enough points!', 'error');
+  await supabaseClient.from('purchases').insert([{ user_id: session.user.id, item_id: id }]);
+  await supabaseClient.from('users').update({ points: (profile.points || 0) - price }).eq('id', session.user.id);
+  const { data: s } = await supabaseClient.from('users').select('points').eq('id', sId).single();
+  await supabaseClient.from('users').update({ points: (s.points || 0) + price }).eq('id', sId);
+  showToast('Purchased!', 'success'); fetchProfile(); renderMarketplace();
 }
 
 async function handleAsk(e) {
@@ -345,7 +282,22 @@ async function handleAnswer(e) {
   if (!error) { showToast('Contributed!', 'success'); document.getElementById('answer-form').reset(); fetchQuestions(); fetchProfile(); }
 }
 
-// AUTH & UTILS
+async function handleSell(e) {
+  e.preventDefault();
+  const title = document.getElementById('sell-title').value;
+  const price = parseInt(document.getElementById('sell-price').value);
+  const file = document.getElementById('sell-file').files[0];
+  if (!file) return showToast('Pick a file', 'error');
+  showToast('Uploading...', 'info');
+  const path = `${Date.now()}_${file.name}`;
+  const { error: upErr } = await supabaseClient.storage.from('marketplace').upload(path, file);
+  if (upErr) return showToast(upErr.message, 'error');
+  const { data: { publicUrl: url } } = supabaseClient.storage.from('marketplace').getPublicUrl(path);
+  const { error } = await supabaseClient.from('marketplace_items').insert([{ id: 'm_'+Date.now(), title, price, link: url, seller_id: session.user.id, seller_name: profile.name }]);
+  if (!error) { showToast('Listed!', 'success'); closeSellModal(); renderMarketplace(); }
+}
+
+// AUTH
 async function handleAuth(e) {
   e.preventDefault();
   const email = document.getElementById('auth-email').value;
@@ -357,7 +309,7 @@ async function handleAuth(e) {
     if (error) return showToast(error.message, 'error');
     const role = (score >= 90) ? 'scholar' : 'student';
     await supabaseClient.from('users').insert([{ id: data.user.id, name, points: 50, role, percentage: score, email }]);
-    showToast('Verify your email!', 'info');
+    showToast('Check email!', 'info');
   } else {
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) return showToast(error.message, 'error');
@@ -387,7 +339,7 @@ async function handleDailyLogin() {
   if (streak === 3) bonus += 5;
   if (streak === 7) bonus += 15;
   await supabaseClient.from('users').update({ last_login: today, streak, points: (profile.points || 0) + bonus }).eq('id', session.user.id);
-  showToast(`Welcome back! +${bonus} points`, 'success');
+  showToast(`Daily Bonus! +${bonus} points`, 'success');
   await fetchProfile();
 }
 
@@ -413,43 +365,26 @@ function toggleDarkMode() { isDarkMode = !isDarkMode; document.documentElement.s
 function updateThemeIcon() { const i = document.getElementById('theme-icon'); if (i) i.setAttribute('data-lucide', isDarkMode ? 'sun' : 'moon'); lucide.createIcons(); }
 function setupSubscriptions() { supabaseClient.channel('any').on('postgres_changes', { event: '*', schema: 'public' }, () => { fetchQuestions(); fetchProfile(); }).subscribe(); }
 
-// Achievement Logic Helper
-async function checkScholarPromotion() {
-  const hasP = profile.points >= 100;
-  const hasA = profile.percentage >= 80;
-  const { data: a } = await supabaseClient.from('answers').select('id').eq('author_id', session.user.id).gte('upvotes', 1);
-  const hasH = (a || []).length >= 5;
-  if (hasP && hasA && hasH) {
-    if (confirm("Qualify for Scholar?")) {
-      await supabaseClient.from('users').update({ role: 'scholar' }).eq('id', session.user.id);
-      showToast('You are an Elite Scholar! 🏆', 'success'); await fetchProfile();
-    }
-  } else { showToast("Requirements: 100 pts, 80% score, 5 helpful answers.", 'info'); }
-}
-
 function renderQuestionDetail() {
   const q = questions.find(x => x.id === currentQuestionId);
   if (!q) return;
-  const isHV = ['PPT Design', 'Creative Work', 'Assignments'].includes(q.subject);
   document.getElementById('qd-content').innerHTML = `
     <div class="glass-card" style="padding: 2.5rem;">
-      <span class="tag" style="background: ${getTagColor(q.subject)}">${q.subject}</span>
-      <h2 style="font-size: 2rem; font-weight: 800; margin: 1rem 0;">${escapeHTML(q.title)}</h2>
-      <p style="font-size: 1.1rem; line-height: 1.6; white-space: pre-wrap;">${escapeHTML(q.body)}</p>
-      <div style="margin-top: 2rem; font-size: 0.8rem; color: var(--text-secondary);">By <strong>${q.asker_name}</strong></div>
+      <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 1rem;">${escapeHTML(q.title)}</h2>
+      <p style="font-size: 1.1rem; line-height: 1.6;">${escapeHTML(q.body)}</p>
     </div>
   `;
   const ansCont = document.getElementById('qd-answers');
-  ansCont.innerHTML = `<h3 style="margin: 2rem 0;">${q.answers?.length || 0} Contributions</h3>`;
+  ansCont.innerHTML = `<h3 style="margin: 2rem 0;">${q.answers?.length || 0} Solutions</h3>`;
   (q.answers || []).forEach(a => {
     const isB = q.best_answer_id === a.id;
     const isAsk = session && session.user.id === q.asker_id;
     ansCont.innerHTML += `
       <div class="glass-card" style="padding: 1.5rem; margin-bottom: 1rem; border-left: 4px solid ${isB ? '#10b981' : 'var(--p-500)'}; display: flex; justify-content: space-between;">
-        <div style="flex: 1;">
-          <strong>${a.author_name}</strong> <small style="text-transform: uppercase;">(${a.author_role})</small>
+        <div>
+          <strong>${a.author_name}</strong>
           <p style="margin-top: 10px;">${escapeHTML(a.body)}</p>
-          ${isAsk && !q.best_answer_id ? `<button onclick="handleMarkBest('${a.id}', '${a.author_id}')" class="btn glass-card" style="font-size: 0.6rem; color: #10b981; margin-top: 1rem;">Mark as Best</button>` : ''}
+          ${isAsk && !q.best_answer_id ? `<button onclick="handleMarkBest('${a.id}', '${a.author_id}')" class="btn glass-card" style="font-size: 0.6rem; color: #10b981; margin-top: 1rem;">Mark Best</button>` : ''}
         </div>
         <div style="text-align: center;">
           <button onclick="handleUpvote('${a.id}', '${a.author_id}')" class="btn-icon glass-card"><i data-lucide="arrow-big-up" style="width: 18px; color: var(--p-500);"></i></button>
@@ -458,7 +393,5 @@ function renderQuestionDetail() {
       </div>
     `;
   });
-  const qForm = document.getElementById('qd-form');
-  qForm.style.display = (session && (q.asker_id === session.user.id || q.answers.some(ans => ans.author_id === session.user.id))) ? 'none' : 'block';
   lucide.createIcons();
 }
