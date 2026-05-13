@@ -99,7 +99,10 @@ async function handleAuth(e) {
 }
 
 async function loginWithGoogle() {
-    const { error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+    const { error } = await db.auth.signInWithOAuth({ 
+        provider: 'google', 
+        options: { redirectTo: 'https://azanabdullah2752012-ui.github.io/scholarQ/' } 
+    });
     if (error) toast(error.message);
 }
 
