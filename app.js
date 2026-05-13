@@ -1,4 +1,4 @@
-// ScholarQ - Institutional Elite Edition (V114.2 Stability Patch)
+// ScholarQ - Academy Life Edition (V115)
 const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -8,17 +8,9 @@ let currentSearch = '', currentFilter = 'All';
 
 document.addEventListener('DOMContentLoaded', async () => {
   lucide.createIcons();
-  
-  // 1. BOOT SEQUENCE
   const { data: { session: s } } = await supabaseClient.auth.getSession();
   await handleSessionUpdate(s);
-  
-  // 2. AUTH STATE LISTENER
-  supabaseClient.auth.onAuthStateChange(async (e, s) => {
-    if (e === 'SIGNED_IN' || e === 'SIGNED_OUT') await handleSessionUpdate(s);
-  });
-
-  // 3. EVENT BINDING
+  supabaseClient.auth.onAuthStateChange(async (e, s) => { if (e === 'SIGNED_IN' || e === 'SIGNED_OUT') await handleSessionUpdate(s); });
   document.getElementById('auth-form')?.addEventListener('submit', handleAuth);
   document.getElementById('ask-form')?.addEventListener('submit', handleAsk);
   document.getElementById('answer-form')?.addEventListener('submit', handleAnswer);
@@ -38,8 +30,6 @@ async function handleSessionUpdate(newS) {
   } else {
     navigateTo('auth');
   }
-  
-  // REVEAL ACADEMY OS
   setTimeout(() => {
     const shield = document.getElementById('init-shield');
     const app = document.getElementById('app');
@@ -58,14 +48,11 @@ async function fetchProfile() {
 function navigateTo(view, param = null) {
   if (!session && view !== 'auth') view = 'auth';
   currentView = view;
-  
   document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
   const target = document.getElementById(`view-${view}`);
   if (target) target.style.display = (view === 'auth' ? 'flex' : 'block');
-  
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`nav-${view}`)?.classList.add('active');
-
   if (view === 'home') renderHome();
   if (view === 'leaderboard') renderLeaderboard();
   if (view === 'profile') renderProfile();
@@ -89,23 +76,46 @@ function renderHome() {
   });
   
   if(document.getElementById('pulse-doubts')) document.getElementById('pulse-doubts').innerText = questions.length;
+  
+  const greeting = getGreeting();
+  const welcomeHTML = `<h2 style="font-size:1.8rem; margin-bottom:24px; font-weight:800; letter-spacing:-1px;">${greeting}, <span style="color:var(--p-500);">${profile.name}</span></h2>`;
 
-  cont.innerHTML = list.map(q => `
-    <div class="card-elite" style="cursor:pointer;" onclick="navigateTo('question', '${q.id}')">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; position:relative; z-index:2;">
-        <span class="subject-chip">${q.subject}</span>
-        <span style="font-size:0.75rem; color:#94a3b8; font-weight:600;">${getTimeAgo(q.created_at)}</span>
+  if (list.length === 0) {
+    cont.innerHTML = welcomeHTML + `
+      <div class="empty-state">
+        <div style="width:64px; height:64px; background:rgba(255,255,255,0.02); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:24px;">
+            <i data-lucide="radio" style="color:var(--p-500); width:32px;"></i>
+        </div>
+        <h3 style="margin-bottom:8px;">Academy Signal Idle</h3>
+        <p style="color:var(--text-secondary); max-width:300px; margin:0 auto 24px;">The academic network is quiet. Be the first to broadcast a doubt to the Academy Hub.</p>
+        <button onclick="navigateTo('ask')" class="btn-primary" style="padding:10px 20px; font-size:0.8rem;">Broadcast Doubt</button>
       </div>
-      <h3 style="font-size:1.2rem; font-weight:800; margin-bottom:8px; line-height:1.4; position:relative; z-index:2; color:white;">${q.title}</h3>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; font-size:0.8rem; color:#94a3b8; position:relative; z-index:2;">
-        <span style="display:flex; align-items:center; gap:8px;"><i data-lucide="user" style="width:14px; opacity:0.6;"></i> By ${q.asker_name}</span>
-        <span style="font-weight:800; color:#6366f1; display:flex; align-items:center; gap:6px;">
-          <i data-lucide="message-square" style="width:16px;"></i> ${q.answers?.length || 0} SOLUTIONS
-        </span>
+    `;
+  } else {
+    cont.innerHTML = welcomeHTML + list.map(q => `
+      <div class="card-elite" style="cursor:pointer; margin-bottom:16px;" onclick="navigateTo('question', '${q.id}')">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; position:relative; z-index:2;">
+          <span class="subject-chip">${q.subject}</span>
+          <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span>
+        </div>
+        <h3 style="font-size:1.2rem; font-weight:800; margin-bottom:8px; line-height:1.4; position:relative; z-index:2;">${q.title}</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; font-size:0.8rem; color:var(--text-secondary); position:relative; z-index:2;">
+          <span style="display:flex; align-items:center; gap:8px;"><i data-lucide="user" style="width:14px; opacity:0.6;"></i> By ${q.asker_name}</span>
+          <span style="font-weight:800; color:var(--p-500); display:flex; align-items:center; gap:6px;">
+            <i data-lucide="message-square" style="width:16px;"></i> ${q.answers?.length || 0} SOLUTIONS
+          </span>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+  }
   lucide.createIcons();
+}
+
+function getGreeting() {
+  const hr = new Date().getHours();
+  if (hr < 12) return "Good Morning";
+  if (hr < 18) return "Good Afternoon";
+  return "Good Evening";
 }
 
 function handleSearch(val) { currentSearch = val; renderHome(); }
@@ -151,20 +161,7 @@ function renderLeaderboard() {
   const cont = document.getElementById('view-leaderboard');
   cont.innerHTML = '<div style="padding:40px; text-align:center; opacity:0.5;">Ranking Academy Leaders...</div>';
   supabaseClient.from('users').select('*').order('points', { ascending: false }).limit(20).then(({data}) => {
-    if(data) cont.innerHTML = `
-      <h1 style="font-size:2.5rem; margin-bottom:40px; font-weight:800; letter-spacing:-1.5px; color:white;">Academy Leaders</h1>
-      <div style="display:grid; gap:16px;">
-        ${data.map((u, i) => `
-          <div class="card-elite" style="display:flex; justify-content:space-between; align-items:center; padding:20px 32px;">
-            <div style="display:flex; gap:32px; align-items:center; position:relative; z-index:2;">
-              <div style="font-size:1.5rem; font-weight:800; color:#475569; width:40px; font-family:'Outfit';">#${i+1}</div>
-              <strong style="font-size:1.1rem; color:white;">${u.name}</strong>
-            </div>
-            <div style="color:#6366f1; font-weight:800; font-size:1.2rem; font-family:'Outfit'; position:relative; z-index:2;">${u.points} PTS</div>
-          </div>
-        `).join('')}
-      </div>
-    `;
+    if(data) cont.innerHTML = `<h1 style="font-size:2.5rem; margin-bottom:40px; font-weight:800; letter-spacing:-1.5px;">Academy Leaders</h1><div style="display:grid; gap:16px;">${data.map((u, i) => `<div class="card-elite" style="display:flex; justify-content:space-between; align-items:center; padding:20px 32px;"><div style="display:flex; gap:32px; align-items:center; position:relative; z-index:2;"><div style="font-size:1.5rem; font-weight:800; color:var(--text-muted); width:40px; font-family:'Outfit';">#${i+1}</div><strong>${u.name}</strong></div><div style="color:var(--p-500); font-weight:800; font-size:1.2rem; font-family:'Outfit'; position:relative; z-index:2;">${u.points} PTS</div></div>`).join('')}</div>`;
   });
 }
 
@@ -180,25 +177,8 @@ let currentQuestionId = null;
 function renderQuestionDetail(id) {
   currentQuestionId = id;
   const q = questions.find(x => x.id === id); if (!q) return;
-  document.getElementById('qd-content').innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:24px; position:relative; z-index:2;">
-      <span class="subject-chip">${q.subject}</span>
-      <span style="font-size:0.8rem; color:#94a3b8; font-weight:600;">${getTimeAgo(q.created_at)}</span>
-    </div>
-    <h2 style="font-size:2rem; font-weight:800; line-height:1.3; position:relative; z-index:2; color:white;">${q.title}</h2>
-    <p style="margin-top:32px; font-size:1.15rem; line-height:1.7; color:white; position:relative; z-index:2;">${q.body}</p>
-    <div style="margin-top:40px; font-size:0.85rem; color:#94a3b8; position:relative; z-index:2; border-top:1px solid rgba(255,255,255,0.05); padding-top:24px;">
-      Broadcasted by <strong style="color:white;">${q.asker_name}</strong>
-    </div>
-  `;
-  document.getElementById('qd-answers').innerHTML = `
-    <h3 style="margin-top:48px; margin-bottom:24px; font-size:1.4rem; color:white;">${q.answers?.length || 0} Professional Solutions</h3>
-    ${(q.answers || []).map(a => `
-      <div class="card-elite" style="margin-top:16px;">
-        <div style="font-weight:800; margin-bottom:12px; font-size:0.9rem; color:#6366f1; font-family:'Outfit'; position:relative; z-index:2;">${a.author_name}</div>
-        <p style="line-height:1.7; font-size:1.05rem; position:relative; z-index:2; color:white;">${a.body}</p>
-      </div>`).join('')}
-  `;
+  document.getElementById('qd-content').innerHTML = `<div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:24px; position:relative; z-index:2;"><span class="subject-chip">${q.subject}</span><span style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span></div><h2 style="font-size:2rem; font-weight:800; line-height:1.3; position:relative; z-index:2;">${q.title}</h2><p style="margin-top:32px; font-size:1.15rem; line-height:1.7; color:white; position:relative; z-index:2;">${q.body}</p><div style="margin-top:40px; font-size:0.85rem; color:var(--text-secondary); position:relative; z-index:2; border-top:1px solid var(--border); padding-top:24px;">Broadcasted by <strong style="color:white;">${q.asker_name}</strong></div>`;
+  document.getElementById('qd-answers').innerHTML = `<h3 style="margin-top:48px; margin-bottom:24px; font-size:1.4rem;">${q.answers?.length || 0} Solutions</h3>` + (q.answers || []).map(a => `<div class="card-elite" style="margin-top:16px;"><div style="font-weight:800; margin-bottom:12px; font-size:0.9rem; color:var(--p-500); font-family:'Outfit'; position:relative; z-index:2;">${a.author_name}</div><p style="line-height:1.7; font-size:1.05rem; position:relative; z-index:2;">${a.body}</p></div>`).join('');
   lucide.createIcons();
 }
 
