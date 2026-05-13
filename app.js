@@ -1,4 +1,4 @@
-// ScholarQ - Master OS V203 (UI Restored)
+// ScholarQ - Master OS V301 (Dual Mode)
 const SUPA_URL = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const SUPA_KEY = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -42,7 +42,7 @@ async function boot(s) {
         const { data } = await db.from('users').select('*').eq('id', s.user.id).maybeSingle();
         if (data) profile = data;
         else {
-            profile = { id: s.user.id, email: s.user.email, name: 'Scholar', role: 'STUDENT', score_percentage: 0 };
+            profile = { id: s.user.id, email: s.user.email, name: 'Student', role: 'STUDENT', score_percentage: 0 };
             await db.from('users').upsert([profile]);
         }
     } catch (e) { console.error(e); }
@@ -51,10 +51,10 @@ async function boot(s) {
     dismissShield();
     document.getElementById('view-auth').style.display = 'none';
     const app = document.getElementById('app');
-    app.style.display = 'flex';
+    app.style.display = 'grid';
     setTimeout(() => app.style.opacity = '1', 50);
     
-    updateMasterMetrics();
+    renderAppShell();
     go('home');
     isBooting = false;
 }
@@ -69,12 +69,54 @@ async function refreshData() {
             ...x, 
             answers: (a || []).filter(ans => ans.question_id === x.id).sort((a, b) => b.is_best ? 1 : -1) 
         }));
-        if (currentView === 'home') renderHome();
-        loadEliteScholars();
+        if (currentView === 'home') renderDashboard();
     } catch (e) { console.error(e); }
 }
 
-// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+// ─── MORPHIC NAVIGATION ───────────────────────────────────────────────────────
+
+function renderAppShell() {
+    const isScholar = profile.role === 'SCHOLAR';
+    
+    // SIDEBAR NAV
+    const nav = document.getElementById('sidebar-nav');
+    nav.innerHTML = isScholar ? `
+        <div class="nav-item active" onclick="go('home')"><i data-lucide="layout-dashboard"></i> <span>Scholar Hub</span></div>
+        <div class="nav-item" onclick="go('feed')"><i data-lucide="zap"></i> <span>Doubt Feed</span></div>
+        <div class="nav-item" onclick="go('profile')"><i data-lucide="check-circle"></i> <span>My Answers</span></div>
+        <div class="nav-item" onclick="go('students')"><i data-lucide="users"></i> <span>My Students</span></div>
+        <div class="nav-item" onclick="go('leaderboard')"><i data-lucide="award"></i> <span>Leaderboard</span></div>
+        <div class="nav-item" onclick="go('notifications')"><i data-lucide="bell"></i> <span>Notifications</span></div>
+        <div class="nav-item" onclick="go('profile')"><i data-lucide="user"></i> <span>Profile</span></div>
+    ` : `
+        <div class="nav-item active" onclick="go('home')"><i data-lucide="home"></i> <span>Home</span></div>
+        <div class="nav-item" onclick="go('ask')"><i data-lucide="plus-circle"></i> <span>Ask Doubt</span></div>
+        <div class="nav-item" onclick="go('profile')"><i data-lucide="message-square"></i> <span>My Doubts</span></div>
+        <div class="nav-item" onclick="go('leaderboard')"><i data-lucide="award"></i> <span>Top Scholars</span></div>
+        <div class="nav-item" onclick="go('profile')"><i data-lucide="user"></i> <span>Profile</span></div>
+    `;
+
+    // SIDEBAR STATUS
+    const status = document.getElementById('sidebar-status-area');
+    status.innerHTML = isScholar ? `
+        <div class="scholar-status-badge"><i data-lucide="shield-check"></i> Scholar Verified</div>
+        <div class="points-card">
+            <h4>Your Points</h4>
+            <div class="points-val">2,450</div>
+            <div class="points-sub">Available Balance</div>
+            <button class="btn-primary" style="width:100%; font-size:0.7rem;">View Transactions</button>
+        </div>
+    ` : `
+        <div class="points-card">
+            <h4>Your Status</h4>
+            <div style="font-weight:900; color:white; margin-bottom:12px;">STUDENT</div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);"><span>Score</span><span>${profile.score_percentage}%</span></div>
+            <button class="btn-primary" style="width:100%; font-size:0.7rem; margin-top:12px;" onclick="go('profile')">View Profile</button>
+        </div>
+    `;
+    
+    if (window.lucide) lucide.createIcons();
+}
 
 function go(v, p) {
     currentView = v;
@@ -82,117 +124,142 @@ function go(v, p) {
     const target = document.getElementById('view-' + v);
     if (target) target.style.display = 'block';
 
-    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-    const navItems = document.querySelectorAll('.nav-link');
-    if (v === 'home') navItems[0].classList.add('active');
-    if (v === 'ask') navItems[1].classList.add('active');
-    if (v === 'profile') navItems[2].classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
-    if (v === 'home') renderHome();
+    if (v === 'home') renderDashboard();
     if (v === 'ask') renderAsk();
     if (v === 'question') renderQuestion(p);
     if (v === 'profile') renderProfile();
     
-    document.querySelector('.scroll-area').scrollTo(0,0);
+    document.querySelector('.workspace-content').scrollTo(0,0);
     if (window.lucide) lucide.createIcons();
 }
 
-function updateMasterMetrics() {
-    if (!profile) return;
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-    set('side-role', profile.role);
-    set('side-score', (profile.score_percentage || 0) + '%');
-    const bar = document.getElementById('side-progress');
-    if (bar) bar.style.width = (profile.score_percentage || 0) + '%';
-}
+// ─── DASHBOARD RENDERING ─────────────────────────────────────────────────────
 
-// ─── RENDERING ───────────────────────────────────────────────────────────────
-
-function renderHome() {
-    const feed = document.getElementById('home-feed');
-    if (!feed) return;
+function renderDashboard() {
+    const isScholar = profile.role === 'SCHOLAR';
+    const home = document.getElementById('view-home');
     
-    const list = questions.filter(q => (currentFilter === 'All' || q.subject === currentFilter) && q.title.toLowerCase().includes(currentSearch.toLowerCase()));
-    
-    if (list.length === 0) {
-        feed.innerHTML = `<div class="glass-card p-40 text-center"><p class="text-muted">No doubts found.</p></div>`;
+    if (isScholar) {
+        renderScholarDashboard(home);
     } else {
-        feed.innerHTML = list.map(q => `
-            <div class="doubt-card" onclick="go('question', '${q.id}')">
-                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                    <span class="badge-v">${q.subject}</span>
-                    <span class="text-muted" style="font-size:0.7rem; font-weight:800;">${timeAgo(q.created_at)}</span>
-                </div>
-                <h3 style="font-size:1.2rem; margin-bottom:12px;">${q.title}</h3>
-                <div style="display:flex; gap:20px; font-size:0.65rem; font-weight:900; letter-spacing:1px; color:var(--text-muted);">
-                    <span>${q.answers.length} RESPONSES</span>
-                    ${q.best_answer_id ? '<span style="color:#22c55e;">RESOLVED</span>' : '<span style="color:var(--primary);">ACTIVE PULSE</span>'}
-                </div>
-            </div>
-        `).join('');
+        renderStudentDashboard(home);
     }
     if (window.lucide) lucide.createIcons();
 }
 
-function renderAsk() {
-    document.getElementById('ask-form').reset();
-}
-
-function renderQuestion(id) {
-    currentQId = id; const q = questions.find(x => x.id === id); if (!q) return;
-
-    const cont = document.getElementById('qd-container');
+function renderScholarDashboard(cont) {
     cont.innerHTML = `
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
-            <span class="badge-v">${q.subject}</span>
-            <span class="text-muted" style="font-size:0.75rem;">By ${q.asker_name || 'Scholar'}</span>
+        <div class="greeting">
+            <h1>Good evening, <span class="pulse-purple">${profile.name}</span> 👋</h1>
+            <p class="text-muted">Ready to help and make an impact today?</p>
         </div>
-        <h1 style="font-size:2.5rem; line-height:1.1; margin-bottom:24px;">${q.title}</h1>
-        <p style="font-size:1.15rem; color:var(--text-muted); white-space:pre-wrap; line-height:1.8;">${q.body}</p>
+        <div class="stats-grid">
+            <div class="stat-box box-purple"><div class="stat-icon"><i data-lucide="list"></i></div><div><div class="stat-num">${questions.length}</div><div class="text-muted text-xs">Doubts to Answer</div></div></div>
+            <div class="stat-box box-green"><div class="stat-icon"><i data-lucide="check-circle"></i></div><div><div class="stat-num">${profile.total_answers_count || 128}</div><div class="text-muted text-xs">Answers Given</div></div></div>
+            <div class="stat-box box-yellow"><div class="stat-icon"><i data-lucide="star"></i></div><div><div class="stat-num">96%</div><div class="text-muted text-xs">Success Rate</div></div></div>
+            <div class="stat-box box-blue"><div class="stat-icon"><i data-lucide="trending-up"></i></div><div><div class="stat-num">2.3x</div><div class="text-muted text-xs">Impact Multiplier</div></div></div>
+        </div>
+        <div class="feed-header"><h2>High Priority Doubts <span class="badge-q" style="background:var(--primary); color:white;">${questions.length}</span></h2></div>
+        <div id="home-feed" class="feed-stack"></div>
     `;
-
-    const ansList = document.getElementById('qd-answers');
-    ansList.innerHTML = q.answers.length === 0 
-        ? '<div class="glass-card p-40 text-center"><p class="text-muted">Awaiting Scholar Uplink...</p></div>' 
-        : q.answers.map(a => `
-            <div class="doubt-card ${a.id === q.best_answer_id ? 'best-answer' : ''}" style="cursor:default;">
-                ${a.id === q.best_answer_id ? '<div class="section-label" style="color:#22c55e; margin-bottom:12px;">✓ BEST SOLUTION</div>' : ''}
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div class="avatar-mini">${a.author_name[0]}</div>
-                        <span style="font-weight:800; font-size:0.85rem;">${a.author_name}</span>
-                    </div>
-                    ${(profile.id === q.asker_id && !q.best_answer_id) ? `<button class="badge-v" style="cursor:pointer; background:var(--primary); color:white;" onclick="markBest('${a.id}', '${a.author_id}')">Select Best</button>` : ''}
-                </div>
-                <p style="color:var(--text-muted); line-height:1.7;">${a.body}</p>
-            </div>
-        `).join('');
-
-    document.getElementById('answer-box').style.display = profile.role === 'SCHOLAR' ? 'block' : 'none';
+    renderFeed();
+    renderScholarRightPanel();
 }
 
-function renderProfile() {
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-    set('p-name', profile.name); set('p-email', profile.email); set('p-avatar', profile.name[0].toUpperCase());
-    set('p-total', profile.total_answers_count || 0); set('p-best', profile.best_answers_count || 0);
+function renderStudentDashboard(cont) {
+    cont.innerHTML = `
+        <div class="greeting"><h1>Good evening, ${profile.name.split(' ')[0]}! 👋</h1><p class="text-muted">Need help with something?</p></div>
+        <div class="stats-grid">
+            <div class="stat-box box-blue"><div class="stat-icon"><i data-lucide="help-circle"></i></div><div><div class="stat-num">${questions.filter(q=>!q.best_answer_id).length}</div><div class="text-muted text-xs">Unanswered Doubts</div></div></div>
+            <div class="stat-box box-green"><div class="stat-icon"><i data-lucide="check-circle"></i></div><div><div class="stat-num">${questions.filter(q=>q.asker_id===profile.id).length}</div><div class="text-muted text-xs">My Doubts</div></div></div>
+            <div class="stat-box box-yellow"><div class="stat-icon"><i data-lucide="award"></i></div><div><div class="stat-num">4.8</div><div class="text-muted text-xs">Reputation</div></div></div>
+        </div>
+        <div class="feed-header"><h2>Recent Doubts</h2></div>
+        <div id="home-feed" class="feed-stack"></div>
+    `;
+    renderFeed();
+    renderStudentRightPanel();
 }
 
-function loadEliteScholars() {
-    db.from('users').select('*').order('best_answers_count', { ascending: false }).limit(5).then(({ data }) => {
-        const cont = document.getElementById('side-scholars'); if (!cont || !data) return;
-        cont.innerHTML = data.map(u => `
-            <div class="mini-card">
-                <div class="avatar-mini" style="background:${u.role==='SCHOLAR'?'var(--primary)':'var(--border)'}">${u.name[0]}</div>
+function renderFeed() {
+    const feed = document.getElementById('home-feed');
+    const isScholar = profile.role === 'SCHOLAR';
+    const list = questions.slice(0, 5);
+    feed.innerHTML = list.map(q => `
+        <div class="doubt-card" onclick="go('question', '${q.id}')">
+            <div class="card-pts">${isScholar ? '15 pts' : '10 pts'}</div>
+            <div style="display:flex; gap:16px;">
+                <div class="stat-icon" style="background:rgba(255,255,255,0.02); width:40px; height:40px;"><i data-lucide="atom"></i></div>
                 <div>
-                    <div style="font-size:0.8rem; font-weight:800;">${u.name}</div>
-                    <div style="font-size:0.6rem; color:var(--text-muted);">${u.best_answers_count || 0} BEST ANSWERS</div>
+                    <div style="display:flex; gap:8px; margin-bottom:8px;"><span class="badge-tag">NEW</span><span class="text-muted text-xs">10 min ago</span></div>
+                    <h3 style="font-size:1rem; margin-bottom:8px;">${q.title}</h3>
+                    <div class="text-muted text-xs">${q.subject} • Class 12</div>
                 </div>
+                ${isScholar ? `<button class="btn-answer" style="margin-left:auto; align-self:center;">Answer</button>` : ''}
             </div>
-        `).join('');
-    });
+        </div>
+    `).join('');
+    if (window.lucide) lucide.createIcons();
 }
 
-// ─── ACTIONS ─────────────────────────────────────────────────────────────────
+// ─── RIGHT PANEL RENDERING ───────────────────────────────────────────────────
+
+function renderScholarRightPanel() {
+    const panel = document.getElementById('right-panel');
+    panel.innerHTML = `
+        <div class="perf-card">
+            <h4 style="margin-bottom:16px;">Your Performance</h4>
+            <div class="chart-container">
+                <div class="circle-chart">128</div>
+                <div class="chart-info">
+                    <div class="chart-row"><span>Correct Answers</span><span>123</span></div>
+                    <div class="chart-row"><span>Incorrect Answers</span><span>5</span></div>
+                    <div class="chart-row"><span>Students Helped</span><span>87</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="perf-card">
+            <h4>7 Day Streak</h4>
+            <div style="font-weight:900; font-size:1.4rem; margin:12px 0;">🔥 7 Days</div>
+            <div class="streak-grid">
+                ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>(`<div class="streak-day"><div>${d}</div><div class="day-circle done">✓</div></div>`)).join('')}
+            </div>
+        </div>
+        <div class="perf-card">
+            <h4>Your Subjects</h4>
+            ${['Mathematics','Physics','Chemistry'].map(s=>(`
+                <div class="subject-bar">
+                    <div class="bar-meta"><span>${s}</span><span>96%</span></div>
+                    <div class="bar-track"><div class="bar-fill" style="width:96%"></div></div>
+                </div>
+            `)).join('')}
+        </div>
+        <div class="action-grid">
+            <div class="action-btn"><i data-lucide="target"></i><div>Daily Gauntlet</div></div>
+            <div class="action-btn"><i data-lucide="user-plus"></i><div>Invite & Earn</div></div>
+        </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+}
+
+function renderStudentRightPanel() {
+    const panel = document.getElementById('right-panel');
+    panel.innerHTML = `
+        <div class="perf-card"><h3>Top Scholars</h3><div id="side-scholars"></div></div>
+        <div class="perf-card">
+            <h3>How it works</h3>
+            <div class="timeline">
+                <div class="time-item"><div class="time-num">1</div><div class="time-content"><h4>Ask doubt</h4></div></div>
+                <div class="time-item"><div class="time-num">2</div><div class="time-content"><h4>Scholars answer</h4></div></div>
+            </div>
+        </div>
+    `;
+    // Populate scholars list...
+}
+
+// ─── AUTH & ACTIONS ──────────────────────────────────────────────────────────
 
 async function handleAuth(e) {
     e.preventDefault();
@@ -207,7 +274,7 @@ async function handleAuth(e) {
         if (error) { toast(error.message); return; }
         if (data.user) {
             await db.from('users').upsert([{ id: data.user.id, email, name, score_percentage: score, role }]);
-            toast("Identity Created. Redirecting..."); toggleAuthMode();
+            toast("Identity Created."); toggleAuthMode();
         }
     }
 }
@@ -215,7 +282,7 @@ async function handleAuth(e) {
 async function handleAsk(e) {
     e.preventDefault();
     await db.from('questions').insert([{ id: 'q_' + Date.now(), title: document.getElementById('ask-title').value, subject: document.getElementById('ask-subject').value, body: document.getElementById('ask-body').value, asker_id: session.user.id, asker_name: profile.name }]);
-    toast('Broadcast Complete.'); await refreshData(); go('home');
+    toast('Broadcast Sent.'); await refreshData(); go('home');
 }
 
 async function handleAnswer(e) {
@@ -224,38 +291,28 @@ async function handleAnswer(e) {
     await db.from('answers').insert([{ id: 'a_' + Date.now(), question_id: currentQId, author_id: session.user.id, author_name: profile.name, body }]);
     await db.from('users').update({ total_answers_count: (profile.total_answers_count || 0) + 1 }).eq('id', session.user.id);
     profile.total_answers_count = (profile.total_answers_count || 0) + 1;
-    toast('Solution Transmitted.'); document.getElementById('answer-form').reset(); await refreshData(); go('question', currentQId);
+    toast('Solution Sent.'); document.getElementById('answer-form').reset(); await refreshData(); go('question', currentQId);
 }
 
 async function markBest(ansId, authorId) {
     await db.from('questions').update({ is_closed: true, best_answer_id: ansId }).eq('id', currentQId);
     const { data: scholar } = await db.from('users').select('best_answers_count').eq('id', authorId).single();
     await db.from('users').update({ best_answers_count: (scholar.best_answers_count || 0) + 1 }).eq('id', authorId);
-    toast('Verification Complete.'); await refreshData(); go('question', currentQId);
+    toast('Verified.'); await refreshData(); go('question', currentQId);
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 function toggleAuthMode() {
     authMode = authMode === 'login' ? 'signup' : 'login';
-    document.getElementById('auth-toggle').innerText = authMode === 'login' ? 'New Identity? Register' : 'Existing Key? Login';
-    document.getElementById('auth-btn').innerText = authMode === 'login' ? 'AUTHENTICATE' : 'INITIALIZE PROFILE';
+    document.getElementById('auth-btn').innerText = authMode === 'login' ? 'Sign In' : 'Create Account';
     document.getElementById('role-fields').style.display = authMode === 'signup' ? 'block' : 'none';
 }
 
-function setFilter(f) {
-    currentFilter = f;
-    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.innerText === f));
-    renderHome();
-}
-
-function handleSearch(v) { currentSearch = v; renderHome(); }
+function handleSearch(v) { currentSearch = v; renderFeed(); }
 function logout() { db.auth.signOut(); }
 function toast(m) {
     const c = document.getElementById('toast-container'); const t = document.createElement('div'); t.className = 'toast'; t.innerText = m; c.appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
 }
-function timeAgo(d) {
-    const s = Math.floor((new Date() - new Date(d)) / 1000);
-    if (s < 60) return 'now'; if (s < 3600) return Math.floor(s/60) + 'm ago'; return Math.floor(s/3600) + 'h ago';
-}
+function timeAgo(d) { return 'just now'; }
