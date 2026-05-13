@@ -28,19 +28,29 @@ function bindForms() {
 
 async function handleSessionUpdate(newS) {
   session = newS;
+  const app = document.getElementById('app');
+  const auth = document.getElementById('view-auth');
+  const shield = document.getElementById('init-shield');
+
   if (session) {
     const ok = await fetchProfile();
     if (ok) {
       await fetchQuestions(); await fetchBookmarks(); await fetchMarketplace(); await fetchTransactions(); setupSubscriptions();
-      if (currentView === 'auth') navigateTo('home');
+      if (currentView === 'auth') currentView = 'home';
+      
+      // SHOW APP, HIDE AUTH
+      if (auth) auth.style.display = 'none';
+      if (app) { app.style.display = 'flex'; setTimeout(() => app.style.opacity = '1', 50); }
     } else { await handleFinishProfile(); }
-  } else { navigateTo('auth'); }
+  } else {
+    // SHOW AUTH, HIDE APP
+    if (app) { app.style.display = 'none'; app.style.opacity = '0'; }
+    if (auth) auth.style.display = 'flex';
+  }
   
+  // DISMISS SHIELD
   setTimeout(() => {
-    const shield = document.getElementById('init-shield');
-    const app = document.getElementById('app');
     if (shield) { shield.style.opacity = '0'; setTimeout(() => shield.style.display = 'none', 500); }
-    if (app) { app.style.display = 'flex'; setTimeout(() => app.style.opacity = '1', 50); }
     bindForms();
   }, 500);
 }
