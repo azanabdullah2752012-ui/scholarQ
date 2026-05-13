@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarQ | Institutional Entrance</title>
+    <title>ScholarQ | Master Network</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
@@ -11,132 +11,119 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* ScholarQ Onboarding System - Institutional Standard */
+        /* ScholarQ Singularity V6.0 - The Final Architecture */
         :root {
-            --bg: #0f1115; --card: #15181e; --border: #24292f;
-            --primary: #4f46e5; --primary-hover: #4338ca;
-            --text-main: #f1f5f9; --text-muted: #8b949e;
-            --student: #64748b; --scholar: #4f46e5; --elite: #10b981;
-            --space: 8px;
+            --bg: #0f1115; --sidebar: #15181e; --card: #1c2128; --border: #2d333b;
+            --primary: #4f46e5; --primary-glow: rgba(79, 70, 229, 0.1);
+            --success: #10b981; --warning: #f59e0b;
+            --text: #f1f5f9; --text-muted: #8b949e;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        body { background: var(--bg); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
-        h1, h2, h3, .brand-logo { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; }
+        body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+        h1, h2, h3, .brand-logo { font-family: 'Outfit', sans-serif; }
 
-        /* SPLIT SCREEN LAYOUT */
-        .onboarding-split { display: flex; width: 100%; height: 100%; }
-        
-        /* LEFT: BRANDING */
-        .brand-section { flex: 1.2; background: radial-gradient(circle at top right, #1e1b4b 0%, #0c0e12 100%); padding: 64px 80px; display: flex; flex-direction: column; position: relative; border-right: 1px solid var(--border); }
-        .logo-wrap { display: flex; align-items: center; gap: 12px; font-size: 1.8rem; margin-bottom: auto; }
-        .vision-text { margin: auto 0; max-width: 500px; }
-        .vision-text h1 { font-size: 3.5rem; line-height: 1.1; margin-bottom: 24px; font-weight: 900; }
-        .vision-text p { font-size: 1.1rem; color: var(--text-muted); line-height: 1.6; }
+        /* ENTRANCE SPLIT */
+        #auth-view { display: none; width: 100%; height: 100vh; }
+        .auth-left { flex: 1.2; background: radial-gradient(circle at top right, #1e1b4b 0%, #0c0e12 100%); padding: 64px 80px; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .auth-right { flex: 0.8; background: #0c0e12; display: flex; align-items: center; justify-content: center; padding: 40px; }
+        .auth-card { width: 100%; max-width: 420px; }
 
-        /* RIGHT: AUTH CARD */
-        .auth-section { flex: 0.8; display: flex; align-items: center; justify-content: center; padding: 40px; background: #0c0e12; }
-        .auth-card { width: 100%; max-width: 440px; }
-        .welcome-header { margin-bottom: 40px; }
-        .welcome-header h2 { font-size: 2.2rem; margin-bottom: 8px; }
-        .welcome-header p { color: var(--text-muted); }
+        /* DASHBOARD SHELL */
+        #app-view { display: none; grid-template-columns: 260px 1fr 320px; height: 100vh; opacity: 0; transition: 0.5s; }
+        aside.sidebar { background: var(--sidebar); border-right: 1px solid var(--border); padding: 32px 24px; display: flex; flex-direction: column; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; color: var(--text-muted); cursor: pointer; transition: 0.1s; font-weight: 500; }
+        .nav-item.active { background: var(--primary-glow); color: var(--primary); }
 
-        /* FORM ELEMENTS */
-        .input-group { margin-bottom: 24px; }
-        .input-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-        .field { width: 100%; background: #0f1115; border: 1px solid var(--border); padding: 16px; border-radius: 12px; color: white; outline: none; transition: 0.2s; font-size: 1rem; }
-        .field:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
-        
-        /* ROLE PREVIEW BADGE */
-        .role-preview { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 8px 14px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.3s; opacity: 0; transform: translateY(-5px); }
-        .role-preview.visible { opacity: 1; transform: translateY(0); }
-        .rp-student { background: rgba(100, 116, 139, 0.1); color: var(--student); }
-        .rp-scholar { background: rgba(79, 70, 229, 0.1); color: var(--scholar); }
-        .rp-elite { background: rgba(16, 185, 129, 0.1); color: var(--elite); }
+        /* INTERFACE ELEMENTS */
+        .field { width: 100%; background: #0f1115; border: 1px solid var(--border); padding: 16px; border-radius: 12px; color: white; outline: none; margin-bottom: 16px; }
+        .field:focus { border-color: var(--primary); }
+        .btn-primary { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .btn-primary:hover { transform: translateY(-2px); }
 
-        /* BUTTONS */
-        .btn-google { width: 100%; background: #1c2128; border: 1px solid var(--border); padding: 16px; border-radius: 12px; color: white; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: 0.15s; margin-bottom: 24px; }
-        .btn-google:hover { background: #262c36; }
-        .btn-primary { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 1rem; transition: 0.2s; }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; display: flex; align-items: center; gap: 16px; }
+        .doubt-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; }
+        .doubt-card:hover { border-color: var(--primary); transform: translateX(8px); }
 
-        .divider { display: flex; align-items: center; gap: 16px; margin: 32px 0; color: var(--text-muted); font-size: 0.8rem; }
-        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-        /* LOADING SHIELD */
-        #boot-loader { position: fixed; inset: 0; background: #0f1115; z-index: 10000; display: flex; align-items: center; justify-content: center; font-family: 'Outfit'; font-size: 2.5rem; color: var(--primary); }
-
-        @media (max-width: 1024px) {
-            .onboarding-split { flex-direction: column; overflow-y: auto; }
-            .brand-section { flex: none; padding: 40px; border-right: none; border-bottom: 1px solid var(--border); }
-            .auth-section { flex: none; padding: 40px 24px; }
-            .vision-text h1 { font-size: 2.5rem; }
-        }
+        #boot-screen { position: fixed; inset: 0; background: var(--bg); z-index: 100000; display: flex; align-items: center; justify-content: center; font-family: 'Outfit'; font-size: 3rem; color: var(--primary); transition: 0.5s; }
+        .hidden { display: none !important; }
+        .visible-flex { display: flex !important; }
+        .visible-grid { display: grid !important; }
     </style>
 </head>
 <body>
 
-    <div id="boot-loader">ScholarQ</div>
+    <div id="boot-screen">ScholarQ</div>
 
-    <div class="onboarding-split" id="auth-view" style="display: none;">
-        <!-- LEFT: BRANDING -->
-        <div class="brand-section">
-            <div class="logo-wrap"><i data-lucide="graduation-cap"></i> ScholarQ</div>
-            <div class="vision-text">
-                <h1>Organized Academic<br><span style="color: var(--primary);">Collaboration.</span></h1>
-                <p>Students ask doubts. Scholars provide trusted answers. Join the elite network designed for deep understanding and academic growth.</p>
+    <!-- VIEW 1: ENTRANCE -->
+    <div id="auth-view">
+        <div class="auth-left">
+            <div style="font-size: 1.8rem; font-weight: 900; margin-bottom: auto;"><i data-lucide="graduation-cap"></i> ScholarQ</div>
+            <div style="margin: auto 0;">
+                <h1 style="font-size: 4rem; line-height: 1; margin-bottom: 24px;">Academic<br><span style="color: var(--primary);">Network.</span></h1>
+                <p style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.6;">A professional ecosystem for institutional growth.</p>
             </div>
-            <div style="color: var(--text-muted); font-size: 0.8rem;">ESTABLISHED 2024 / INSTITUTIONAL EDITION</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted);">OS V6.0 / FINAL EDITION</div>
         </div>
-
-        <!-- RIGHT: AUTH -->
-        <div class="auth-section">
+        <div class="auth-right">
             <div class="auth-card">
-                <div class="welcome-header">
-                    <h2>Welcome to ScholarQ</h2>
-                    <p>Join the academic network today.</p>
-                </div>
-
-                <form id="onboarding-form">
-                    <div class="input-group">
-                        <label class="input-label">Full Identity Name</label>
-                        <input type="text" id="user-name" placeholder="Enter full name" class="field" required minlength="3">
+                <h2 style="font-size: 2.2rem; margin-bottom: 32px;">Initialize Session</h2>
+                <form id="auth-form">
+                    <div id="signup-fields" class="hidden">
+                        <input type="text" id="reg-name" placeholder="Full Identity Name" class="field">
+                        <input type="number" id="reg-score" placeholder="Academic Percentage %" class="field">
                     </div>
-
-                    <div class="input-group">
-                        <label class="input-label">Verified Academic Score (%)</label>
-                        <input type="number" id="user-score" placeholder="Ex: 94" class="field" required min="0" max="100" oninput="updateRolePreview(this.value)">
-                        <div id="role-badge" class="role-preview">
-                            <i data-lucide="shield-check" style="width: 14px;"></i>
-                            <span id="role-name">Student Access</span>
-                        </div>
-                    </div>
-
-                    <button type="button" class="btn-google" onclick="loginWithGoogle()">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo.svg" style="width: 18px;">
-                        Continue with Google
-                    </button>
-
-                    <div class="divider">OR CONTINUE WITH</div>
-
-                    <div class="input-group">
-                        <label class="input-label">Access Email</label>
-                        <input type="email" id="user-email" placeholder="email@institution.edu" class="field" required>
-                    </div>
-
-                    <div class="input-group">
-                        <label class="input-label">Access Token (Password)</label>
-                        <input type="password" id="user-password" placeholder="••••••••" class="field" required>
-                    </div>
-
-                    <button type="submit" id="submit-btn" class="btn-primary">Initialize Onboarding</button>
+                    <input type="email" id="auth-email" placeholder="Institutional Email" class="field" required>
+                    <input type="password" id="auth-password" placeholder="Access Token" class="field" required>
+                    <button type="submit" id="auth-btn" class="btn-primary">Authenticate</button>
                 </form>
-                <p style="text-align: center; margin-top: 24px; font-size: 0.9rem; color: var(--text-muted);">
-                    By continuing, you agree to the Academic Code of Conduct.
+                <p style="text-align: center; margin-top: 24px; color: var(--text-muted);">
+                    <a href="#" onclick="toggleAuth()" id="auth-toggle" style="color: var(--primary); text-decoration: none; font-weight: 700;">Create Account</a>
                 </p>
+                <button onclick="loginWithGoogle()" style="width:100%; background:#1c2128; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; font-weight:700; margin-top:16px; cursor:pointer;">Google SSO</button>
             </div>
         </div>
+    </div>
+
+    <!-- VIEW 2: MASTER DASHBOARD -->
+    <div id="app-view">
+        <aside class="sidebar">
+            <div style="font-size: 1.5rem; font-weight: 900; margin-bottom: 40px;"><i data-lucide="graduation-cap"></i> ScholarQ</div>
+            <nav id="nav-group" class="nav-group"></nav>
+            <div style="background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); margin-top: auto;">
+                <div id="role-pill" style="font-size: 0.7rem; font-weight: 800; color: var(--success); margin-bottom: 8px;">VERIFIED</div>
+                <div id="user-score-side" style="font-size: 1.1rem; font-weight: 800;">0%</div>
+            </div>
+            <div class="nav-item" style="margin-top: 20px;" onclick="terminate()"><i data-lucide="log-out"></i> Terminate</div>
+        </aside>
+        
+        <main style="display: flex; flex-direction: column; overflow: hidden;">
+            <header style="height: 72px; padding: 0 40px; display: flex; align-items: center; border-bottom: 1px solid var(--border);">
+                <input type="text" placeholder="Query Knowledge Database..." style="width: 500px; background: #1c2128; border: 1px solid var(--border); padding: 12px 16px; border-radius: 10px; color: white;">
+                <button class="btn-primary" style="width: auto; padding: 10px 24px; margin-left: auto;" onclick="go('ask')">New Doubt</button>
+            </header>
+            <div id="workspace" style="flex: 1; overflow-y: auto; padding: 40px;">
+                <div id="view-home">
+                    <h1 id="greeting" style="font-size: 2.2rem; margin-bottom: 40px;">System Status: Operational</h1>
+                    <div id="stats-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px;"></div>
+                    <div id="feed"></div>
+                </div>
+                <div id="view-ask" class="hidden">
+                    <h1>Broadcast New Doubt</h1>
+                    <form id="ask-form" style="margin-top: 32px; background: var(--card); padding: 32px; border-radius: 20px;">
+                        <input type="text" id="ask-title" placeholder="Query Title" class="field">
+                        <select id="ask-subj" class="field"><option>Mathematics</option><option>Physics</option></select>
+                        <textarea id="ask-body" placeholder="Specification..." class="field" style="min-height: 200px;"></textarea>
+                        <button type="submit" class="btn-primary">Initialize Broadcast</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <aside id="panel" style="background: var(--sidebar); border-left: 1px solid var(--border); padding: 32px 24px;">
+            <h3>Academic Context</h3>
+            <div id="activity-log" style="margin-top: 24px;"></div>
+        </aside>
     </div>
 
     <script>
@@ -144,84 +131,107 @@
         const SUPA_KEY = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
         const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
+        let session = null, profile = null, doubts = [], mode = 'login';
+
         document.addEventListener('DOMContentLoaded', async () => {
-            if (window.lucide) lucide.createIcons();
-            const { data: { session } } = await db.auth.getSession();
-            if (session) {
-                // Redirect if already logged in (Logic for dashboards)
-                console.log("Session active. Redirecting to Dashboard...");
-                window.location.href = './index.html'; // Assuming dashboard is here
-            } else {
-                document.getElementById('boot-loader').style.display = 'none';
-                document.getElementById('auth-view').style.display = 'flex';
-                if (window.lucide) lucide.createIcons();
-            }
-            document.getElementById('onboarding-form').addEventListener('submit', handleOnboarding);
+            const { data: { session: s } } = await db.auth.getSession();
+            if (s) boot(s); else showEntrance();
+            document.getElementById('auth-form').addEventListener('submit', handleAuth);
+            document.getElementById('ask-form').addEventListener('submit', handleAsk);
+            
+            // EMERGENCY KILL-SWITCH for boot loader
+            setTimeout(() => {
+                const b = document.getElementById('boot-screen');
+                if (b.style.display !== 'none') { b.style.opacity = '0'; setTimeout(()=>b.style.display='none', 500); }
+            }, 3000);
         });
 
-        function updateRolePreview(val) {
-            const badge = document.getElementById('role-badge');
-            const nameEl = document.getElementById('role-name');
-            if (!val) { badge.className = 'role-preview'; return; }
-            
-            badge.classList.add('visible');
-            const score = parseInt(val);
-            badge.className = 'role-preview visible';
-
-            if (score < 85) {
-                badge.classList.add('rp-student');
-                nameEl.innerText = 'Student Access Granted';
-            } else if (score >= 85 && score <= 91) {
-                badge.classList.add('rp-scholar');
-                nameEl.innerText = 'Verified Scholar Status';
-            } else if (score >= 92) {
-                badge.classList.add('rp-elite');
-                nameEl.innerText = 'Elite Scholar Prestige';
-            }
-        }
-
-        async function handleOnboarding(e) {
+        async function handleAuth(e) {
             e.preventDefault();
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true; btn.innerText = "Initializing Identity...";
-
-            const email = document.getElementById('user-email').value;
-            const pass = document.getElementById('user-password').value;
-            const name = document.getElementById('user-name').value;
-            const score = parseInt(document.getElementById('user-score').value);
-            
-            const role = score >= 92 ? 'ELITE' : (score >= 85 ? 'SCHOLAR' : 'STUDENT');
-
-            const { data, error } = await db.auth.signUp({ 
-                email, 
-                password: pass, 
-                options: { data: { full_name: name, score, role } } 
-            });
-
-            if (data.user) {
-                await db.from('users').upsert([{ 
-                    id: data.user.id, 
-                    email, 
-                    name, 
-                    score_percentage: score, 
-                    role,
-                    starting_points: 50,
-                    trust_score: 1.0
-                }]);
-                alert("Account Initialized. Redirecting to your " + role + " terminal.");
-                window.location.reload();
-            } else if (error) {
-                alert(error.message);
-                btn.disabled = false; btn.innerText = "Initialize Onboarding";
+            const email = document.getElementById('auth-email').value, pass = document.getElementById('auth-password').value;
+            if (mode === 'login') {
+                const { error } = await db.auth.signInWithPassword({ email, password: pass });
+                if (error) alert(error.message);
+                else location.reload();
+            } else {
+                const name = document.getElementById('reg-name').value, score = parseInt(document.getElementById('reg-score').value);
+                const role = score >= 85 ? 'SCHOLAR' : 'STUDENT';
+                const { data, error } = await db.auth.signUp({ email, password: pass, options: { data: { full_name: name, score, role } } });
+                if (data.user) {
+                    await db.from('users').upsert([{ id: data.user.id, email, name, score_percentage: score, role }]);
+                    alert("Account Created. Please Login."); toggleAuth();
+                } else if (error) alert(error.message);
             }
         }
 
-        async function loginWithGoogle() {
-            await db.auth.signInWithOAuth({ 
-                provider: 'google', 
-                options: { redirectTo: 'https://azanabdullah2752012-ui.github.io/scholarQ/' } 
-            });
+        async function boot(s) {
+            session = s;
+            const { data } = await db.from('users').select('*').eq('id', s.user.id).maybeSingle();
+            profile = data || { name: 'Operator', role: 'STUDENT', score_percentage: 92 };
+            
+            await sync();
+            const b = document.getElementById('boot-screen');
+            b.style.opacity = '0'; setTimeout(() => b.style.display = 'none', 500);
+            
+            document.getElementById('app-view').classList.add('visible-grid');
+            setTimeout(() => document.getElementById('app-view').style.opacity = '1', 50);
+            renderOS();
         }
+
+        async function sync() {
+            const { data: q } = await db.from('questions').select('*').order('created_at', { ascending: false });
+            doubts = q || [];
+            renderFeed();
+        }
+
+        function renderOS() {
+            const isS = profile.role === 'SCHOLAR';
+            document.getElementById('greeting').innerText = `SYSTEM STATUS: ${profile.name.toUpperCase()} / AUTHENTICATED`;
+            document.getElementById('user-score-side').innerText = profile.score_percentage + '%';
+            document.getElementById('role-pill').innerText = profile.role;
+            
+            const nav = document.getElementById('nav-group');
+            const items = isS ? [['Hub', 'grid'], ['Feed', 'list'], ['Answers', 'check']] : [['Home', 'home'], ['Ask', 'plus'], ['Doubts', 'message']];
+            nav.innerHTML = items.map(i => `<div class="nav-item" onclick="go('home')"><i data-lucide="${i[1]}"></i> ${i[0]}</div>`).join('');
+            
+            document.getElementById('stats-row').innerHTML = `
+                <div class="stat-card"><b>${doubts.length}</b> Doubts</div>
+                <div class="stat-card"><b>${profile.total_answers_count || 0}</b> Solved</div>
+                <div class="stat-card"><b>94%</b> Rate</div>
+            `;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderFeed() {
+            document.getElementById('feed').innerHTML = doubts.map(d => `
+                <div class="doubt-card">
+                    <div style="font-size:0.7rem; color:var(--primary); font-weight:800; margin-bottom:8px;">${d.subject}</div>
+                    <div style="font-size:1.1rem; font-weight:700;">${d.title}</div>
+                    <div style="margin-top:12px; color:var(--text-muted); font-size:0.8rem;">by ${d.asker_name}</div>
+                </div>
+            `).join('');
+        }
+
+        function go(v) {
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-ask').classList.add('hidden');
+            document.getElementById('view-' + v).classList.remove('hidden');
+        }
+
+        async function handleAsk(e) {
+            e.preventDefault();
+            await db.from('questions').insert([{ id:'q_'+Date.now(), title:document.getElementById('ask-title').value, subject:document.getElementById('ask-subj').value, body:document.getElementById('ask-body').value, asker_id:session.user.id, asker_name:profile.name }]);
+            sync(); go('home');
+        }
+
+        function showEntrance() { 
+            const b = document.getElementById('boot-screen');
+            b.style.opacity = '0'; setTimeout(() => b.style.display = 'none', 500);
+            document.getElementById('auth-view').classList.add('visible-flex'); 
+        }
+        function toggleAuth() { mode = mode === 'login' ? 'signup' : 'login'; document.getElementById('signup-fields').classList.toggle('hidden'); }
+        function terminate() { db.auth.signOut(); location.reload(); }
+        async function loginWithGoogle() { await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://azanabdullah2752012-ui.github.io/scholarQ/' } }); }
     </script>
 </body>
 </html>
