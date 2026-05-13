@@ -1,4 +1,4 @@
-// ScholarQ - Serious Academic Edition (V113)
+// ScholarQ - Institutional Elite Edition (V114)
 const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -9,11 +9,11 @@ let currentSearch = '', currentFilter = 'All';
 document.addEventListener('DOMContentLoaded', async () => {
   lucide.createIcons();
   
-  // 1. INITIAL SESSION CHECK
+  // 1. BOOT SEQUENCE
   const { data: { session: s } } = await supabaseClient.auth.getSession();
   await handleSessionUpdate(s);
   
-  // 2. AUTH STATE LISTENER
+  // 2. AUTH LISTENER
   supabaseClient.auth.onAuthStateChange(async (e, s) => {
     if (e === 'SIGNED_IN' || e === 'SIGNED_OUT') await handleSessionUpdate(s);
   });
@@ -52,12 +52,12 @@ function navigateTo(view, param = null) {
   if (!session && view !== 'auth') view = 'auth';
   currentView = view;
   
-  // Hide all views
+  // View Toggle
   document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
   const target = document.getElementById(`view-${view}`);
   if (target) target.style.display = (view === 'auth' ? 'flex' : 'block');
   
-  // Update Nav
+  // Sidebar State
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`nav-${view}`)?.classList.add('active');
 
@@ -75,7 +75,7 @@ async function fetchQuestions() {
   if (currentView === 'home') renderHome();
 }
 
-// HUB RENDERING (V113 Search-Aware)
+// ELITE RENDERING (V114)
 function renderHome() {
   const cont = document.getElementById('home-feed');
   const list = questions.filter(q => {
@@ -87,15 +87,17 @@ function renderHome() {
   document.getElementById('pulse-doubts').innerText = questions.length;
 
   cont.innerHTML = list.map(q => `
-    <div class="card-serious" style="margin-bottom:16px; cursor:pointer;" onclick="navigateTo('question', '${q.id}')">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <span class="badge-tag">${q.subject}</span>
-        <span style="font-size:0.7rem; color:var(--text-secondary);">${getTimeAgo(q.created_at)}</span>
+    <div class="card-elite" style="cursor:pointer;" onclick="navigateTo('question', '${q.id}')">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; position:relative; z-index:2;">
+        <span class="subject-chip">${q.subject}</span>
+        <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span>
       </div>
-      <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:8px;">${q.title}</h3>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; font-size:0.75rem; color:var(--text-secondary);">
-        <span>By ${q.asker_name}</span>
-        <span style="font-weight:800; color:var(--p-500);"><i data-lucide="message-square" style="width:14px; margin-right:4px; vertical-align:middle;"></i>${q.answers?.length || 0} SOLUTIONS</span>
+      <h3 style="font-size:1.2rem; font-weight:800; margin-bottom:8px; line-height:1.4; position:relative; z-index:2;">${q.title}</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; font-size:0.8rem; color:var(--text-secondary); position:relative; z-index:2;">
+        <span style="display:flex; align-items:center; gap:8px;"><i data-lucide="user" style="width:14px; opacity:0.6;"></i> By ${q.asker_name}</span>
+        <span style="font-weight:800; color:var(--p-500); display:flex; align-items:center; gap:6px;">
+          <i data-lucide="message-square" style="width:16px;"></i> ${q.answers?.length || 0} SOLUTIONS
+        </span>
       </div>
     </div>
   `).join('');
@@ -111,7 +113,7 @@ async function handleAuth(e) {
   const { error } = await supabaseClient.auth.signInWithPassword({ email: em, password: pw });
   if (error) {
     const { error: upErr } = await supabaseClient.auth.signUp({ email: em, password: pw });
-    if (upErr) alert(upErr.message); else alert("Institutional Verification email sent!");
+    if (upErr) alert(upErr.message); else alert("Institutional Access Email sent!");
   }
 }
 
@@ -145,14 +147,20 @@ function renderLeaderboard() {
   const cont = document.getElementById('view-leaderboard');
   cont.innerHTML = '<div style="padding:40px; text-align:center; opacity:0.5;">Ranking Academy Leaders...</div>';
   supabaseClient.from('users').select('*').order('points', { ascending: false }).limit(20).then(({data}) => {
-    if(data) cont.innerHTML = `<h1 style="margin-bottom:32px;">Academy Leaders</h1><div style="display:grid; gap:12px;">${data.map((u, i) => `
-      <div class="card-serious" style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; gap:20px; align-items:center;">
-          <div style="font-size:1.2rem; font-weight:800; color:var(--text-muted); width:30px;">#${i+1}</div>
-          <strong>${u.name}</strong>
-        </div>
-        <div style="color:var(--p-500); font-weight:800;">${u.points} PTS</div>
-      </div>`).join('')}</div>`;
+    if(data) cont.innerHTML = `
+      <h1 style="font-size:2.5rem; margin-bottom:40px; font-weight:800; letter-spacing:-1.5px;">Academy Leaders</h1>
+      <div style="display:grid; gap:16px;">
+        ${data.map((u, i) => `
+          <div class="card-elite" style="display:flex; justify-content:space-between; align-items:center; padding:20px 32px;">
+            <div style="display:flex; gap:32px; align-items:center; position:relative; z-index:2;">
+              <div style="font-size:1.5rem; font-weight:800; color:var(--text-muted); width:40px; font-family:'Outfit';">#${i+1}</div>
+              <strong style="font-size:1.1rem;">${u.name}</strong>
+            </div>
+            <div style="color:var(--p-500); font-weight:800; font-size:1.2rem; font-family:'Outfit'; position:relative; z-index:2;">${u.points} PTS</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
   });
 }
 
@@ -169,19 +177,24 @@ function renderQuestionDetail(id) {
   currentQuestionId = id;
   const q = questions.find(x => x.id === id); if (!q) return;
   document.getElementById('qd-content').innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:16px;">
-      <span class="badge-tag">${q.subject}</span>
-      <span style="font-size:0.7rem; color:var(--text-secondary);">${getTimeAgo(q.created_at)}</span>
+    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:24px; position:relative; z-index:2;">
+      <span class="subject-chip">${q.subject}</span>
+      <span style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span>
     </div>
-    <h2>${q.title}</h2>
-    <p style="margin-top:20px; font-size:1.1rem; line-height:1.6; color:var(--text-primary);">${q.body}</p>
-    <div style="margin-top:24px; font-size:0.75rem; color:var(--text-secondary);">Broadcasted by ${q.asker_name}</div>
+    <h2 style="font-size:2rem; font-weight:800; line-height:1.3; position:relative; z-index:2;">${q.title}</h2>
+    <p style="margin-top:32px; font-size:1.15rem; line-height:1.7; color:var(--text-primary); position:relative; z-index:2;">${q.body}</p>
+    <div style="margin-top:40px; font-size:0.85rem; color:var(--text-secondary); position:relative; z-index:2; border-top:1px solid var(--border); padding-top:24px;">
+      Broadcasted by <strong style="color:white;">${q.asker_name}</strong>
+    </div>
   `;
-  document.getElementById('qd-answers').innerHTML = `<h3>${q.answers?.length || 0} Solutions</h3>` + (q.answers || []).map(a => `
-    <div class="card-serious" style="margin-top:12px;">
-      <div style="font-weight:800; margin-bottom:8px; font-size:0.8rem; color:var(--p-500);">${a.author_name}</div>
-      <p style="line-height:1.6;">${a.body}</p>
-    </div>`).join('');
+  document.getElementById('qd-answers').innerHTML = `
+    <h3 style="margin-top:48px; margin-bottom:24px; font-size:1.4rem;">${q.answers?.length || 0} Professional Solutions</h3>
+    ${(q.answers || []).map(a => `
+      <div class="card-elite" style="margin-top:16px;">
+        <div style="font-weight:800; margin-bottom:12px; font-size:0.9rem; color:var(--p-500); font-family:'Outfit'; position:relative; z-index:2;">${a.author_name}</div>
+        <p style="line-height:1.7; font-size:1.05rem; position:relative; z-index:2;">${a.body}</p>
+      </div>`).join('')}
+  `;
   lucide.createIcons();
 }
 

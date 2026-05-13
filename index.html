@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarQ | Academy OS</title>
-    <link rel="stylesheet" href="styles.css?v=113">
+    <title>ScholarQ | Institutional Portal</title>
+    <link rel="stylesheet" href="styles.css?v=114">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
@@ -15,140 +15,145 @@
     <div id="toast-container"></div>
 
     <div id="app" style="display:none;">
-        <!-- SERIOUS SIDEBAR -->
+        <!-- ELITE SIDEBAR -->
         <nav id="sidebar">
-            <div style="margin-bottom: 40px; display:flex; align-items:center; gap:12px; padding:0 12px;">
-                <div style="width:32px; height:32px; background:var(--p-500); border-radius:8px; display:flex; align-items:center; justify-content:center;">
-                    <i data-lucide="graduation-cap" style="color:white; width:20px;"></i>
+            <div style="margin-bottom: 48px; display:flex; align-items:center; gap:14px; padding:0 8px;">
+                <div style="width:40px; height:40px; background:linear-gradient(135deg, var(--p-500), var(--p-600)); border-radius:12px; display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);">
+                    <i data-lucide="graduation-cap" style="color:white; width:24px;"></i>
                 </div>
-                <h2 style="font-weight:800; font-size:1.2rem; letter-spacing:-1px;">ScholarQ</h2>
+                <h2 class="logo-text" style="font-size:1.5rem; font-weight:800; letter-spacing:-1.5px;">ScholarQ</h2>
             </div>
             
             <div style="flex:1;">
                 <div id="nav-home" class="nav-item active" onclick="navigateTo('home')">
-                    <i data-lucide="layout-grid"></i> Academy Hub
+                    <i data-lucide="layout-grid" style="width:20px;"></i> Academy Hub
                 </div>
                 <div id="nav-leaderboard" class="nav-item" onclick="navigateTo('leaderboard')">
-                    <i data-lucide="award"></i> Leaderboard
+                    <i data-lucide="award" style="width:20px;"></i> Leaderboard
                 </div>
                 <div id="nav-profile" class="nav-item" onclick="navigateTo('profile')">
-                    <i data-lucide="user"></i> My Profile
+                    <i data-lucide="user" style="width:20px;"></i> My Profile
                 </div>
             </div>
 
-            <div class="card-serious" style="padding:16px; margin-bottom:20px;">
-                <div style="font-size:0.6rem; color:var(--text-secondary); font-weight:800; margin-bottom:4px;">ACADEMY POINTS</div>
-                <div id="side-points" style="font-size:1.2rem; font-weight:800; color:var(--p-500);">0</div>
+            <div class="card-elite" style="padding:20px; border:none; background:rgba(255,255,255,0.03);">
+                <div style="font-size:0.65rem; color:var(--text-secondary); font-weight:800; margin-bottom:6px; letter-spacing:1px;">ACADEMY POINTS</div>
+                <div id="side-points" style="font-size:1.6rem; font-weight:800; color:var(--p-500); font-family:'Outfit';">0</div>
             </div>
 
-            <button onclick="logout()" class="nav-item" style="color:#ef4444; margin-top:auto;">
-                <i data-lucide="log-out"></i> Logout
+            <button onclick="logout()" class="nav-item" style="color:#f87171; margin-top:32px; border:none; background:none; width:100%;">
+                <i data-lucide="log-out" style="width:20px;"></i> Logout
             </button>
         </nav>
 
         <main id="main-content">
-            <!-- TOP BAR -->
+            <!-- TOP COMMAND BAR -->
             <header class="top-bar">
-                <input type="text" id="global-search" placeholder="Search for doubts, subjects, or peers..." class="search-input" oninput="handleSearch(this.value)">
+                <div class="search-container">
+                    <i data-lucide="search" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--text-muted); width:18px;"></i>
+                    <input type="text" id="global-search" placeholder="Search for academic doubts, subjects, or peers..." class="search-input" style="padding-left:48px;" oninput="handleSearch(this.value)">
+                </div>
                 <button onclick="navigateTo('ask')" class="btn-primary" style="white-space:nowrap;">+ Post Doubt</button>
             </header>
 
-            <!-- VIEW: HOME -->
+            <!-- VIEW: HOME (BENTO HUB) -->
             <div id="view-home" class="view">
-                <div class="hub-grid">
-                    <div id="home-feed"></div>
+                <div style="display:grid; grid-template-columns: 1fr 340px; gap:40px;">
+                    <div id="home-feed" style="display:flex; flex-direction:column; gap:20px;"></div>
                     <div>
-                        <div class="card-serious" style="margin-bottom:24px;">
-                            <h3 style="font-size:0.9rem; margin-bottom:12px;">Academy Pulse</h3>
-                            <div style="font-size:0.75rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:8px;">
+                        <div class="card-elite" style="margin-bottom:32px; border-left:4px solid var(--p-500);">
+                            <h3 style="font-size:0.95rem; margin-bottom:16px;">Academy Pulse</h3>
+                            <div style="font-size:0.8rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:12px;">
                                 <div style="display:flex; justify-content:space-between;"><span>Global Status</span><span style="color:var(--success); font-weight:800;">🟢 STABLE</span></div>
-                                <div style="display:flex; justify-content:space-between;"><span>Active Doubts</span><span id="pulse-doubts">0</span></div>
-                                <div style="display:flex; justify-content:space-between;"><span>Helpfulness</span><span style="color:var(--p-500);">HIGH</span></div>
+                                <div style="display:flex; justify-content:space-between;"><span>Active Doubts</span><span id="pulse-doubts" style="color:white; font-weight:700;">0</span></div>
+                                <div style="display:flex; justify-content:space-between;"><span>Help Index</span><span style="color:var(--p-500); font-weight:800;">ELITE</span></div>
                             </div>
                         </div>
-                        <div id="side-subjects" class="card-serious">
-                            <h3 style="font-size:0.9rem; margin-bottom:12px;">Top Subjects</h3>
-                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
-                                <span class="badge-tag" onclick="setFilter('Math')" style="cursor:pointer;">Math</span>
-                                <span class="badge-tag" onclick="setFilter('Science')" style="cursor:pointer;">Science</span>
-                                <span class="badge-tag" onclick="setFilter('History')" style="cursor:pointer;">History</span>
-                                <span class="badge-tag" onclick="setFilter('All')" style="cursor:pointer;">All</span>
+                        <div class="card-elite">
+                            <h3 style="font-size:0.95rem; margin-bottom:16px;">Top Subjects</h3>
+                            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                                <span class="subject-chip" onclick="setFilter('Math')" style="cursor:pointer;">Math</span>
+                                <span class="subject-chip" onclick="setFilter('Science')" style="cursor:pointer;">Science</span>
+                                <span class="subject-chip" onclick="setFilter('History')" style="cursor:pointer;">History</span>
+                                <span class="subject-chip" onclick="setFilter('All')" style="cursor:pointer;">All</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- VIEW: ASK -->
+            <!-- VIEW: ASK & QUESTION DETAIL -->
             <div id="view-ask" class="view" style="display:none;">
-                <div class="card-serious" style="max-width:700px; margin:0 auto;">
-                    <h2 style="margin-bottom:24px;">Broadcast New Doubt</h2>
-                    <form id="ask-form" style="display:flex; flex-direction:column; gap:16px;">
-                        <input type="text" id="ask-title" placeholder="Title of your question..." class="search-input" required>
+                <div class="card-elite" style="max-width:700px; margin:0 auto;">
+                    <h2 style="margin-bottom:24px; font-size:2rem;">Broadcast Doubt</h2>
+                    <form id="ask-form" style="display:flex; flex-direction:column; gap:20px;">
+                        <input type="text" id="ask-title" placeholder="What is your doubt?" class="search-input" required>
                         <select id="ask-subject" class="search-input">
                             <option value="Math">Mathematics</option>
                             <option value="Science">Science</option>
                             <option value="History">History</option>
                             <option value="General">General</option>
                         </select>
-                        <textarea id="ask-body" placeholder="Provide context and background..." class="search-input" style="min-height:150px;"></textarea>
-                        <button type="submit" class="btn-primary" style="justify-content:center;">Broadcast Doubt</button>
-                        <button type="button" onclick="navigateTo('home')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-weight:700;">Cancel</button>
+                        <textarea id="ask-body" placeholder="Provide background context..." class="search-input" style="min-height:180px;"></textarea>
+                        <button type="submit" class="btn-primary" style="justify-content:center; padding:18px;">Publish Doubt</button>
+                        <button type="button" onclick="navigateTo('home')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-weight:700; margin-top:8px;">Cancel</button>
                     </form>
                 </div>
             </div>
 
-            <!-- VIEW: QUESTION DETAIL -->
             <div id="view-question" class="view" style="display:none;">
-                <button onclick="navigateTo('home')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; margin-bottom:24px; font-weight:700;">← Back to Hub</button>
-                <div id="qd-content" class="card-serious" style="margin-bottom:32px;"></div>
-                <div id="qd-answers" style="margin-top:32px;"></div>
-                <div class="card-serious" style="margin-top:32px;">
-                    <h3 style="margin-bottom:16px;">Provide a Solution</h3>
-                    <form id="answer-form" style="display:flex; flex-direction:column; gap:16px;">
-                        <textarea id="answer-body" placeholder="Write a professional explanation..." class="search-input" style="min-height:120px;" required></textarea>
-                        <button type="submit" class="btn-primary" style="align-self:flex-end;">Publish Solution</button>
+                <button onclick="navigateTo('home')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; margin-bottom:32px; font-weight:700; display:flex; align-items:center; gap:8px;">
+                    <i data-lucide="arrow-left" style="width:18px;"></i> Back to Hub
+                </button>
+                <div id="qd-content" class="card-elite" style="margin-bottom:40px; padding:40px;"></div>
+                <div id="qd-answers" style="margin-top:48px;"></div>
+                <div class="card-elite" style="margin-top:48px; border-top:4px solid var(--p-500);">
+                    <h3 style="margin-bottom:20px;">Contribute Solution</h3>
+                    <form id="answer-form" style="display:flex; flex-direction:column; gap:20px;">
+                        <textarea id="answer-body" placeholder="Write a professional explanation..." class="search-input" style="min-height:150px;" required></textarea>
+                        <button type="submit" class="btn-primary" style="align-self:flex-end; padding:12px 32px;">Post Solution</button>
                     </form>
                 </div>
             </div>
 
-            <!-- VIEW: LEADERBOARD & PROFILE -->
+            <!-- LEADERBOARD & PROFILE -->
             <div id="view-leaderboard" class="view" style="display:none;"></div>
             <div id="view-profile" class="view" style="display:none;">
-                <div class="card-serious" style="text-align:center; max-width:600px; margin:0 auto;">
-                    <div id="profile-avatar" style="width:80px; height:80px; background:var(--p-500); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:2rem; font-weight:800; margin:0 auto 24px;">A</div>
-                    <h2 id="profile-name" style="font-size:2rem; font-weight:800;">Student Name</h2>
-                    <p id="profile-email" style="color:var(--text-secondary); margin-bottom:32px;">email@example.com</p>
-                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; border-top:1px solid var(--border); padding-top:40px;">
-                        <div><div id="profile-points" style="font-size:1.8rem; font-weight:800; color:var(--p-500);">0</div><div style="font-size:0.7rem; color:var(--text-secondary); font-weight:800;">POINTS</div></div>
-                        <div><div id="profile-asked" style="font-size:1.8rem; font-weight:800;">0</div><div style="font-size:0.7rem; color:var(--text-secondary); font-weight:800;">DOUBTS</div></div>
-                        <div><div id="profile-solved" style="font-size:1.8rem; font-weight:800;">0</div><div style="font-size:0.7rem; color:var(--text-secondary); font-weight:800;">SOLUTIONS</div></div>
+                <div class="card-elite" style="text-align:center; max-width:600px; margin:0 auto; padding:60px 40px;">
+                    <div id="profile-avatar" style="width:100px; height:100px; background:linear-gradient(135deg, var(--p-500), var(--p-600)); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:800; font-family:'Outfit'; color:white; margin:0 auto 32px; box-shadow: 0 12px 24px rgba(99, 102, 241, 0.3);">A</div>
+                    <h1 id="profile-name" style="font-size:2.5rem; font-weight:800; margin-bottom:8px;">Student</h1>
+                    <p id="profile-email" style="color:var(--text-secondary); margin-bottom:48px; font-size:1rem;">email@example.com</p>
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:32px; border-top:1px solid var(--border); padding-top:48px;">
+                        <div><div id="profile-points" style="font-size:2.2rem; font-weight:800; color:var(--p-500); font-family:'Outfit';">0</div><div style="font-size:0.7rem; color:var(--text-secondary); font-weight:800; letter-spacing:1px; margin-top:8px;">POINTS</div></div>
+                        <div><div id="profile-asked" style="font-size:2.2rem; font-weight:800; font-family:'Outfit';">0</div><div style="font-size:0.7rem; color:var(--text-secondary); font-weight:800; letter-spacing:1px; margin-top:8px;">DOUBTS</div></div>
+                        <div><div id="profile-solved" style="font-size:2.2rem; font-weight:800; font-family:'Outfit';">0</div><div style="font-size:0.7rem; color:var(--text-secondary); font-weight:800; letter-spacing:1px; margin-top:8px;">SOLUTIONS</div></div>
                     </div>
                 </div>
             </div>
         </main>
 
-        <!-- AUTH OVERLAY -->
-        <div id="view-auth" class="view" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:1000; align-items:center; justify-content:center;">
-            <div class="card-serious" style="max-width:400px; width:90%; padding:40px;">
-                <div style="text-align:center; margin-bottom:32px;">
-                    <div style="width:64px; height:64px; background:var(--p-500); border-radius:16px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:16px;">
-                        <i data-lucide="graduation-cap" style="color:white; width:36px;"></i>
-                    </div>
-                    <h1 style="margin-bottom:8px;">ScholarQ</h1>
-                    <p style="color:var(--text-secondary); font-size:0.9rem;">Institutional Academic Hub</p>
+        <!-- AUTH VIEW -->
+        <div id="view-auth" class="view" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:1000; align-items:center; justify-content:center; background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.02) 1px, transparent 0); background-size: 32px 32px;">
+            <div class="card-elite" style="max-width:420px; width:90%; padding:50px; text-align:center;">
+                <div style="width:72px; height:72px; background:linear-gradient(135deg, var(--p-500), var(--p-600)); border-radius:18px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:24px; box-shadow: 0 12px 24px rgba(99, 102, 241, 0.3);">
+                    <i data-lucide="graduation-cap" style="color:white; width:40px;"></i>
                 </div>
-                <form id="auth-form" style="display:flex; flex-direction:column; gap:16px;">
-                    <input type="email" id="auth-email" placeholder="Email" class="search-input" required>
-                    <input type="password" id="auth-password" placeholder="Password" class="search-input" required>
-                    <button type="submit" class="btn-primary" style="width:100%; justify-content:center; padding:14px;">Access Portal</button>
+                <h1 style="font-size:2.5rem; font-weight:800; margin-bottom:8px; letter-spacing:-1.5px;">ScholarQ</h1>
+                <p style="color:var(--text-secondary); margin-bottom:40px; font-size:1rem;">Elite Institutional Portal</p>
+                <form id="auth-form" style="display:flex; flex-direction:column; gap:18px;">
+                    <input type="email" id="auth-email" placeholder="Institutional Email" class="search-input" required>
+                    <input type="password" id="auth-password" placeholder="Access Password" class="search-input" required>
+                    <button type="submit" class="btn-primary" style="width:100%; justify-content:center; padding:16px; font-size:1.1rem;">Access Academy</button>
                 </form>
-                <div style="margin:20px 0; text-align:center; font-size:0.7rem; color:var(--text-muted); font-weight:800;">OR</div>
-                <button onclick="signInWithGoogle()" class="card-serious" style="width:100%; display:flex; align-items:center; justify-content:center; gap:12px; padding:12px; cursor:pointer; font-weight:700;">Google Access</button>
+                <div style="margin:24px 0; text-align:center; font-size:0.75rem; color:var(--text-muted); font-weight:800; letter-spacing:2px;">OR</div>
+                <button onclick="signInWithGoogle()" class="card-elite" style="width:100%; display:flex; align-items:center; justify-content:center; gap:14px; padding:14px; cursor:pointer; font-weight:700; border:1px solid var(--border); background:rgba(255,255,255,0.02);">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/layout/google.svg" width="20">
+                    Google Sign-In
+                </button>
             </div>
         </div>
     </div>
 
-    <script src="app.js?v=113"></script>
+    <script src="app.js?v=114"></script>
 </body>
 </html>
