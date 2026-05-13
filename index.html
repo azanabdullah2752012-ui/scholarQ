@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarQ | Peer Learning</title>
+    <title>ScholarQ | Stealth OS</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,105 +11,154 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="clean-theme">
-    <!-- Auth & Role Setup -->
+<body class="stealth-theme">
+    <!-- Boot Shield -->
+    <div id="init-shield" class="init-shield">
+        <div class="shield-content">
+            <div class="spinner-core"></div>
+            <div class="brand-minimal" style="margin-top:20px;">Scholar<span>Q</span></div>
+            <p class="text-muted" style="font-size:0.7rem; letter-spacing:2px; margin-top:8px;">INITIALIZING SYSTEM</p>
+        </div>
+    </div>
+
+    <!-- Auth Gateway -->
     <div id="view-auth" class="auth-overlay" style="display:none;">
-        <div class="auth-modal">
+        <div class="auth-modal glow-border">
             <div class="brand-minimal">Scholar<span>Q</span></div>
-            <p id="auth-sub" class="text-muted">Academic Help. Organized.</p>
+            <p id="auth-sub" class="text-muted">High-Performance Peer Learning.</p>
             
-            <form id="auth-form">
-                <input type="email" id="auth-email" placeholder="School Email" class="input-field" required>
-                <input type="password" id="auth-password" placeholder="Password" class="input-field" required>
+            <form id="auth-form" class="stack-sm">
+                <input type="email" id="auth-email" placeholder="Institutional Email" class="input-stealth" required>
+                <input type="password" id="auth-password" placeholder="Access Key" class="input-stealth" required>
                 
-                <div id="role-fields" style="display:none; margin-top:16px; border-top:1px solid #eee; padding-top:16px;">
-                    <input type="text" id="auth-name" placeholder="Full Name" class="input-field">
-                    <input type="number" id="auth-score" placeholder="Recent Score %" class="input-field" min="0" max="100">
-                    <p class="text-xs">Scholars (85%+) get answering privileges.</p>
+                <div id="role-fields" style="display:none; margin-top:16px; border-top:1px solid rgba(255,255,255,0.05); padding-top:20px;">
+                    <input type="text" id="auth-name" placeholder="Full Name" class="input-stealth">
+                    <input type="number" id="auth-score" placeholder="Recent Academic Score %" class="input-stealth" min="0" max="100">
+                    <p class="text-xs">Scholars (85%+) gain broadcast and solve permissions.</p>
                 </div>
                 
-                <button type="submit" id="auth-btn" class="btn-main">Enter Platform</button>
-                <button type="button" onclick="toggleAuthMode()" class="btn-link" id="auth-toggle">New here? Create Account</button>
+                <button type="submit" id="auth-btn" class="btn-glow">Enter OS</button>
+                <button type="button" onclick="toggleAuthMode()" class="btn-link" id="auth-toggle">New Scholar? Register Account</button>
             </form>
         </div>
     </div>
 
-    <!-- App Shell -->
-    <div id="app" style="display:none;">
-        <header class="navbar">
-            <div class="nav-container">
+    <!-- Main OS Shell -->
+    <div id="app" style="display:none; opacity:0;">
+        <header class="os-header">
+            <div class="header-inner">
                 <div class="brand-minimal" onclick="go('home')">Scholar<span>Q</span></div>
-                <div class="nav-right">
-                    <button id="btn-ask-nav" class="btn-main-sm" onclick="go('ask')">Ask Doubt</button>
-                    <div class="user-trigger" onclick="go('profile')">
-                        <div id="nav-avatar" class="avatar-circle">A</div>
+                <div class="header-actions">
+                    <button class="btn-ask-plus" onclick="go('ask')"><span>+</span> Post Doubt</button>
+                    <div class="avatar-pill" onclick="go('profile')">
+                        <span id="nav-role" class="role-micro">STUDENT</span>
+                        <div id="nav-avatar" class="avatar-sm">A</div>
                     </div>
                 </div>
             </div>
         </header>
 
-        <main class="content-limit">
-            <!-- Role Bar -->
-            <div id="role-banner" class="role-banner">
-                <span id="role-label" class="badge">STUDENT</span>
-                <span id="role-stats" class="text-muted text-sm">Welcome back, Scholar.</span>
+        <main class="os-container">
+            <!-- System Stats (Pivot Version) -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="label">RANK</div>
+                    <div id="stat-rank" class="val">SCHOLAR</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">BEST ANSWERS</div>
+                    <div id="stat-best" class="val">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">REPUTATION</div>
+                    <div id="stat-rep" class="val">75%</div>
+                </div>
             </div>
 
-            <!-- Home View -->
+            <!-- Home Feed -->
             <div id="view-home" class="view">
-                <div class="view-header">
-                    <h2>Recent Doubts</h2>
-                    <div class="subject-filters" id="subject-filters">
-                        <button class="chip active" onclick="setFilter('All')">All</button>
+                <div class="section-header">
+                    <h2>Live Doubt Feed</h2>
+                    <div class="filter-row">
+                        <button class="chip active" onclick="setFilter('All')">All Pulse</button>
                         <button class="chip" onclick="setFilter('Math')">Math</button>
                         <button class="chip" onclick="setFilter('Science')">Science</button>
-                        <button class="chip" onclick="setFilter('English')">English</button>
                     </div>
                 </div>
-                <div id="home-feed" class="stack"></div>
+                <div id="home-feed" class="feed-stack"></div>
             </div>
 
-            <!-- Ask View -->
+            <!-- Ask Form -->
             <div id="view-ask" class="view" style="display:none;">
-                <div class="view-header">
-                    <h2>Ask your Doubt</h2>
-                </div>
-                <form id="ask-form" class="card-form">
-                    <input type="text" id="ask-title" placeholder="Title (e.g. Help with Quadratic Equations)" class="input-field" required>
-                    <select id="ask-subject" class="input-field">
-                        <option>Math</option><option>Science</option><option>Physics</option><option>History</option><option>CS</option>
-                    </select>
-                    <textarea id="ask-body" placeholder="Describe your doubt in detail..." class="input-field" style="min-height:150px;" required></textarea>
-                    <button type="submit" class="btn-main">Post Doubt</button>
+                <div class="section-header"><h2>Broadcast Doubt</h2></div>
+                <form id="ask-form" class="stealth-card p-large">
+                    <div class="input-group">
+                        <label>TITLE</label>
+                        <input type="text" id="ask-title" placeholder="What do you need help with?" class="input-stealth" required>
+                    </div>
+                    <div class="input-group">
+                        <label>SUBJECT</label>
+                        <select id="ask-subject" class="input-stealth">
+                            <option>Math</option><option>Science</option><option>Physics</option><option>History</option><option>CS</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>DESCRIPTION</label>
+                        <textarea id="ask-body" placeholder="Provide context or upload an image..." class="input-stealth" style="min-height:180px;" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-glow">Post to Feed</button>
                 </form>
             </div>
 
-            <!-- Detail View -->
+            <!-- Question Detail -->
             <div id="view-question" class="view" style="display:none;">
-                <div id="qd-container"></div>
-                <div class="answers-section">
-                    <h3 id="ans-count">Answers</h3>
-                    <div id="qd-answers" class="stack"></div>
+                <div id="qd-container" class="stealth-card p-large"></div>
+                
+                <div class="answers-wrapper">
+                    <div class="section-header"><h3>Solutions</h3></div>
+                    <div id="qd-answers" class="feed-stack"></div>
                 </div>
-                <div id="answer-box" class="answer-box">
+
+                <div id="answer-box" class="stealth-card p-large" style="margin-top:32px;">
                     <h3>Submit Solution</h3>
+                    <p class="text-muted text-sm mb-16">Provide a high-quality answer to earn reputation.</p>
                     <form id="answer-form">
-                        <textarea id="answer-body" placeholder="Write your solution clearly..." class="input-field" required></textarea>
-                        <button type="submit" class="btn-main">Submit Answer</button>
+                        <textarea id="answer-body" placeholder="Type your answer here..." class="input-stealth" style="min-height:150px;" required></textarea>
+                        <button type="submit" class="btn-glow">Submit Response</button>
                     </form>
                 </div>
             </div>
 
-            <!-- Profile View -->
+            <!-- Profile -->
             <div id="view-profile" class="view" style="display:none;">
-                <div id="profile-card" class="profile-card"></div>
-                <button onclick="logout()" class="btn-outline" style="margin-top:24px;">Logout</button>
+                <div class="stealth-card p-large text-center">
+                    <div id="profile-avatar" class="avatar-lg">A</div>
+                    <h2 id="profile-name">Scholar Name</h2>
+                    <p id="profile-email" class="text-muted mb-24">email@school.com</p>
+                    
+                    <div class="profile-stats">
+                        <div class="p-stat">
+                            <div id="p-total" class="p-val">0</div>
+                            <div class="p-label">ANSWERS</div>
+                        </div>
+                        <div class="p-stat">
+                            <div id="p-best" class="p-val">0</div>
+                            <div class="p-label">BEST ANSWERS</div>
+                        </div>
+                    </div>
+
+                    <div class="academic-badge">
+                        <div class="label">SCORE %</div>
+                        <div id="p-score" class="val">0%</div>
+                    </div>
+
+                    <button onclick="logout()" class="btn-link" style="margin-top:40px; color:#ef4444;">Logout System</button>
+                </div>
             </div>
         </main>
     </div>
 
     <div id="toast-container"></div>
-
-    <script src="app.js?v=200"></script>
+    <script src="app.js?v=201"></script>
 </body>
 </html>
