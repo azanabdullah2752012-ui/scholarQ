@@ -5,6 +5,7 @@ const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
 let session = null, profile = null, questions = [], currentView = 'home';
 let currentSearch = '', currentFilter = 'All', isBoosted = false, currentQId = null;
+let isBooting = false;
 
 const ICONS = { 'Calculus':'$fx$','Math':'$fx$','Biology':'🍃','Data Structures':'</>','Computer Science':'</>','Science':'🧪','Physics':'🧪','General':'🧠','History':'📜' };
 
@@ -13,8 +14,22 @@ const ICONS = { 'Calculus':'$fx$','Math':'$fx$','Biology':'🍃','Data Structure
 document.addEventListener('DOMContentLoaded', () => {
   if (window.lucide) lucide.createIcons();
 
+  // Safety Timeout: Force show auth if it hangs for 4 seconds
+  setTimeout(() => {
+    const app = document.getElementById('app');
+    const auth = document.getElementById('view-auth');
+    if (app && auth && app.style.display === 'none' && auth.style.display === 'none') {
+      console.warn("Boot timeout: showing auth gateway.");
+      auth.style.display = 'flex';
+    }
+  }, 4000);
+
   db.auth.getSession().then(({ data: { session: s } }) => boot(s));
-  db.auth.onAuthStateChange((_, s) => boot(s));
+  db.auth.onAuthStateChange((_, s) => {
+    // Only reboot if session state actually changed to/from null
+    if (!session && s) boot(s);
+    else if (session && !s) window.location.reload();
+  });
 
   document.getElementById('auth-form')?.addEventListener('submit', handleAuth);
   document.getElementById('ask-form')?.addEventListener('submit', handleAsk);
@@ -23,11 +38,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function boot(s) {
+  if (isBooting) return;
+  isBooting = true;
   session = s;
 
+  const app = document.getElementById('app');
+  const auth = document.getElementById('view-auth');
+
   if (!s) {
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('view-auth').style.display = 'flex';
+    if (app) app.style.display = 'none';
+    if (auth) auth.style.display = 'flex';
+    isBooting = false;
     return;
   }
 
@@ -40,16 +61,18 @@ async function boot(s) {
       profile = { id: s.user.id, email: s.user.email, name, points: 50, streak: 1, trust_score: 75, multiplier: 1.00, status_badge: 'SCHOLAR', gauntlet_progress: 0 };
       await db.from('users').upsert([profile]);
     }
-  } catch (e) { console.error('Profile error:', e); }
+  } catch (e) { console.error('Profile load error:', e); }
 
   await refreshData();
 
-  document.getElementById('view-auth').style.display = 'none';
-  const app = document.getElementById('app');
-  app.style.display = 'flex';
-  app.style.opacity = '1';
+  if (auth) auth.style.display = 'none';
+  if (app) {
+    app.style.display = 'flex';
+    setTimeout(() => app.style.opacity = '1', 50);
+  }
 
   go('home');
+  isBooting = false;
 }
 
 async function refreshData() {
@@ -59,7 +82,10 @@ async function refreshData() {
       db.from('answers').select('*')
     ]);
     questions = (q || []).map(x => ({ ...x, answers: (a || []).filter(ans => ans.question_id === x.id) }));
-  } catch (e) { questions = []; }
+  } catch (e) { 
+    console.error('Data refresh error:', e);
+    questions = []; 
+  }
 }
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────────────
@@ -93,8 +119,10 @@ function go(v, p) {
 }
 
 function showAuth() {
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('view-auth').style.display = 'flex';
+  const app = document.getElementById('app');
+  const auth = document.getElementById('view-auth');
+  if (app) app.style.display = 'none';
+  if (auth) auth.style.display = 'flex';
 }
 
 // ─── RENDER FUNCTIONS ────────────────────────────────────────────────────────
@@ -134,7 +162,7 @@ function renderProfile() {
         <div onclick="navigateTo('warroom')" style="cursor:pointer;"><div style="font-size:2rem;font-weight:800;color:white;">${doubts}</div><div style="font-size:0.6rem;color:#71717a;font-weight:800;text-transform:uppercase;margin-top:4px;">Doubts</div></div>
         <div onclick="navigateTo('gauntlet')" style="cursor:pointer;"><div style="font-size:2rem;font-weight:800;color:white;">${solutions}</div><div style="font-size:0.6rem;color:#71717a;font-weight:800;text-transform:uppercase;margin-top:4px;">Solutions</div></div>
       </div>
-      <button class="btn-ghost" style="margin-top:48px;" onclick="navigateTo('transactions')">View Transaction History</button>
+      <button class="btn-ghost" style="margin-top:48px; width:100%; justify-content:center;" onclick="navigateTo('transactions')">View Transaction History</button>
     </div>`;
 }
 
@@ -193,7 +221,7 @@ function renderGauntlet() {
   if (!cont) return;
   const prog = profile?.gauntlet_progress || 0;
   const done = prog >= 3;
-  cont.innerHTML = `<h1 style="font-size:2rem;font-weight:800;margin-bottom:40px;">Daily Gauntlet</h1><div class="widget-content" style="padding:40px;margin-bottom:24px;border-top:3px solid #6366f1;"><h2 style="margin-bottom:8px;">Today's Mission</h2><p style="color:#71717a;margin-bottom:32px;">Answer 3 questions to earn a 50 PTS bonus.</p><div style="font-size:3.5rem;font-weight:800;color:#6366f1;font-family:'Outfit';margin-bottom:24px;">${prog} / 3</div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(prog/3*100,100)}%;"></div></div><div style="margin-top:32px;">` + [1,2,3].map(n => `<div style="display:flex;align-items:center;gap:16px;padding:16px;background:${prog>=n?'rgba(99,102,241,0.1)':'#0a0a0a'};border-radius:12px;border:1px solid ${prog>=n?'#6366f1':'rgba(255,255,255,0.06)'};margin-bottom:12px;"><div style="width:32px;height:32px;border-radius:50%;background:${prog>=n?'#6366f1':'#27272a'};display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;">${prog>=n?'✓':n}</div><div style="flex:1;"><div style="font-weight:700;color:white;">Answer ${n} Question${n>1?'s':''}</div><div style="font-size:0.75rem;color:#71717a;">+${n*20} PTS reward</div></div></div>`).join('') + `</div><button class="btn-primary" style="margin-top:32px;width:100%;padding:16px;font-size:1rem;${done?'':'opacity:0.5;cursor:not-allowed;'}" ${done?'onclick="claimGauntlet()"':'disabled'}>${done?'🏆 Claim 50 PTS Bonus':'Go answer doubts to progress'}</button></div><div style="text-align:center;"><button class="btn-ghost" onclick="navigateTo('warroom')">Find Doubts to Solve →</button></div>`;
+  cont.innerHTML = `<h1 style="font-size:2rem;font-weight:800;margin-bottom:40px;">Daily Gauntlet</h1><div class="widget-content" style="padding:40px;margin-bottom:24px;border-top:3px solid #6366f1;"><h2 style="margin-bottom:8px;">Today's Mission</h2><p style="color:#71717a;margin-bottom:32px;">Answer 3 questions to earn a 50 PTS bonus.</p><div style="font-size:3.5rem;font-weight:800;color:#6366f1;font-family:'Outfit';margin-bottom:24px;">${prog} / 3</div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(prog/3*100,100)}%;"></div></div><div style="margin-top:32px;">` + [1,2,3].map(n => `<div style="display:flex;align-items:center;gap:16px;padding:16px;background:${prog>=n?'rgba(99,102,241,0.1)':'#0a0a0a'};border-radius:12px;border:1px solid ${prog>=n?'#6366f1':'rgba(255,255,255,0.06)'};margin-bottom:12px;"><div style="width:32px;height:32px;border-radius:50%;background:${prog>=n?'#6366f1':'#27272a'};display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;">${prog>=n?'✓':n}</div><div style="flex:1;"><div style="font-weight:700;color:white;">Answer ${n} Question${n>1?'s':''}</div><div style="font-size:0.75rem;color:#71717a;">+${n*20} PTS reward</div></div></div>`).join('') + `</div><button class="btn-primary" style="margin-top:32px;width:100%;padding:16px;font-size:1rem;${done?'':'opacity:0.5;cursor:not-allowed;'}" ${done?'onclick="claimGauntlet()"':'disabled'}>${done?'🏆 Claim 50 PTS Bonus':'Go answer doubts to progress'}</button></div><div style="text-align:center;"><button class="btn-ghost" style="width:100%; justify-content:center;" onclick="navigateTo('warroom')">Find Doubts to Solve →</button></div>`;
 }
 
 async function claimGauntlet() {
