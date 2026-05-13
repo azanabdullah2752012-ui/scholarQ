@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarQ | Institutional OS</title>
-    <link rel="stylesheet" href="styles.css?v=116">
+    <title>ScholarQ | Academy OS</title>
+    <link rel="stylesheet" href="styles.css?v=117">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
@@ -34,6 +34,9 @@
                 <div id="nav-home" class="nav-item active" onclick="navigateTo('home')">
                     <i data-lucide="layout-grid" style="width:20px;"></i> Academy Hub
                 </div>
+                <div id="nav-marketplace" class="nav-item" onclick="navigateTo('marketplace')">
+                    <i data-lucide="database" style="width:20px;"></i> The Vault
+                </div>
                 <div id="nav-library" class="nav-item" onclick="navigateTo('library')">
                     <i data-lucide="library" style="width:20px;"></i> My Library
                 </div>
@@ -60,12 +63,12 @@
             <header class="top-bar">
                 <div class="search-container">
                     <i data-lucide="search" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:#475569; width:18px;"></i>
-                    <input type="text" id="global-search" placeholder="Search for academic doubts, subjects, or peers..." class="search-input" style="padding-left:48px;" oninput="handleSearch(this.value)">
+                    <input type="text" id="global-search" placeholder="Search for academic doubts, subjects, or resources..." class="search-input" style="padding-left:48px;" oninput="handleSearch(this.value)">
                 </div>
-                <button onclick="navigateTo('ask')" class="btn-primary" style="white-space:nowrap;">+ Post Doubt</button>
+                <button id="main-action-btn" onclick="navigateTo('ask')" class="btn-primary" style="white-space:nowrap;">+ Post Doubt</button>
             </header>
 
-            <!-- VIEW: HOME (BENTO HUB) -->
+            <!-- VIEW: HOME (HUB) -->
             <div id="view-home" class="view">
                 <div style="display:grid; grid-template-columns: 1fr 340px; gap:40px;">
                     <div id="home-feed" style="display:flex; flex-direction:column; gap:20px;"></div>
@@ -87,17 +90,20 @@
                                 <div style="display:flex; justify-content:space-between;"><span>Help Index</span><span style="color:#6366f1; font-weight:800;">ELITE</span></div>
                             </div>
                         </div>
-                        <div class="card-elite">
-                            <h3 style="font-size:0.95rem; margin-bottom:16px;">Top Subjects</h3>
-                            <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                                <span class="subject-chip" onclick="setFilter('Math')" style="cursor:pointer;">Math</span>
-                                <span class="subject-chip" onclick="setFilter('Science')" style="cursor:pointer;">Science</span>
-                                <span class="subject-chip" onclick="setFilter('History')" style="cursor:pointer;">History</span>
-                                <span class="subject-chip" onclick="setFilter('All')" style="cursor:pointer;">All</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- VIEW: THE VAULT (MARKETPLACE) -->
+            <div id="view-marketplace" class="view" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:48px;">
+                    <div>
+                        <h1 style="font-size:2.5rem; font-weight:800; letter-spacing:-1.5px; margin-bottom:8px;">The Academy Vault</h1>
+                        <p style="color:var(--text-secondary);">Premium academic resources and knowledge assets.</p>
+                    </div>
+                    <button onclick="openSellModal()" class="btn-primary" style="background:var(--grad-indigo); color:var(--p-500); border:1px solid rgba(99,102,241,0.2);">Publish Resource</button>
+                </div>
+                <div id="market-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:24px;"></div>
             </div>
 
             <!-- VIEW: LIBRARY -->
@@ -141,7 +147,6 @@
                 </div>
             </div>
 
-            <!-- LEADERBOARD & PROFILE -->
             <div id="view-leaderboard" class="view" style="display:none;"></div>
             <div id="view-profile" class="view" style="display:none;">
                 <div class="card-elite" style="text-align:center; max-width:600px; margin:0 auto; padding:60px 40px;">
@@ -179,7 +184,21 @@
         </div>
     </div>
 
+    <!-- VAULT MODAL -->
+    <div id="modal-sell" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); z-index:1001; align-items:center; justify-content:center;">
+        <div class="card-elite" style="max-width:400px; width:90%; padding:40px;">
+            <h2 style="margin-bottom:24px; font-size:1.5rem; font-family:'Outfit';">Publish to Vault</h2>
+            <form id="sell-form" style="display:flex; flex-direction:column; gap:16px;">
+                <input type="text" id="sell-title" placeholder="Resource Title (e.g. Physics Ch-1 Notes)" class="search-input" required>
+                <input type="number" id="sell-price" placeholder="Price in Points" class="search-input" required>
+                <input type="url" id="sell-link" placeholder="Download Link (Google Drive/OneDrive)" class="search-input" required>
+                <button type="submit" class="btn-primary" style="justify-content:center; margin-top:8px;">Submit Resource</button>
+                <button type="button" onclick="closeSellModal()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-weight:600; padding:10px;">Cancel</button>
+            </form>
+        </div>
+    </div>
+
     <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-    <script src="app.js?v=116"></script>
+    <script src="app.js?v=117"></script>
 </body>
 </html>

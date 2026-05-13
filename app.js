@@ -1,9 +1,9 @@
-// ScholarQ - Universal Utility Edition (V116)
+// ScholarQ - The Vault Edition (V117)
 const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-let session = null, profile = null, questions = [], bookmarks = [], currentView = 'auth';
+let session = null, profile = null, questions = [], bookmarks = [], marketplaceItems = [], currentView = 'auth';
 let currentSearch = '', currentFilter = 'All';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('auth-form')?.addEventListener('submit', handleAuth);
   document.getElementById('ask-form')?.addEventListener('submit', handleAsk);
   document.getElementById('answer-form')?.addEventListener('submit', handleAnswer);
+  document.getElementById('sell-form')?.addEventListener('submit', handleSell);
 });
 
 async function handleSessionUpdate(newS) {
@@ -21,7 +22,7 @@ async function handleSessionUpdate(newS) {
   if (session) {
     const ok = await fetchProfile();
     if (ok) {
-      await fetchQuestions(); await fetchBookmarks(); setupSubscriptions();
+      await fetchQuestions(); await fetchBookmarks(); await fetchMarketplace(); setupSubscriptions();
       if (currentView === 'auth') navigateTo('home');
     } else { await handleFinishProfile(); }
   } else { navigateTo('auth'); }
@@ -47,6 +48,12 @@ async function fetchBookmarks() {
   bookmarks = (data || []).map(b => b.question_id);
 }
 
+async function fetchMarketplace() {
+  const { data } = await supabaseClient.from('marketplace').select('*').order('created_at', { ascending: false });
+  marketplaceItems = data || [];
+  if (currentView === 'marketplace') renderMarketplace();
+}
+
 function navigateTo(view, param = null) {
   if (!session && view !== 'auth') view = 'auth';
   currentView = view;
@@ -55,6 +62,16 @@ function navigateTo(view, param = null) {
   if (target) target.style.display = (view === 'auth' ? 'flex' : 'block');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`nav-${view}`)?.classList.add('active');
+
+  const actionBtn = document.getElementById('main-action-btn');
+  if (view === 'marketplace') {
+    actionBtn.innerText = "+ Publish Resource";
+    actionBtn.onclick = openSellModal;
+    renderMarketplace();
+  } else {
+    actionBtn.innerText = "+ Post Doubt";
+    actionBtn.onclick = () => navigateTo('ask');
+  }
 
   if (view === 'home') renderHome();
   if (view === 'library') renderLibrary();
@@ -75,14 +92,11 @@ async function fetchQuestions() {
 function renderHome() {
   const cont = document.getElementById('home-feed');
   const list = questions.filter(q => {
-    const matchFilt = currentFilter === 'All' || q.subject === currentFilter;
     const matchSearch = q.title.toLowerCase().includes(currentSearch.toLowerCase()) || q.body.toLowerCase().includes(currentSearch.toLowerCase());
-    return matchFilt && matchSearch;
+    return matchSearch;
   });
-  
   if(document.getElementById('pulse-doubts')) document.getElementById('pulse-doubts').innerText = questions.length;
   renderNoticeBoard();
-
   const welcomeHTML = `<h2 style="font-size:1.8rem; margin-bottom:24px; font-weight:800; letter-spacing:-1px;">${getGreeting()}, <span style="color:var(--p-500);">${profile.name}</span></h2>`;
   if (list.length === 0) {
     cont.innerHTML = welcomeHTML + `<div class="empty-state"><h3>Academy Signal Idle</h3><p style="color:var(--text-secondary); margin-bottom:24px;">The network is quiet. Broadcast a doubt to start.</p><button onclick="navigateTo('ask')" class="btn-primary">Broadcast Doubt</button></div>`;
@@ -92,11 +106,58 @@ function renderHome() {
   lucide.createIcons();
 }
 
+function renderMarketplace() {
+  const cont = document.getElementById('market-list');
+  const list = marketplaceItems.filter(i => i.title.toLowerCase().includes(currentSearch.toLowerCase()));
+  if (list.length === 0) {
+    cont.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><h3>Vault Empty</h3><p style="color:var(--text-secondary);">Be the first to publish a high-value academic resource.</p></div>`;
+  } else {
+    cont.innerHTML = list.map(i => `
+      <div class="card-elite" style="display:flex; flex-direction:column; justify-content:space-between; height:200px;">
+        <div>
+            <div style="font-size:0.6rem; color:var(--p-500); font-weight:800; margin-bottom:8px; text-transform:uppercase;">ACADEMIC ASSET</div>
+            <h3 style="font-size:1.1rem; line-height:1.4;">${i.title}</h3>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">By ${i.seller_name}</div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:16px;">
+            <div style="font-family:'Outfit'; font-weight:800; color:white;">${i.price} PTS</div>
+            <button onclick="handlePurchase('${i.id}', ${i.price}, '${i.link}', '${i.seller_id}')" class="btn-primary" style="padding:8px 16px; font-size:0.75rem;">Unlock Access</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+async function handlePurchase(itemId, price, link, sellerId) {
+  if (profile.points < price) return alert("Insufficient Academy Points.");
+  if (confirm(`Unlock access to this asset for ${price} points?`)) {
+    // 1. Deduct from buyer
+    await supabaseClient.from('users').update({ points: profile.points - price }).eq('id', session.user.id);
+    // 2. Add to seller
+    const { data: seller } = await supabaseClient.from('users').select('points').eq('id', sellerId).single();
+    await supabaseClient.from('users').update({ points: (seller.points || 0) + price }).eq('id', sellerId);
+    
+    alert("Resource Unlocked!");
+    window.open(link, '_blank');
+    fetchProfile();
+  }
+}
+
+async function handleSell(e) {
+  e.preventDefault();
+  const t = document.getElementById('sell-title').value, p = parseInt(document.getElementById('sell-price').value), l = document.getElementById('sell-link').value;
+  await supabaseClient.from('marketplace').insert([{ id: 'm_'+Date.now(), title: t, price: p, link: l, seller_id: session.user.id, seller_name: profile.name }]);
+  closeSellModal(); fetchMarketplace();
+}
+
+function openSellModal() { document.getElementById('modal-sell').style.display = 'flex'; }
+function closeSellModal() { document.getElementById('modal-sell').style.display = 'none'; }
+
 function renderLibrary() {
   const cont = document.getElementById('library-feed');
   const list = questions.filter(q => bookmarks.includes(q.id));
   if (list.length === 0) {
-    cont.innerHTML = `<div class="empty-state"><h3>Library Empty</h3><p style="color:var(--text-secondary);">Save doubts from the hub to build your personal study bank.</p></div>`;
+    cont.innerHTML = `<div class="empty-state"><h3>Library Empty</h3><p style="color:var(--text-secondary);">Save doubts from the hub to build your personal bank.</p></div>`;
   } else {
     cont.innerHTML = list.map(q => renderQuestionCard(q)).join('');
   }
@@ -164,8 +225,7 @@ function getGreeting() {
   return "Good Evening";
 }
 
-function handleSearch(val) { currentSearch = val; renderHome(); }
-function setFilter(f) { currentFilter = f; renderHome(); }
+function handleSearch(val) { currentSearch = val; if(currentView === 'home') renderHome(); if(currentView === 'marketplace') renderMarketplace(); }
 
 async function handleAuth(e) {
   e.preventDefault();
@@ -224,16 +284,7 @@ function renderQuestionDetail(id) {
   currentQuestionId = id;
   const q = questions.find(x => x.id === id); if (!q) return;
   document.getElementById('qd-content').innerHTML = `<div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:24px; position:relative; z-index:2;"><span class="subject-chip">${q.subject}</span><span style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span></div><h2 style="font-size:2rem; font-weight:800; line-height:1.3; position:relative; z-index:2;">${q.title}</h2><p style="margin-top:32px; font-size:1.15rem; line-height:1.7; color:white; position:relative; z-index:2;">${q.body}</p>`;
-  document.getElementById('qd-answers').innerHTML = `<h3 style="margin-top:48px; margin-bottom:24px; font-size:1.4rem;">${q.answers?.length || 0} Solutions</h3>` + (q.answers || []).map(a => `
-    <div class="card-elite" style="margin-top:16px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; position:relative; z-index:2;">
-        <div style="font-weight:800; font-size:0.9rem; color:var(--p-500); font-family:'Outfit';">${a.author_name}</div>
-        <button class="btn-insightful" onclick="endorseAnswer('${a.id}')">
-            <i data-lucide="sparkles" style="width:14px;"></i> ${a.insightful_count || 0} Insightful
-        </button>
-      </div>
-      <p style="line-height:1.7; font-size:1.05rem; position:relative; z-index:2;">${a.body}</p>
-    </div>`).join('');
+  document.getElementById('qd-answers').innerHTML = `<h3 style="margin-top:48px; margin-bottom:24px; font-size:1.4rem;">${q.answers?.length || 0} Solutions</h3>` + (q.answers || []).map(a => `<div class="card-elite" style="margin-top:16px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; position:relative; z-index:2;"><div style="font-weight:800; font-size:0.9rem; color:var(--p-500); font-family:'Outfit';">${a.author_name}</div><button class="btn-insightful" onclick="endorseAnswer('${a.id}')"><i data-lucide="sparkles" style="width:14px;"></i> ${a.insightful_count || 0} Insightful</button></div><p style="line-height:1.7; font-size:1.05rem; position:relative; z-index:2;">${a.body}</p></div>`).join('');
   lucide.createIcons();
 }
 
@@ -246,4 +297,4 @@ function getTimeAgo(date) {
 
 async function logout() { await supabaseClient.auth.signOut(); window.location.reload(); }
 async function signInWithGoogle() { await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } }); }
-function setupSubscriptions() { supabaseClient.channel('any').on('postgres_changes', { event: '*', schema: 'public' }, () => { fetchQuestions(); fetchProfile(); }).subscribe(); }
+function setupSubscriptions() { supabaseClient.channel('any').on('postgres_changes', { event: '*', schema: 'public' }, () => { fetchQuestions(); fetchProfile(); fetchMarketplace(); }).subscribe(); }
