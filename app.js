@@ -1,4 +1,4 @@
-// ScholarQ - The Mobile Scholar Edition (V118)
+// ScholarQ - Vault Recovery Patch (V118.2)
 const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -11,11 +11,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session: s } } = await supabaseClient.auth.getSession();
   await handleSessionUpdate(s);
   supabaseClient.auth.onAuthStateChange(async (e, s) => { if (e === 'SIGNED_IN' || e === 'SIGNED_OUT') await handleSessionUpdate(s); });
+  
+  // Resilient Binding
+  bindForms();
+});
+
+function bindForms() {
   document.getElementById('auth-form')?.addEventListener('submit', handleAuth);
   document.getElementById('ask-form')?.addEventListener('submit', handleAsk);
   document.getElementById('answer-form')?.addEventListener('submit', handleAnswer);
   document.getElementById('sell-form')?.addEventListener('submit', handleSell);
-});
+}
 
 async function handleSessionUpdate(newS) {
   session = newS;
@@ -32,11 +38,13 @@ async function handleSessionUpdate(newS) {
     const app = document.getElementById('app');
     if (shield) { shield.style.opacity = '0'; setTimeout(() => shield.style.display = 'none', 500); }
     if (app) { app.style.display = 'flex'; setTimeout(() => app.style.opacity = '1', 50); }
+    bindForms(); // Re-bind after app is revealed
   }, 500);
 }
 
 function showToast(msg) {
   const cont = document.getElementById('toast-container');
+  if(!cont) return;
   const t = document.createElement('div');
   t.className = 'toast';
   t.innerText = msg;
@@ -58,7 +66,8 @@ async function fetchBookmarks() {
 }
 
 async function fetchMarketplace() {
-  const { data } = await supabaseClient.from('marketplace').select('*').order('created_at', { ascending: false });
+  const { data, error } = await supabaseClient.from('marketplace').select('*').order('created_at', { ascending: false });
+  if (error) { console.error("Vault Error:", error); return; }
   marketplaceItems = data || [];
   if (currentView === 'marketplace') renderMarketplace();
 }
@@ -70,7 +79,6 @@ function navigateTo(view, param = null) {
   const target = document.getElementById(`view-${view}`);
   if (target) target.style.display = (view === 'auth' ? 'flex' : 'block');
   
-  // Dual-Nav Sync
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.m-nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`nav-${view}`)?.classList.add('active');
@@ -107,13 +115,10 @@ async function fetchQuestions() {
 
 function renderHome() {
   const cont = document.getElementById('home-feed');
-  const list = questions.filter(q => {
-    const matchSearch = q.title.toLowerCase().includes(currentSearch.toLowerCase()) || q.body.toLowerCase().includes(currentSearch.toLowerCase());
-    return matchSearch;
-  });
+  const list = questions.filter(q => q.title.toLowerCase().includes(currentSearch.toLowerCase()) || q.body.toLowerCase().includes(currentSearch.toLowerCase()));
   if(document.getElementById('pulse-doubts')) document.getElementById('pulse-doubts').innerText = questions.length;
   renderNoticeBoard();
-  const welcomeHTML = `<h2 style="font-size:1.6rem; margin-bottom:24px; font-weight:800; letter-spacing:-1px; color:white;">${getGreeting()}, <span style="color:var(--p-500);">${profile.name}</span></h2>`;
+  const welcomeHTML = `<h2 style="font-size:1.6rem; margin-bottom:24px; font-weight:800; color:white;">${getGreeting()}, <span style="color:var(--p-500);">${profile?.name || 'Scholar'}</span></h2>`;
   if (list.length === 0) {
     cont.innerHTML = welcomeHTML + `<div class="empty-state"><h3>Academy Signal Idle</h3><p style="color:var(--text-secondary); margin-bottom:24px;">The network is quiet.</p><button onclick="navigateTo('ask')" class="btn-primary">Broadcast Doubt</button></div>`;
   } else {
@@ -126,7 +131,7 @@ function renderMarketplace() {
   const cont = document.getElementById('market-list');
   const list = marketplaceItems.filter(i => i.title.toLowerCase().includes(currentSearch.toLowerCase()));
   if (list.length === 0) {
-    cont.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><h3>Vault Empty</h3><p style="color:var(--text-secondary);">Be the first to publish.</p></div>`;
+    cont.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><h3>Vault Empty</h3><p style="color:var(--text-secondary);">Publish an asset to start.</p></div>`;
   } else {
     cont.innerHTML = list.map(i => `
       <div class="card-elite" style="display:flex; flex-direction:column; justify-content:space-between; min-height:180px;">
@@ -158,10 +163,21 @@ async function handlePurchase(itemId, price, link, sellerId) {
 
 async function handleSell(e) {
   e.preventDefault();
+  if(!profile || !session) return showToast("Institutional Session missing.");
+  
   const t = document.getElementById('sell-title').value, p = parseInt(document.getElementById('sell-price').value), l = document.getElementById('sell-link').value;
-  await supabaseClient.from('marketplace').insert([{ id: 'm_'+Date.now(), title: t, price: p, link: l, seller_id: session.user.id, seller_name: profile.name }]);
-  showToast("Resource Published to Vault!");
-  closeSellModal(); fetchMarketplace();
+  
+  const { error } = await supabaseClient.from('marketplace').insert([{ id: 'm_'+Date.now(), title: t, price: p, link: l, seller_id: session.user.id, seller_name: profile.name }]);
+  
+  if (error) {
+    console.error("Submission Error:", error);
+    showToast("Error: Run the Vault SQL Script.");
+  } else {
+    showToast("Resource Published to Vault!");
+    closeSellModal(); 
+    document.getElementById('sell-form').reset();
+    fetchMarketplace();
+  }
 }
 
 function openSellModal() { document.getElementById('modal-sell').style.display = 'flex'; }
@@ -257,9 +273,9 @@ async function handleAuth(e) {
 async function handleAsk(e) {
   e.preventDefault();
   const t = document.getElementById('ask-title').value, s = document.getElementById('ask-subject').value, b = document.getElementById('ask-body').value;
-  await supabaseClient.from('questions').insert([{ id: 'q_'+Date.now(), title: t, subject: s, body: b, asker_id: session.user.id, asker_name: profile.name }]);
-  showToast("Doubt Broadcasted!");
-  fetchQuestions(); navigateTo('home');
+  const { error } = await supabaseClient.from('questions').insert([{ id: 'q_'+Date.now(), title: t, subject: s, body: b, asker_id: session.user.id, asker_name: profile.name }]);
+  if (error) { console.error(error); showToast("Error: Verification failure."); }
+  else { showToast("Doubt Broadcasted!"); fetchQuestions(); navigateTo('home'); }
 }
 
 async function handleAnswer(e) {
@@ -279,24 +295,24 @@ async function handleFinishProfile() {
 }
 
 function updateGlobalUI() {
-  if(document.getElementById('side-points')) document.getElementById('side-points').innerText = profile.points;
+  if(document.getElementById('side-points')) document.getElementById('side-points').innerText = profile?.points || 0;
 }
 
 function renderLeaderboard() {
   const cont = document.getElementById('view-leaderboard');
-  cont.innerHTML = '<div style="padding:40px; text-align:center; opacity:0.5; color:white;">Ranking Academy Leaders...</div>';
+  cont.innerHTML = '<div style="padding:40px; text-align:center; color:white;">Ranking Academy Leaders...</div>';
   supabaseClient.from('users').select('*').order('points', { ascending: false }).limit(20).then(({data}) => {
     if(data) cont.innerHTML = `<h1 style="font-size:2rem; margin-bottom:40px; font-weight:800; color:white;">Leaders</h1><div style="display:grid; gap:16px;">${data.map((u, i) => `<div class="card-elite" style="display:flex; justify-content:space-between; align-items:center; padding:16px 24px;"><div style="display:flex; gap:20px; align-items:center;"><div style="font-size:1.2rem; font-weight:800; color:var(--text-muted); width:30px;">#${i+1}</div><strong style="color:white;">${u.name}</strong></div><div style="color:var(--p-500); font-weight:800; font-size:1.1rem;">${u.points} PTS</div></div>`).join('')}</div>`;
   });
 }
 
 function renderProfile() {
-  document.getElementById('profile-name').innerText = profile.name;
-  document.getElementById('profile-email').innerText = profile.email || '';
-  document.getElementById('profile-points').innerText = profile.points;
-  document.getElementById('profile-asked').innerText = questions.filter(q => q.asker_id === profile.id).length;
-  document.getElementById('profile-solved').innerText = questions.reduce((acc, q) => acc + q.answers.filter(a => a.author_id === profile.id).length, 0);
-  document.getElementById('profile-avatar').innerText = (profile.name ? profile.name[0].toUpperCase() : 'S');
+  document.getElementById('profile-name').innerText = profile?.name || 'Scholar';
+  document.getElementById('profile-email').innerText = profile?.email || '';
+  document.getElementById('profile-points').innerText = profile?.points || 0;
+  document.getElementById('profile-asked').innerText = questions.filter(q => q.asker_id === profile?.id).length;
+  document.getElementById('profile-solved').innerText = questions.reduce((acc, q) => acc + q.answers.filter(a => a.author_id === profile?.id).length, 0);
+  document.getElementById('profile-avatar').innerText = (profile?.name ? profile.name[0].toUpperCase() : 'S');
 }
 
 let currentQuestionId = null;
