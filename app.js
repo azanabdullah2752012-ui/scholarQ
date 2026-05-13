@@ -1,9 +1,9 @@
-// ScholarQ - Academy Life Edition (V115)
+// ScholarQ - Universal Utility Edition (V116)
 const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-let session = null, profile = null, questions = [], currentView = 'auth';
+let session = null, profile = null, questions = [], bookmarks = [], currentView = 'auth';
 let currentSearch = '', currentFilter = 'All';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -21,15 +21,11 @@ async function handleSessionUpdate(newS) {
   if (session) {
     const ok = await fetchProfile();
     if (ok) {
-      await fetchQuestions();
-      setupSubscriptions();
+      await fetchQuestions(); await fetchBookmarks(); setupSubscriptions();
       if (currentView === 'auth') navigateTo('home');
-    } else {
-      await handleFinishProfile();
-    }
-  } else {
-    navigateTo('auth');
-  }
+    } else { await handleFinishProfile(); }
+  } else { navigateTo('auth'); }
+  
   setTimeout(() => {
     const shield = document.getElementById('init-shield');
     const app = document.getElementById('app');
@@ -45,6 +41,12 @@ async function fetchProfile() {
   return false;
 }
 
+async function fetchBookmarks() {
+  if (!session) return;
+  const { data } = await supabaseClient.from('bookmarks').select('question_id').eq('user_id', session.user.id);
+  bookmarks = (data || []).map(b => b.question_id);
+}
+
 function navigateTo(view, param = null) {
   if (!session && view !== 'auth') view = 'auth';
   currentView = view;
@@ -53,7 +55,9 @@ function navigateTo(view, param = null) {
   if (target) target.style.display = (view === 'auth' ? 'flex' : 'block');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`nav-${view}`)?.classList.add('active');
+
   if (view === 'home') renderHome();
+  if (view === 'library') renderLibrary();
   if (view === 'leaderboard') renderLeaderboard();
   if (view === 'profile') renderProfile();
   if (view === 'question') renderQuestionDetail(param);
@@ -62,9 +66,10 @@ function navigateTo(view, param = null) {
 
 async function fetchQuestions() {
   const { data: q } = await supabaseClient.from('questions').select('*').order('created_at', { ascending: false });
-  const { data: a } = await supabaseClient.from('answers').select('*');
+  const { data: a } = await supabaseClient.from('answers').select('*').order('insightful_count', { ascending: false });
   questions = (q || []).map(item => ({ ...item, answers: (a || []).filter(ans => ans.question_id === item.id) }));
   if (currentView === 'home') renderHome();
+  if (currentView === 'library') renderLibrary();
 }
 
 function renderHome() {
@@ -76,39 +81,80 @@ function renderHome() {
   });
   
   if(document.getElementById('pulse-doubts')) document.getElementById('pulse-doubts').innerText = questions.length;
-  
-  const greeting = getGreeting();
-  const welcomeHTML = `<h2 style="font-size:1.8rem; margin-bottom:24px; font-weight:800; letter-spacing:-1px;">${greeting}, <span style="color:var(--p-500);">${profile.name}</span></h2>`;
+  renderNoticeBoard();
 
+  const welcomeHTML = `<h2 style="font-size:1.8rem; margin-bottom:24px; font-weight:800; letter-spacing:-1px;">${getGreeting()}, <span style="color:var(--p-500);">${profile.name}</span></h2>`;
   if (list.length === 0) {
-    cont.innerHTML = welcomeHTML + `
-      <div class="empty-state">
-        <div style="width:64px; height:64px; background:rgba(255,255,255,0.02); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:24px;">
-            <i data-lucide="radio" style="color:var(--p-500); width:32px;"></i>
-        </div>
-        <h3 style="margin-bottom:8px;">Academy Signal Idle</h3>
-        <p style="color:var(--text-secondary); max-width:300px; margin:0 auto 24px;">The academic network is quiet. Be the first to broadcast a doubt to the Academy Hub.</p>
-        <button onclick="navigateTo('ask')" class="btn-primary" style="padding:10px 20px; font-size:0.8rem;">Broadcast Doubt</button>
-      </div>
-    `;
+    cont.innerHTML = welcomeHTML + `<div class="empty-state"><h3>Academy Signal Idle</h3><p style="color:var(--text-secondary); margin-bottom:24px;">The network is quiet. Broadcast a doubt to start.</p><button onclick="navigateTo('ask')" class="btn-primary">Broadcast Doubt</button></div>`;
   } else {
-    cont.innerHTML = welcomeHTML + list.map(q => `
-      <div class="card-elite" style="cursor:pointer; margin-bottom:16px;" onclick="navigateTo('question', '${q.id}')">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; position:relative; z-index:2;">
-          <span class="subject-chip">${q.subject}</span>
-          <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span>
-        </div>
-        <h3 style="font-size:1.2rem; font-weight:800; margin-bottom:8px; line-height:1.4; position:relative; z-index:2;">${q.title}</h3>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; font-size:0.8rem; color:var(--text-secondary); position:relative; z-index:2;">
-          <span style="display:flex; align-items:center; gap:8px;"><i data-lucide="user" style="width:14px; opacity:0.6;"></i> By ${q.asker_name}</span>
-          <span style="font-weight:800; color:var(--p-500); display:flex; align-items:center; gap:6px;">
-            <i data-lucide="message-square" style="width:16px;"></i> ${q.answers?.length || 0} SOLUTIONS
-          </span>
-        </div>
-      </div>
-    `).join('');
+    cont.innerHTML = welcomeHTML + list.map(q => renderQuestionCard(q)).join('');
   }
   lucide.createIcons();
+}
+
+function renderLibrary() {
+  const cont = document.getElementById('library-feed');
+  const list = questions.filter(q => bookmarks.includes(q.id));
+  if (list.length === 0) {
+    cont.innerHTML = `<div class="empty-state"><h3>Library Empty</h3><p style="color:var(--text-secondary);">Save doubts from the hub to build your personal study bank.</p></div>`;
+  } else {
+    cont.innerHTML = list.map(q => renderQuestionCard(q)).join('');
+  }
+  lucide.createIcons();
+}
+
+function renderQuestionCard(q) {
+  const isBookmarked = bookmarks.includes(q.id);
+  return `
+    <div class="card-elite" style="margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; position:relative; z-index:2;">
+        <span class="subject-chip">${q.subject}</span>
+        <div style="display:flex; align-items:center; gap:16px;">
+            <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span>
+            <i data-lucide="bookmark" class="bookmark-icon ${isBookmarked?'active':''}" onclick="toggleBookmark(event, '${q.id}')" style="width:18px;"></i>
+        </div>
+      </div>
+      <h3 style="font-size:1.2rem; font-weight:800; margin-bottom:8px; line-height:1.4; cursor:pointer;" onclick="navigateTo('question', '${q.id}')">${q.title}</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; font-size:0.8rem; color:var(--text-secondary);">
+        <span>By ${q.asker_name}</span>
+        <span style="font-weight:800; color:var(--p-500); display:flex; align-items:center; gap:6px;">
+          <i data-lucide="message-square" style="width:16px;"></i> ${q.answers?.length || 0} SOLUTIONS
+        </span>
+      </div>
+    </div>
+  `;
+}
+
+function renderNoticeBoard() {
+  const cont = document.getElementById('notice-list');
+  const trending = [...questions].sort((a,b) => b.answers.length - a.answers.length).slice(0, 3);
+  cont.innerHTML = trending.map(q => `
+    <div class="notice-item" onclick="navigateTo('question', '${q.id}')">
+        <div style="font-size:0.6rem; font-weight:800; color:var(--p-500); margin-bottom:4px; text-transform:uppercase;">TRENDING DOUBT</div>
+        <div style="font-size:0.8rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${q.title}</div>
+    </div>
+  `).join('');
+}
+
+async function toggleBookmark(e, qid) {
+  e.stopPropagation();
+  if (bookmarks.includes(qid)) {
+    await supabaseClient.from('bookmarks').delete().eq('user_id', session.user.id).eq('question_id', qid);
+    bookmarks = bookmarks.filter(id => id !== qid);
+  } else {
+    await supabaseClient.from('bookmarks').insert([{ user_id: session.user.id, question_id: qid }]);
+    bookmarks.push(qid);
+  }
+  if (currentView === 'home') renderHome();
+  if (currentView === 'library') renderLibrary();
+}
+
+async function endorseAnswer(aid) {
+  const qid = currentQuestionId;
+  const q = questions.find(x => x.id === qid);
+  const a = q.answers.find(x => x.id === aid);
+  await supabaseClient.from('answers').update({ insightful_count: (a.insightful_count || 0) + 1 }).eq('id', aid);
+  fetchQuestions();
 }
 
 function getGreeting() {
@@ -177,8 +223,17 @@ let currentQuestionId = null;
 function renderQuestionDetail(id) {
   currentQuestionId = id;
   const q = questions.find(x => x.id === id); if (!q) return;
-  document.getElementById('qd-content').innerHTML = `<div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:24px; position:relative; z-index:2;"><span class="subject-chip">${q.subject}</span><span style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span></div><h2 style="font-size:2rem; font-weight:800; line-height:1.3; position:relative; z-index:2;">${q.title}</h2><p style="margin-top:32px; font-size:1.15rem; line-height:1.7; color:white; position:relative; z-index:2;">${q.body}</p><div style="margin-top:40px; font-size:0.85rem; color:var(--text-secondary); position:relative; z-index:2; border-top:1px solid var(--border); padding-top:24px;">Broadcasted by <strong style="color:white;">${q.asker_name}</strong></div>`;
-  document.getElementById('qd-answers').innerHTML = `<h3 style="margin-top:48px; margin-bottom:24px; font-size:1.4rem;">${q.answers?.length || 0} Solutions</h3>` + (q.answers || []).map(a => `<div class="card-elite" style="margin-top:16px;"><div style="font-weight:800; margin-bottom:12px; font-size:0.9rem; color:var(--p-500); font-family:'Outfit'; position:relative; z-index:2;">${a.author_name}</div><p style="line-height:1.7; font-size:1.05rem; position:relative; z-index:2;">${a.body}</p></div>`).join('');
+  document.getElementById('qd-content').innerHTML = `<div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:24px; position:relative; z-index:2;"><span class="subject-chip">${q.subject}</span><span style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span></div><h2 style="font-size:2rem; font-weight:800; line-height:1.3; position:relative; z-index:2;">${q.title}</h2><p style="margin-top:32px; font-size:1.15rem; line-height:1.7; color:white; position:relative; z-index:2;">${q.body}</p>`;
+  document.getElementById('qd-answers').innerHTML = `<h3 style="margin-top:48px; margin-bottom:24px; font-size:1.4rem;">${q.answers?.length || 0} Solutions</h3>` + (q.answers || []).map(a => `
+    <div class="card-elite" style="margin-top:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; position:relative; z-index:2;">
+        <div style="font-weight:800; font-size:0.9rem; color:var(--p-500); font-family:'Outfit';">${a.author_name}</div>
+        <button class="btn-insightful" onclick="endorseAnswer('${a.id}')">
+            <i data-lucide="sparkles" style="width:14px;"></i> ${a.insightful_count || 0} Insightful
+        </button>
+      </div>
+      <p style="line-height:1.7; font-size:1.05rem; position:relative; z-index:2;">${a.body}</p>
+    </div>`).join('');
   lucide.createIcons();
 }
 

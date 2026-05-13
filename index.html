@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarQ | Institutional Portal</title>
-    <link rel="stylesheet" href="styles.css?v=114.2">
+    <title>ScholarQ | Institutional OS</title>
+    <link rel="stylesheet" href="styles.css?v=116">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
@@ -34,6 +34,9 @@
                 <div id="nav-home" class="nav-item active" onclick="navigateTo('home')">
                     <i data-lucide="layout-grid" style="width:20px;"></i> Academy Hub
                 </div>
+                <div id="nav-library" class="nav-item" onclick="navigateTo('library')">
+                    <i data-lucide="library" style="width:20px;"></i> My Library
+                </div>
                 <div id="nav-leaderboard" class="nav-item" onclick="navigateTo('leaderboard')">
                     <i data-lucide="award" style="width:20px;"></i> Leaderboard
                 </div>
@@ -62,11 +65,20 @@
                 <button onclick="navigateTo('ask')" class="btn-primary" style="white-space:nowrap;">+ Post Doubt</button>
             </header>
 
-            <!-- VIEW: HOME -->
+            <!-- VIEW: HOME (BENTO HUB) -->
             <div id="view-home" class="view">
                 <div style="display:grid; grid-template-columns: 1fr 340px; gap:40px;">
                     <div id="home-feed" style="display:flex; flex-direction:column; gap:20px;"></div>
                     <div>
+                        <!-- NOTICE BOARD -->
+                        <div class="card-elite" style="margin-bottom:32px; background:linear-gradient(135deg, rgba(99,102,241,0.05), transparent); border:1px solid rgba(99,102,241,0.2);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                                <h3 style="font-size:0.95rem;">Notice Board</h3>
+                                <div class="dot-pulse"></div>
+                            </div>
+                            <div id="notice-list" style="display:flex; flex-direction:column; gap:12px;"></div>
+                        </div>
+
                         <div class="card-elite" style="margin-bottom:32px; border-left:4px solid #6366f1;">
                             <h3 style="font-size:0.95rem; margin-bottom:16px;">Academy Pulse</h3>
                             <div style="font-size:0.8rem; color:#94a3b8; display:flex; flex-direction:column; gap:12px;">
@@ -88,6 +100,14 @@
                 </div>
             </div>
 
+            <!-- VIEW: LIBRARY -->
+            <div id="view-library" class="view" style="display:none;">
+                <h1 style="font-size:2.5rem; margin-bottom:12px; font-weight:800; letter-spacing:-1.5px;">Academy Library</h1>
+                <p style="color:var(--text-secondary); margin-bottom:40px;">Your personal bank of saved academic solutions.</p>
+                <div id="library-feed" style="display:flex; flex-direction:column; gap:20px;"></div>
+            </div>
+
+            <!-- VIEW: ASK & QUESTION DETAIL -->
             <div id="view-ask" class="view" style="display:none;">
                 <div class="card-elite" style="max-width:700px; margin:0 auto;">
                     <h2 style="margin-bottom:24px; font-size:2rem;">Broadcast Doubt</h2>
@@ -121,6 +141,7 @@
                 </div>
             </div>
 
+            <!-- LEADERBOARD & PROFILE -->
             <div id="view-leaderboard" class="view" style="display:none;"></div>
             <div id="view-profile" class="view" style="display:none;">
                 <div class="card-elite" style="text-align:center; max-width:600px; margin:0 auto; padding:60px 40px;">
@@ -137,7 +158,7 @@
         </main>
 
         <!-- AUTH VIEW -->
-        <div id="view-auth" class="view" style="display:none; position:fixed; inset:0; background:#0b0d12; z-index:1000; align-items:center; justify-content:center;">
+        <div id="view-auth" class="view" style="display:none; position:fixed; inset:0; background:#0b0d12; z-index:1000; align-items:center; justify-content:center; background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.02) 1px, transparent 0); background-size: 32px 32px;">
             <div class="card-elite" style="max-width:420px; width:90%; padding:50px; text-align:center;">
                 <div style="width:72px; height:72px; background:linear-gradient(135deg, #6366f1, #4f46e5); border-radius:18px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:24px; box-shadow: 0 12px 24px rgba(99, 102, 241, 0.3);">
                     <i data-lucide="graduation-cap" style="color:white; width:40px;"></i>
@@ -159,6 +180,6 @@
     </div>
 
     <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-    <script src="app.js?v=114.2"></script>
+    <script src="app.js?v=116"></script>
 </body>
 </html>
