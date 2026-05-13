@@ -1,4 +1,4 @@
-// ScholarQ - The Vault Edition (V117)
+// ScholarQ - The Mobile Scholar Edition (V118)
 const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -35,6 +35,15 @@ async function handleSessionUpdate(newS) {
   }, 500);
 }
 
+function showToast(msg) {
+  const cont = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerText = msg;
+  cont.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
 async function fetchProfile() {
   if (!session) return false;
   const { data } = await supabaseClient.from('users').select('*').eq('id', session.user.id).maybeSingle();
@@ -60,17 +69,19 @@ function navigateTo(view, param = null) {
   document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
   const target = document.getElementById(`view-${view}`);
   if (target) target.style.display = (view === 'auth' ? 'flex' : 'block');
+  
+  // Dual-Nav Sync
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.m-nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`nav-${view}`)?.classList.add('active');
+  document.getElementById(`m-nav-${view}`)?.classList.add('active');
 
   const actionBtn = document.getElementById('main-action-btn');
   if (view === 'marketplace') {
-    actionBtn.innerText = "+ Publish Resource";
-    actionBtn.onclick = openSellModal;
+    if(actionBtn) { actionBtn.innerText = "+ Publish Resource"; actionBtn.onclick = openSellModal; }
     renderMarketplace();
   } else {
-    actionBtn.innerText = "+ Post Doubt";
-    actionBtn.onclick = () => navigateTo('ask');
+    if(actionBtn) { actionBtn.innerText = "+ Post Doubt"; actionBtn.onclick = () => navigateTo('ask'); }
   }
 
   if (view === 'home') renderHome();
@@ -79,6 +90,11 @@ function navigateTo(view, param = null) {
   if (view === 'profile') renderProfile();
   if (view === 'question') renderQuestionDetail(param);
   lucide.createIcons();
+}
+
+function handleFabClick() {
+  if (currentView === 'marketplace') openSellModal();
+  else navigateTo('ask');
 }
 
 async function fetchQuestions() {
@@ -97,9 +113,9 @@ function renderHome() {
   });
   if(document.getElementById('pulse-doubts')) document.getElementById('pulse-doubts').innerText = questions.length;
   renderNoticeBoard();
-  const welcomeHTML = `<h2 style="font-size:1.8rem; margin-bottom:24px; font-weight:800; letter-spacing:-1px;">${getGreeting()}, <span style="color:var(--p-500);">${profile.name}</span></h2>`;
+  const welcomeHTML = `<h2 style="font-size:1.6rem; margin-bottom:24px; font-weight:800; letter-spacing:-1px; color:white;">${getGreeting()}, <span style="color:var(--p-500);">${profile.name}</span></h2>`;
   if (list.length === 0) {
-    cont.innerHTML = welcomeHTML + `<div class="empty-state"><h3>Academy Signal Idle</h3><p style="color:var(--text-secondary); margin-bottom:24px;">The network is quiet. Broadcast a doubt to start.</p><button onclick="navigateTo('ask')" class="btn-primary">Broadcast Doubt</button></div>`;
+    cont.innerHTML = welcomeHTML + `<div class="empty-state"><h3>Academy Signal Idle</h3><p style="color:var(--text-secondary); margin-bottom:24px;">The network is quiet.</p><button onclick="navigateTo('ask')" class="btn-primary">Broadcast Doubt</button></div>`;
   } else {
     cont.innerHTML = welcomeHTML + list.map(q => renderQuestionCard(q)).join('');
   }
@@ -110,13 +126,13 @@ function renderMarketplace() {
   const cont = document.getElementById('market-list');
   const list = marketplaceItems.filter(i => i.title.toLowerCase().includes(currentSearch.toLowerCase()));
   if (list.length === 0) {
-    cont.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><h3>Vault Empty</h3><p style="color:var(--text-secondary);">Be the first to publish a high-value academic resource.</p></div>`;
+    cont.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><h3>Vault Empty</h3><p style="color:var(--text-secondary);">Be the first to publish.</p></div>`;
   } else {
     cont.innerHTML = list.map(i => `
-      <div class="card-elite" style="display:flex; flex-direction:column; justify-content:space-between; height:200px;">
+      <div class="card-elite" style="display:flex; flex-direction:column; justify-content:space-between; min-height:180px;">
         <div>
             <div style="font-size:0.6rem; color:var(--p-500); font-weight:800; margin-bottom:8px; text-transform:uppercase;">ACADEMIC ASSET</div>
-            <h3 style="font-size:1.1rem; line-height:1.4;">${i.title}</h3>
+            <h3 style="font-size:1rem; line-height:1.4; color:white;">${i.title}</h3>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">By ${i.seller_name}</div>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:16px;">
@@ -129,15 +145,12 @@ function renderMarketplace() {
 }
 
 async function handlePurchase(itemId, price, link, sellerId) {
-  if (profile.points < price) return alert("Insufficient Academy Points.");
-  if (confirm(`Unlock access to this asset for ${price} points?`)) {
-    // 1. Deduct from buyer
+  if (profile.points < price) return showToast("Insufficient Academy Points.");
+  if (confirm(`Unlock access for ${price} points?`)) {
     await supabaseClient.from('users').update({ points: profile.points - price }).eq('id', session.user.id);
-    // 2. Add to seller
     const { data: seller } = await supabaseClient.from('users').select('points').eq('id', sellerId).single();
     await supabaseClient.from('users').update({ points: (seller.points || 0) + price }).eq('id', sellerId);
-    
-    alert("Resource Unlocked!");
+    showToast("Resource Unlocked!");
     window.open(link, '_blank');
     fetchProfile();
   }
@@ -147,6 +160,7 @@ async function handleSell(e) {
   e.preventDefault();
   const t = document.getElementById('sell-title').value, p = parseInt(document.getElementById('sell-price').value), l = document.getElementById('sell-link').value;
   await supabaseClient.from('marketplace').insert([{ id: 'm_'+Date.now(), title: t, price: p, link: l, seller_id: session.user.id, seller_name: profile.name }]);
+  showToast("Resource Published to Vault!");
   closeSellModal(); fetchMarketplace();
 }
 
@@ -157,7 +171,7 @@ function renderLibrary() {
   const cont = document.getElementById('library-feed');
   const list = questions.filter(q => bookmarks.includes(q.id));
   if (list.length === 0) {
-    cont.innerHTML = `<div class="empty-state"><h3>Library Empty</h3><p style="color:var(--text-secondary);">Save doubts from the hub to build your personal bank.</p></div>`;
+    cont.innerHTML = `<div class="empty-state"><h3>Library Empty</h3><p style="color:var(--text-secondary);">Save doubts to build your bank.</p></div>`;
   } else {
     cont.innerHTML = list.map(q => renderQuestionCard(q)).join('');
   }
@@ -168,18 +182,18 @@ function renderQuestionCard(q) {
   const isBookmarked = bookmarks.includes(q.id);
   return `
     <div class="card-elite" style="margin-bottom:16px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; position:relative; z-index:2;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
         <span class="subject-chip">${q.subject}</span>
         <div style="display:flex; align-items:center; gap:16px;">
             <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span>
             <i data-lucide="bookmark" class="bookmark-icon ${isBookmarked?'active':''}" onclick="toggleBookmark(event, '${q.id}')" style="width:18px;"></i>
         </div>
       </div>
-      <h3 style="font-size:1.2rem; font-weight:800; margin-bottom:8px; line-height:1.4; cursor:pointer;" onclick="navigateTo('question', '${q.id}')">${q.title}</h3>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; font-size:0.8rem; color:var(--text-secondary);">
+      <h3 style="font-size:1.1rem; font-weight:800; margin-bottom:8px; line-height:1.4; color:white;" onclick="navigateTo('question', '${q.id}')">${q.title}</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; font-size:0.75rem; color:var(--text-secondary);">
         <span>By ${q.asker_name}</span>
         <span style="font-weight:800; color:var(--p-500); display:flex; align-items:center; gap:6px;">
-          <i data-lucide="message-square" style="width:16px;"></i> ${q.answers?.length || 0} SOLUTIONS
+          <i data-lucide="message-square" style="width:14px;"></i> ${q.answers?.length || 0} SOLUTIONS
         </span>
       </div>
     </div>
@@ -192,7 +206,7 @@ function renderNoticeBoard() {
   cont.innerHTML = trending.map(q => `
     <div class="notice-item" onclick="navigateTo('question', '${q.id}')">
         <div style="font-size:0.6rem; font-weight:800; color:var(--p-500); margin-bottom:4px; text-transform:uppercase;">TRENDING DOUBT</div>
-        <div style="font-size:0.8rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${q.title}</div>
+        <div style="font-size:0.8rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:white;">${q.title}</div>
     </div>
   `).join('');
 }
@@ -202,9 +216,11 @@ async function toggleBookmark(e, qid) {
   if (bookmarks.includes(qid)) {
     await supabaseClient.from('bookmarks').delete().eq('user_id', session.user.id).eq('question_id', qid);
     bookmarks = bookmarks.filter(id => id !== qid);
+    showToast("Removed from Library");
   } else {
     await supabaseClient.from('bookmarks').insert([{ user_id: session.user.id, question_id: qid }]);
     bookmarks.push(qid);
+    showToast("Added to Library");
   }
   if (currentView === 'home') renderHome();
   if (currentView === 'library') renderLibrary();
@@ -215,6 +231,7 @@ async function endorseAnswer(aid) {
   const q = questions.find(x => x.id === qid);
   const a = q.answers.find(x => x.id === aid);
   await supabaseClient.from('answers').update({ insightful_count: (a.insightful_count || 0) + 1 }).eq('id', aid);
+  showToast("Endorsement Sent!");
   fetchQuestions();
 }
 
@@ -233,14 +250,15 @@ async function handleAuth(e) {
   const { error } = await supabaseClient.auth.signInWithPassword({ email: em, password: pw });
   if (error) {
     const { error: upErr } = await supabaseClient.auth.signUp({ email: em, password: pw });
-    if (upErr) alert(upErr.message); else alert("Institutional Access Email sent!");
-  }
+    if (upErr) showToast(upErr.message); else showToast("Institutional Email sent!");
+  } else { showToast("Academy Access Verified!"); }
 }
 
 async function handleAsk(e) {
   e.preventDefault();
   const t = document.getElementById('ask-title').value, s = document.getElementById('ask-subject').value, b = document.getElementById('ask-body').value;
   await supabaseClient.from('questions').insert([{ id: 'q_'+Date.now(), title: t, subject: s, body: b, asker_id: session.user.id, asker_name: profile.name }]);
+  showToast("Doubt Broadcasted!");
   fetchQuestions(); navigateTo('home');
 }
 
@@ -248,6 +266,7 @@ async function handleAnswer(e) {
   e.preventDefault();
   const b = document.getElementById('answer-body').value;
   await supabaseClient.from('answers').insert([{ id: 'a_'+Date.now(), question_id: currentQuestionId, author_id: session.user.id, author_name: profile.name, body: b }]);
+  showToast("Solution Published!");
   document.getElementById('answer-form').reset();
   fetchQuestions(); navigateTo('question', currentQuestionId);
 }
@@ -265,9 +284,9 @@ function updateGlobalUI() {
 
 function renderLeaderboard() {
   const cont = document.getElementById('view-leaderboard');
-  cont.innerHTML = '<div style="padding:40px; text-align:center; opacity:0.5;">Ranking Academy Leaders...</div>';
+  cont.innerHTML = '<div style="padding:40px; text-align:center; opacity:0.5; color:white;">Ranking Academy Leaders...</div>';
   supabaseClient.from('users').select('*').order('points', { ascending: false }).limit(20).then(({data}) => {
-    if(data) cont.innerHTML = `<h1 style="font-size:2.5rem; margin-bottom:40px; font-weight:800; letter-spacing:-1.5px;">Academy Leaders</h1><div style="display:grid; gap:16px;">${data.map((u, i) => `<div class="card-elite" style="display:flex; justify-content:space-between; align-items:center; padding:20px 32px;"><div style="display:flex; gap:32px; align-items:center; position:relative; z-index:2;"><div style="font-size:1.5rem; font-weight:800; color:var(--text-muted); width:40px; font-family:'Outfit';">#${i+1}</div><strong>${u.name}</strong></div><div style="color:var(--p-500); font-weight:800; font-size:1.2rem; font-family:'Outfit'; position:relative; z-index:2;">${u.points} PTS</div></div>`).join('')}</div>`;
+    if(data) cont.innerHTML = `<h1 style="font-size:2rem; margin-bottom:40px; font-weight:800; color:white;">Leaders</h1><div style="display:grid; gap:16px;">${data.map((u, i) => `<div class="card-elite" style="display:flex; justify-content:space-between; align-items:center; padding:16px 24px;"><div style="display:flex; gap:20px; align-items:center;"><div style="font-size:1.2rem; font-weight:800; color:var(--text-muted); width:30px;">#${i+1}</div><strong style="color:white;">${u.name}</strong></div><div style="color:var(--p-500); font-weight:800; font-size:1.1rem;">${u.points} PTS</div></div>`).join('')}</div>`;
   });
 }
 
@@ -276,6 +295,7 @@ function renderProfile() {
   document.getElementById('profile-email').innerText = profile.email || '';
   document.getElementById('profile-points').innerText = profile.points;
   document.getElementById('profile-asked').innerText = questions.filter(q => q.asker_id === profile.id).length;
+  document.getElementById('profile-solved').innerText = questions.reduce((acc, q) => acc + q.answers.filter(a => a.author_id === profile.id).length, 0);
   document.getElementById('profile-avatar').innerText = (profile.name ? profile.name[0].toUpperCase() : 'S');
 }
 
@@ -283,8 +303,15 @@ let currentQuestionId = null;
 function renderQuestionDetail(id) {
   currentQuestionId = id;
   const q = questions.find(x => x.id === id); if (!q) return;
-  document.getElementById('qd-content').innerHTML = `<div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:24px; position:relative; z-index:2;"><span class="subject-chip">${q.subject}</span><span style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span></div><h2 style="font-size:2rem; font-weight:800; line-height:1.3; position:relative; z-index:2;">${q.title}</h2><p style="margin-top:32px; font-size:1.15rem; line-height:1.7; color:white; position:relative; z-index:2;">${q.body}</p>`;
-  document.getElementById('qd-answers').innerHTML = `<h3 style="margin-top:48px; margin-bottom:24px; font-size:1.4rem;">${q.answers?.length || 0} Solutions</h3>` + (q.answers || []).map(a => `<div class="card-elite" style="margin-top:16px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; position:relative; z-index:2;"><div style="font-weight:800; font-size:0.9rem; color:var(--p-500); font-family:'Outfit';">${a.author_name}</div><button class="btn-insightful" onclick="endorseAnswer('${a.id}')"><i data-lucide="sparkles" style="width:14px;"></i> ${a.insightful_count || 0} Insightful</button></div><p style="line-height:1.7; font-size:1.05rem; position:relative; z-index:2;">${a.body}</p></div>`).join('');
+  document.getElementById('qd-content').innerHTML = `<div style="padding:24px;"><div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;"><span class="subject-chip">${q.subject}</span><span style="font-size:0.75rem; color:var(--text-secondary);">${getTimeAgo(q.created_at)}</span></div><h2 style="font-size:1.6rem; font-weight:800; color:white; line-height:1.3;">${q.title}</h2><p style="margin-top:24px; font-size:1.05rem; line-height:1.7; color:white;">${q.body}</p></div>`;
+  document.getElementById('qd-answers').innerHTML = `<h3 style="margin-top:32px; margin-bottom:20px; font-size:1.2rem; color:white; padding:0 8px;">${q.answers?.length || 0} Solutions</h3>` + (q.answers || []).map(a => `
+    <div class="card-elite" style="margin-top:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="font-weight:800; font-size:0.85rem; color:var(--p-500); font-family:'Outfit';">${a.author_name}</div>
+        <button class="btn-insightful" onclick="endorseAnswer('${a.id}')"><i data-lucide="sparkles" style="width:14px;"></i> ${a.insightful_count || 0}</button>
+      </div>
+      <p style="line-height:1.6; font-size:1rem; color:white;">${a.body}</p>
+    </div>`).join('');
   lucide.createIcons();
 }
 
