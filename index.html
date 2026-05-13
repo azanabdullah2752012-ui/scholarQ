@@ -4,180 +4,93 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScholarQ | Master Network</title>
-    <link rel="stylesheet" href="./styles.css?v=401">
+    <!-- NUCLEAR PATHING -->
+    <link rel="stylesheet" href="https://azanabdullah2752012-ui.github.io/scholarQ/styles.css?v=999">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Emergency Backup Style */
+        body { background: #0b0d14 !important; color: #f1f5f9 !important; font-family: sans-serif; }
+        .init-shield { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
+    </style>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="reference-theme">
-    <!-- Boot Shield -->
     <div id="init-shield" class="init-shield">
         <div class="shield-content">
-            <div class="brand-logo"><i data-lucide="graduation-cap"></i> ScholarQ</div>
+            <h1 style="font-family:'Outfit'; color:#6366f1;">ScholarQ</h1>
+            <p style="color:#94a3b8;">Initializing System...</p>
         </div>
     </div>
 
-    <!-- Auth Gateway (Split-Screen) -->
+    <!-- Auth Gateway -->
     <div id="view-auth" class="auth-overlay-vision" style="display:none;">
         <div class="auth-split">
-            <!-- LEFT PANEL: VISION -->
             <div class="auth-left">
                 <div class="brand-logo"><i data-lucide="graduation-cap"></i> <div>ScholarQ<div class="brand-sub">Learn Together. Rise Together.</div></div></div>
-                
                 <div class="vision-content">
                     <h1>Where Scholars<br><span class="text-indigo">Elevate Minds.</span><br>Together.</h1>
-                    <p class="text-muted vision-p">ScholarQ connects high-achieving students with peers who need help, building a community of learning, growth, and excellence.</p>
-                    
                     <div class="feature-stack">
-                        <div class="feature-item">
-                            <div class="f-icon purple"><i data-lucide="graduation-cap"></i></div>
-                            <div>
-                                <h4>Ask. Learn. Understand.</h4>
-                                <p>Get your doubts solved by top-performing students.</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="f-icon green"><i data-lucide="user-plus"></i></div>
-                            <div>
-                                <h4>Help. Teach. Impact.</h4>
-                                <p>Share your knowledge and earn recognition.</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="f-icon yellow"><i data-lucide="award"></i></div>
-                            <div>
-                                <h4>Grow. Rank. Lead.</h4>
-                                <p>Build your reputation and become a trusted scholar.</p>
-                            </div>
-                        </div>
+                        <div class="feature-item"><div class="f-icon purple"><i data-lucide="graduation-cap"></i></div><div><h4>Ask. Learn. Understand.</h4></div></div>
+                        <div class="feature-item"><div class="f-icon green"><i data-lucide="user-plus"></i></div><div><h4>Help. Teach. Impact.</h4></div></div>
                     </div>
-                </div>
-
-                <div class="mortarboard-graphic">
-                    <div class="mortar-shadow"></div>
-                    <i data-lucide="graduation-cap"></i>
                 </div>
             </div>
-
-            <!-- RIGHT PANEL: ENGINE -->
             <div class="auth-right">
-                <div class="auth-mode-top">
-                    <div class="dark-toggle"><i data-lucide="moon"></i> Dark <i data-lucide="chevron-down"></i></div>
-                </div>
-
                 <div class="auth-form-wrap">
                     <h2>Welcome Back</h2>
-                    <p class="text-muted mb-32">Log in to continue your learning journey</p>
-
                     <div class="toggle-group">
-                        <button class="t-btn active"><i data-lucide="mail"></i> Email</button>
-                        <button class="t-btn"><i data-lucide="smartphone"></i> Phone</button>
+                        <button class="t-btn active">Email</button>
+                        <button class="t-btn">Phone</button>
                     </div>
-
                     <form id="auth-form">
-                        <div class="input-field">
-                            <label>Email Address</label>
-                            <div class="input-icon-wrap">
-                                <i data-lucide="mail" class="i-lead"></i>
-                                <input type="email" id="auth-email" placeholder="Enter your email" required>
-                            </div>
-                        </div>
-
-                        <div class="input-field">
-                            <label>Password</label>
-                            <div class="input-icon-wrap">
-                                <i data-lucide="lock" class="i-lead"></i>
-                                <input type="password" id="auth-password" placeholder="Enter your password" required>
-                                <i data-lucide="eye" class="i-trail"></i>
-                            </div>
-                        </div>
-
-                        <div class="text-right mb-24">
-                            <a href="#" class="link-indigo text-xs">Forgot Password?</a>
-                        </div>
-
-                        <div id="role-fields" style="display:none; margin-bottom:24px;">
-                            <div class="input-field">
-                                <label>Full Name</label>
-                                <input type="text" id="auth-name" placeholder="Scholar Name" class="sq-input-pure">
-                            </div>
-                            <div class="input-field">
-                                <label>Recent Score %</label>
-                                <input type="number" id="auth-score" placeholder="e.g. 92" class="sq-input-pure">
-                            </div>
-                        </div>
-
-                        <button type="submit" id="auth-btn" class="btn-auth-main">Log In <i data-lucide="arrow-right"></i></button>
+                        <div class="input-field"><label>Email Address</label><div class="input-icon-wrap"><input type="email" id="auth-email" placeholder="Enter email" required></div></div>
+                        <div class="input-field"><label>Password</label><div class="input-icon-wrap"><input type="password" id="auth-password" placeholder="Enter password" required></div></div>
+                        <button type="submit" id="auth-btn" class="btn-auth-main">Log In</button>
                     </form>
-
                     <div class="divider"><span>or continue with</span></div>
-
-                    <div class="social-row">
-                        <button class="btn-social" onclick="loginWithGoogle()"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo.svg" alt="Google"> Google</button>
-                    </div>
-
-                    <p class="text-center mt-32 text-sm text-muted">
-                        Don't have an account? <a href="#" onclick="toggleAuthMode()" class="link-indigo" id="auth-toggle-link">Sign up</a>
-                    </p>
-                </div>
-
-                <div class="auth-footer">
-                    <i data-lucide="shield-check"></i> Your data is safe and secure with us.
+                    <button class="btn-social" onclick="loginWithGoogle()"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo.svg" style="width:18px;"> Google</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main OS Shell -->
-    <div id="app" class="app-layout" style="display:none; opacity:0;">
+    <!-- App Shell -->
+    <div id="app" class="app-layout" style="display:none;">
         <aside class="sidebar">
-            <div class="brand-logo" onclick="go('home')"><i data-lucide="graduation-cap"></i> <div>ScholarQ<div class="brand-sub">Ask. Learn. Excel.</div></div></div>
+            <div class="brand-logo"><i data-lucide="graduation-cap"></i> <div>ScholarQ</div></div>
             <nav class="side-nav">
-                <div class="nav-item active" onclick="go('home')"><i data-lucide="home"></i> <span>Home</span></div>
-                <div class="nav-item" onclick="go('ask')"><i data-lucide="edit-2"></i> <span>Ask Doubt</span></div>
-                <div class="nav-item" onclick="go('profile')"><i data-lucide="message-square"></i> <span>My Doubts</span></div>
-                <div class="nav-item" onclick="go('leaderboard')"><i data-lucide="award"></i> <span>Top Scholars</span></div>
-                <div class="nav-item" onclick="go('profile')"><i data-lucide="user"></i> <span>Profile</span></div>
+                <div class="nav-item active"><i data-lucide="home"></i> <span>Home</span></div>
+                <div class="nav-item"><i data-lucide="edit-2"></i> <span>Ask Doubt</span></div>
             </nav>
             <div class="sidebar-status-card">
-                <h3>YOUR STATUS</h3>
-                <div id="status-pill" class="badge-pill"><i data-lucide="shield-check"></i> Scholar</div>
-                <div class="status-line"><span>Score</span><b id="side-score">0%</b></div>
-                <div class="status-line"><span>Subjects</span><b>5</b></div>
-                <div class="status-line"><span>Reputation</span><b>A+</b></div>
-                <button class="btn-side-profile" onclick="go('profile')">View Profile</button>
-            </div>
-            <div class="side-footer" onclick="logout()">
-                <i data-lucide="moon"></i> <span>Dark Mode</span>
+                <h3>STATUS</h3>
+                <div id="status-pill" class="badge-pill">Scholar</div>
+                <button class="btn-side-profile">Profile</button>
             </div>
         </aside>
 
         <main class="main-workspace">
             <header class="top-bar">
-                <div class="search-container">
-                    <i data-lucide="search"></i>
-                    <input type="text" placeholder="Search doubts, subjects or topics..." oninput="handleSearch(this.value)">
-                </div>
-                <button class="btn-ask-doubt" onclick="go('ask')"><i data-lucide="edit-3"></i> Ask Doubt</button>
+                <div class="search-container"><input type="text" placeholder="Search doubts..."></div>
+                <button class="btn-ask-doubt">Ask Doubt</button>
             </header>
             <div class="scroll-view">
                 <div id="view-home" class="view">
-                    <div class="dashboard-greeting"><h1 id="user-greeting">Good evening, Azan! 👋</h1><p class="text-muted">Need help with something?</p></div>
-                    <div class="stats-row" id="stats-row"></div>
-                    <div class="feed-label-row"><h2>Recent Doubts</h2><button class="btn-view-all">View All</button></div>
+                    <div class="dashboard-greeting"><h1>Dashboard</h1></div>
                     <div id="home-feed"></div>
                 </div>
-                <div id="view-ask" class="view" style="display:none;"></div>
-                <div id="view-question" class="view" style="display:none;"></div>
-                <div id="view-profile" class="view" style="display:none;"></div>
             </div>
         </main>
-        <aside id="right-panel" class="right-panel"></aside>
     </div>
 
     <div id="toast-container"></div>
-    <script src="app.js?v=401"></script>
+    <!-- NUCLEAR JS PATHING -->
+    <script src="https://azanabdullah2752012-ui.github.io/scholarQ/app.js?v=999"></script>
 </body>
 </html>
