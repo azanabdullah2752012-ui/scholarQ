@@ -99,7 +99,7 @@ async function handleAuth(e) {
 }
 
 async function loginWithGoogle() {
-    const { error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    const { error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
     if (error) toast(error.message);
 }
 
