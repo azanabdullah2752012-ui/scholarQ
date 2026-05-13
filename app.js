@@ -1,4 +1,4 @@
-// ScholarQ - Institutional Elite Edition (V114)
+// ScholarQ - Institutional Elite Edition (V114.2 Stability Patch)
 const supabaseUrl = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const supabaseKey = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session: s } } = await supabaseClient.auth.getSession();
   await handleSessionUpdate(s);
   
-  // 2. AUTH LISTENER
+  // 2. AUTH STATE LISTENER
   supabaseClient.auth.onAuthStateChange(async (e, s) => {
     if (e === 'SIGNED_IN' || e === 'SIGNED_OUT') await handleSessionUpdate(s);
   });
@@ -38,7 +38,14 @@ async function handleSessionUpdate(newS) {
   } else {
     navigateTo('auth');
   }
-  document.getElementById('app').style.display = 'flex';
+  
+  // REVEAL ACADEMY OS
+  setTimeout(() => {
+    const shield = document.getElementById('init-shield');
+    const app = document.getElementById('app');
+    if (shield) { shield.style.opacity = '0'; setTimeout(() => shield.style.display = 'none', 500); }
+    if (app) { app.style.display = 'flex'; setTimeout(() => app.style.opacity = '1', 50); }
+  }, 500);
 }
 
 async function fetchProfile() {
@@ -52,12 +59,10 @@ function navigateTo(view, param = null) {
   if (!session && view !== 'auth') view = 'auth';
   currentView = view;
   
-  // View Toggle
   document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
   const target = document.getElementById(`view-${view}`);
   if (target) target.style.display = (view === 'auth' ? 'flex' : 'block');
   
-  // Sidebar State
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`nav-${view}`)?.classList.add('active');
 
@@ -75,7 +80,6 @@ async function fetchQuestions() {
   if (currentView === 'home') renderHome();
 }
 
-// ELITE RENDERING (V114)
 function renderHome() {
   const cont = document.getElementById('home-feed');
   const list = questions.filter(q => {
@@ -84,18 +88,18 @@ function renderHome() {
     return matchFilt && matchSearch;
   });
   
-  document.getElementById('pulse-doubts').innerText = questions.length;
+  if(document.getElementById('pulse-doubts')) document.getElementById('pulse-doubts').innerText = questions.length;
 
   cont.innerHTML = list.map(q => `
     <div class="card-elite" style="cursor:pointer;" onclick="navigateTo('question', '${q.id}')">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; position:relative; z-index:2;">
         <span class="subject-chip">${q.subject}</span>
-        <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span>
+        <span style="font-size:0.75rem; color:#94a3b8; font-weight:600;">${getTimeAgo(q.created_at)}</span>
       </div>
-      <h3 style="font-size:1.2rem; font-weight:800; margin-bottom:8px; line-height:1.4; position:relative; z-index:2;">${q.title}</h3>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; font-size:0.8rem; color:var(--text-secondary); position:relative; z-index:2;">
+      <h3 style="font-size:1.2rem; font-weight:800; margin-bottom:8px; line-height:1.4; position:relative; z-index:2; color:white;">${q.title}</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; font-size:0.8rem; color:#94a3b8; position:relative; z-index:2;">
         <span style="display:flex; align-items:center; gap:8px;"><i data-lucide="user" style="width:14px; opacity:0.6;"></i> By ${q.asker_name}</span>
-        <span style="font-weight:800; color:var(--p-500); display:flex; align-items:center; gap:6px;">
+        <span style="font-weight:800; color:#6366f1; display:flex; align-items:center; gap:6px;">
           <i data-lucide="message-square" style="width:16px;"></i> ${q.answers?.length || 0} SOLUTIONS
         </span>
       </div>
@@ -133,14 +137,14 @@ async function handleAnswer(e) {
 }
 
 async function handleFinishProfile() {
-  const nm = session.user.user_metadata.full_name || session.user.email.split('@')[0];
+  const nm = session.user.user_metadata.full_name || (session.user.email ? session.user.email.split('@')[0] : 'Scholar');
   const newP = { id: session.user.id, email: session.user.email, name: nm, points: 50 };
   await supabaseClient.from('users').upsert([newP]);
   profile = newP; navigateTo('home');
 }
 
 function updateGlobalUI() {
-  document.getElementById('side-points').innerText = profile.points;
+  if(document.getElementById('side-points')) document.getElementById('side-points').innerText = profile.points;
 }
 
 function renderLeaderboard() {
@@ -148,15 +152,15 @@ function renderLeaderboard() {
   cont.innerHTML = '<div style="padding:40px; text-align:center; opacity:0.5;">Ranking Academy Leaders...</div>';
   supabaseClient.from('users').select('*').order('points', { ascending: false }).limit(20).then(({data}) => {
     if(data) cont.innerHTML = `
-      <h1 style="font-size:2.5rem; margin-bottom:40px; font-weight:800; letter-spacing:-1.5px;">Academy Leaders</h1>
+      <h1 style="font-size:2.5rem; margin-bottom:40px; font-weight:800; letter-spacing:-1.5px; color:white;">Academy Leaders</h1>
       <div style="display:grid; gap:16px;">
         ${data.map((u, i) => `
           <div class="card-elite" style="display:flex; justify-content:space-between; align-items:center; padding:20px 32px;">
             <div style="display:flex; gap:32px; align-items:center; position:relative; z-index:2;">
-              <div style="font-size:1.5rem; font-weight:800; color:var(--text-muted); width:40px; font-family:'Outfit';">#${i+1}</div>
-              <strong style="font-size:1.1rem;">${u.name}</strong>
+              <div style="font-size:1.5rem; font-weight:800; color:#475569; width:40px; font-family:'Outfit';">#${i+1}</div>
+              <strong style="font-size:1.1rem; color:white;">${u.name}</strong>
             </div>
-            <div style="color:var(--p-500); font-weight:800; font-size:1.2rem; font-family:'Outfit'; position:relative; z-index:2;">${u.points} PTS</div>
+            <div style="color:#6366f1; font-weight:800; font-size:1.2rem; font-family:'Outfit'; position:relative; z-index:2;">${u.points} PTS</div>
           </div>
         `).join('')}
       </div>
@@ -166,10 +170,10 @@ function renderLeaderboard() {
 
 function renderProfile() {
   document.getElementById('profile-name').innerText = profile.name;
-  document.getElementById('profile-email').innerText = profile.email;
+  document.getElementById('profile-email').innerText = profile.email || '';
   document.getElementById('profile-points').innerText = profile.points;
   document.getElementById('profile-asked').innerText = questions.filter(q => q.asker_id === profile.id).length;
-  document.getElementById('profile-avatar').innerText = profile.name[0].toUpperCase();
+  document.getElementById('profile-avatar').innerText = (profile.name ? profile.name[0].toUpperCase() : 'S');
 }
 
 let currentQuestionId = null;
@@ -179,20 +183,20 @@ function renderQuestionDetail(id) {
   document.getElementById('qd-content').innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:24px; position:relative; z-index:2;">
       <span class="subject-chip">${q.subject}</span>
-      <span style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">${getTimeAgo(q.created_at)}</span>
+      <span style="font-size:0.8rem; color:#94a3b8; font-weight:600;">${getTimeAgo(q.created_at)}</span>
     </div>
-    <h2 style="font-size:2rem; font-weight:800; line-height:1.3; position:relative; z-index:2;">${q.title}</h2>
-    <p style="margin-top:32px; font-size:1.15rem; line-height:1.7; color:var(--text-primary); position:relative; z-index:2;">${q.body}</p>
-    <div style="margin-top:40px; font-size:0.85rem; color:var(--text-secondary); position:relative; z-index:2; border-top:1px solid var(--border); padding-top:24px;">
+    <h2 style="font-size:2rem; font-weight:800; line-height:1.3; position:relative; z-index:2; color:white;">${q.title}</h2>
+    <p style="margin-top:32px; font-size:1.15rem; line-height:1.7; color:white; position:relative; z-index:2;">${q.body}</p>
+    <div style="margin-top:40px; font-size:0.85rem; color:#94a3b8; position:relative; z-index:2; border-top:1px solid rgba(255,255,255,0.05); padding-top:24px;">
       Broadcasted by <strong style="color:white;">${q.asker_name}</strong>
     </div>
   `;
   document.getElementById('qd-answers').innerHTML = `
-    <h3 style="margin-top:48px; margin-bottom:24px; font-size:1.4rem;">${q.answers?.length || 0} Professional Solutions</h3>
+    <h3 style="margin-top:48px; margin-bottom:24px; font-size:1.4rem; color:white;">${q.answers?.length || 0} Professional Solutions</h3>
     ${(q.answers || []).map(a => `
       <div class="card-elite" style="margin-top:16px;">
-        <div style="font-weight:800; margin-bottom:12px; font-size:0.9rem; color:var(--p-500); font-family:'Outfit'; position:relative; z-index:2;">${a.author_name}</div>
-        <p style="line-height:1.7; font-size:1.05rem; position:relative; z-index:2;">${a.body}</p>
+        <div style="font-weight:800; margin-bottom:12px; font-size:0.9rem; color:#6366f1; font-family:'Outfit'; position:relative; z-index:2;">${a.author_name}</div>
+        <p style="line-height:1.7; font-size:1.05rem; position:relative; z-index:2; color:white;">${a.body}</p>
       </div>`).join('')}
   `;
   lucide.createIcons();
