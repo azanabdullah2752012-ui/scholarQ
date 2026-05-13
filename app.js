@@ -52,7 +52,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function handleSessionUpdate(newS) {
   session = newS;
-  console.log("Session Update:", session ? "Active" : "None");
+  const isInitializing = window.location.hash.includes('access_token');
+  console.log("Session Update:", session ? "Active" : "None", " | Hash detected:", isInitializing);
 
   if (session) {
     const ok = await fetchProfile();
@@ -60,15 +61,15 @@ async function handleSessionUpdate(newS) {
       await handleDailyLogin();
       await fetchQuestions();
       setupSubscriptions();
-      // Only navigate to home if we're currently stuck on the auth page
       if (currentView === 'auth') navigateTo('home');
-    } else {
-      // If profile is missing, fetchProfile already redirects to finish-profile
-      console.log("Waiting for profile completion...");
     }
   } else {
-    // Only redirect to auth if we aren't already there
-    if (currentView !== 'auth') navigateTo('auth');
+    // DO NOT redirect to auth if we are in the middle of a hash-login (OAuth)
+    if (!isInitializing && currentView !== 'auth') {
+      navigateTo('auth');
+    } else {
+      console.log("Login in progress via URL hash, holding redirect...");
+    }
   }
 }
 
@@ -104,7 +105,13 @@ function navigateTo(view, param = null) {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
 
   // Enhanced Auth Guard
+  const isInitializing = window.location.hash.includes('access_token');
+
   if (!session && view !== 'auth') {
+    if (isInitializing) {
+      console.log("OAuth hash detected, holding redirect to ensure session completes...");
+      return; // Stop the redirect to let Supabase finish
+    }
     console.log("No session found, redirecting to auth...");
     view = 'auth';
   }
