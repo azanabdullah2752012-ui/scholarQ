@@ -4,27 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScholarQ | Master Network</title>
-    <!-- NUCLEAR PATHING -->
-    <link rel="stylesheet" href="https://azanabdullah2752012-ui.github.io/scholarQ/styles.css?v=999">
-    
+    <link rel="stylesheet" href="./styles.css?v=500">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
     
-    <style>
-        /* Emergency Backup Style */
-        body { background: #0b0d14 !important; color: #f1f5f9 !important; font-family: sans-serif; }
-        .init-shield { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
-    </style>
+    <script>
+        // EMERGENCY FAIL-SAFE
+        setTimeout(() => {
+            const s = document.getElementById('init-shield');
+            if (s && s.style.display !== 'none') {
+                console.log("Fail-safe trigger: Dismissing shield.");
+                s.style.opacity = '0';
+                setTimeout(() => s.style.display = 'none', 800);
+                document.getElementById('view-auth').style.display = 'flex';
+            }
+        }, 6000);
+    </script>
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="reference-theme">
-    <div id="init-shield" class="init-shield">
-        <div class="shield-content">
-            <h1 style="font-family:'Outfit'; color:#6366f1;">ScholarQ</h1>
-            <p style="color:#94a3b8;">Initializing System...</p>
+    <div id="init-shield" style="position:fixed; inset:0; background:#000; z-index:20000; display:flex; align-items:center; justify-content:center; transition:1s;">
+        <div style="text-align:center;">
+            <h1 style="font-family:'Outfit'; color:#6366f1; font-size:3rem; margin-bottom:10px;">ScholarQ</h1>
+            <p style="color:#94a3b8; letter-spacing:2px; font-size:0.7rem;">SYSTEM INITIALIZING</p>
         </div>
     </div>
 
@@ -36,18 +41,15 @@
                 <div class="vision-content">
                     <h1>Where Scholars<br><span class="text-indigo">Elevate Minds.</span><br>Together.</h1>
                     <div class="feature-stack">
-                        <div class="feature-item"><div class="f-icon purple"><i data-lucide="graduation-cap"></i></div><div><h4>Ask. Learn. Understand.</h4></div></div>
-                        <div class="feature-item"><div class="f-icon green"><i data-lucide="user-plus"></i></div><div><h4>Help. Teach. Impact.</h4></div></div>
+                        <div class="feature-item"><div class="f-icon purple"><i data-lucide="graduation-cap"></i></div><div><h4>Ask. Learn. Understand.</h4><p>Get doubts solved by top students.</p></div></div>
+                        <div class="feature-item"><div class="f-icon green"><i data-lucide="user-plus"></i></div><div><h4>Help. Teach. Impact.</h4><p>Share knowledge and earn reputation.</p></div></div>
                     </div>
                 </div>
             </div>
             <div class="auth-right">
                 <div class="auth-form-wrap">
                     <h2>Welcome Back</h2>
-                    <div class="toggle-group">
-                        <button class="t-btn active">Email</button>
-                        <button class="t-btn">Phone</button>
-                    </div>
+                    <p class="text-muted mb-32">Log in to continue your journey</p>
                     <form id="auth-form">
                         <div class="input-field"><label>Email Address</label><div class="input-icon-wrap"><input type="email" id="auth-email" placeholder="Enter email" required></div></div>
                         <div class="input-field"><label>Password</label><div class="input-icon-wrap"><input type="password" id="auth-password" placeholder="Enter password" required></div></div>
@@ -55,42 +57,48 @@
                     </form>
                     <div class="divider"><span>or continue with</span></div>
                     <button class="btn-social" onclick="loginWithGoogle()"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo.svg" style="width:18px;"> Google</button>
+                    <p class="text-center mt-32 text-sm text-muted">Don't have an account? <a href="#" onclick="toggleAuthMode()" class="link-indigo" id="auth-toggle-link">Sign up</a></p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- App Shell -->
-    <div id="app" class="app-layout" style="display:none;">
+    <div id="app" class="app-layout" style="display:none; opacity:0;">
         <aside class="sidebar">
-            <div class="brand-logo"><i data-lucide="graduation-cap"></i> <div>ScholarQ</div></div>
+            <div class="brand-logo" onclick="go('home')"><i data-lucide="graduation-cap"></i> <div>ScholarQ</div></div>
             <nav class="side-nav">
-                <div class="nav-item active"><i data-lucide="home"></i> <span>Home</span></div>
-                <div class="nav-item"><i data-lucide="edit-2"></i> <span>Ask Doubt</span></div>
+                <div class="nav-item active" onclick="go('home')"><i data-lucide="home"></i> <span>Home</span></div>
+                <div class="nav-item" onclick="go('ask')"><i data-lucide="edit-2"></i> <span>Ask Doubt</span></div>
+                <div class="nav-item" onclick="go('profile')"><i data-lucide="user"></i> <span>Profile</span></div>
             </nav>
             <div class="sidebar-status-card">
                 <h3>STATUS</h3>
                 <div id="status-pill" class="badge-pill">Scholar</div>
-                <button class="btn-side-profile">Profile</button>
+                <div class="status-line"><span>Score</span><b id="side-score">0%</b></div>
+                <button class="btn-side-profile" onclick="go('profile')">View Profile</button>
             </div>
         </aside>
 
         <main class="main-workspace">
             <header class="top-bar">
-                <div class="search-container"><input type="text" placeholder="Search doubts..."></div>
-                <button class="btn-ask-doubt">Ask Doubt</button>
+                <div class="search-container"><i data-lucide="search"></i><input type="text" placeholder="Search doubts..." oninput="handleSearch(this.value)"></div>
+                <button class="btn-ask-doubt" onclick="go('ask')">Ask Doubt</button>
             </header>
             <div class="scroll-view">
                 <div id="view-home" class="view">
-                    <div class="dashboard-greeting"><h1>Dashboard</h1></div>
+                    <div class="dashboard-greeting"><h1 id="user-greeting">Good evening! 👋</h1><p class="text-muted">Need help with something?</p></div>
                     <div id="home-feed"></div>
                 </div>
+                <div id="view-ask" class="view" style="display:none;"></div>
+                <div id="view-question" class="view" style="display:none;"></div>
+                <div id="view-profile" class="view" style="display:none;"></div>
             </div>
         </main>
+        <aside id="right-panel" class="right-panel"></aside>
     </div>
 
     <div id="toast-container"></div>
-    <!-- NUCLEAR JS PATHING -->
-    <script src="https://azanabdullah2752012-ui.github.io/scholarQ/app.js?v=999"></script>
+    <script src="./app.js?v=500"></script>
 </body>
 </html>
