@@ -13,18 +13,30 @@ let currentSearch = '';
 let currentFilter = 'All';
 let isDarkMode = localStorage.getItem('scholarq_theme') === 'dark';
 
+// Initialization
 document.addEventListener('DOMContentLoaded', async () => {
   if (isDarkMode) document.documentElement.setAttribute('data-theme', 'dark');
   updateThemeIcon();
   lucide.createIcons();
   
-  const { data: { session: initialSession } } = await supabaseClient.auth.getSession();
-  await handleSessionUpdate(initialSession);
+  console.log("App Initializing...");
 
-  supabaseClient.auth.onAuthStateChange(async (event, newSession) => {
-    console.log('Auth Event:', event);
-    await handleSessionUpdate(newSession);
-  });
+  // Give the OAuth redirect a moment to settle
+  setTimeout(async () => {
+    const { data: { session: initialSession } } = await supabaseClient.auth.getSession();
+    await handleSessionUpdate(initialSession);
+
+    supabaseClient.auth.onAuthStateChange(async (event, newSession) => {
+      console.log('Auth Event:', event);
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        await handleSessionUpdate(newSession);
+      } else if (event === 'SIGNED_OUT') {
+        session = null;
+        profile = null;
+        navigateTo('auth');
+      }
+    });
+  }, 500);
 
   document.getElementById('auth-form')?.addEventListener('submit', handleAuth);
   document.getElementById('ask-form')?.addEventListener('submit', handleAsk);
