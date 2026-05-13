@@ -321,27 +321,35 @@ function renderHome() {
 }
 
 async function renderLeaderboard() {
-  const container = document.getElementById('leaderboard-list');
-  container.innerHTML = '<div class="glass-card" style="padding: 2rem;">Fetching Hub elite...</div>';
-  
-  const { data } = await supabaseClient.from('users').select('name, points, role').order('points', { ascending: false }).limit(10);
-  if (data) {
-    container.innerHTML = '';
-    data.forEach((u, i) => {
-      container.innerHTML += `
-        <div class="doubt-card glass-card" style="margin-bottom: 1rem;">
-          <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1;">
-            <span style="font-weight: 900; color: var(--p-400); width: 20px;">${i+1}</span>
-            <div style="width: 45px; height: 45px; background: var(--glass-border); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--p-500);">${u.name[0]}</div>
-            <div>
-              <div style="font-weight: 700;">${u.name}</div>
-              <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">${u.role}</div>
+  const container = document.getElementById('view-leaderboard');
+  container.innerHTML = '<div class="glass-card" style="padding: 2rem;">Tallying the best scholars...</div>';
+
+  const { data: topUsers } = await supabaseClient.from('users').select('*').order('points', { ascending: false }).limit(20);
+
+  if (topUsers) {
+    container.innerHTML = `
+      <div style="text-align: center; margin-bottom: 4rem;">
+        <h1 style="font-size: 3rem; font-weight: 800; letter-spacing: -2px;">Hall of <span style="color: var(--p-500);">Fame</span></h1>
+        <p style="color: var(--text-secondary); font-weight: 600;">The elite contributors of the ScholarQ ecosystem.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        ${topUsers.map((u, i) => `
+          <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; gap: 20px; border-left: 5px solid ${i < 3 ? '#fbbf24' : 'var(--glass-border)'}">
+            <div style="font-size: 1.5rem; font-weight: 800; color: ${i < 3 ? '#fbbf24' : 'var(--text-secondary)'}; width: 40px;">#${i + 1}</div>
+            <div style="width: 50px; height: 50px; background: rgba(0,0,0,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.25rem;">${u.name ? u.name[0] : '?'}</div>
+            <div style="flex: 1;">
+              <div style="font-weight: 700; font-size: 1.1rem;">${u.name || 'Anonymous'}</div>
+              <div style="font-size: 0.7rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">${calculateRank(u.points)}</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 800; color: var(--p-500); font-size: 1.25rem;">${u.points}</div>
+              <div style="font-size: 0.6rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">PTS</div>
             </div>
           </div>
-          <strong style="color: var(--p-500); font-size: 1.1rem;">${u.points} PTS</strong>
-        </div>
-      `;
-    });
+        `).join('')}
+      </div>
+    `;
   }
 }
 
@@ -352,6 +360,33 @@ function renderProfile() {
   document.getElementById('profile-avatar').innerText = profile.name[0].toUpperCase();
   document.getElementById('profile-points').innerText = profile.points;
   document.getElementById('profile-asked').innerText = questions.filter(q => q.asker_id === profile.id).length;
+  
+  renderBadges();
+}
+
+function renderBadges() {
+  const cont = document.getElementById('profile-badges');
+  cont.innerHTML = '';
+  
+  const badges = [];
+  if (profile.points >= 100) badges.push({ icon: 'star', name: 'Rising Star', color: '#3b82f6' });
+  if (profile.points >= 500) badges.push({ icon: 'trophy', name: 'Elite Scholar', color: '#fbbf24' });
+  if (profile.streak >= 7) badges.push({ icon: 'flame', name: 'Unstoppable', color: '#f97316' });
+  
+  if (badges.length === 0) {
+    cont.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">Complete milestones to earn badges!</p>';
+    return;
+  }
+
+  badges.forEach(b => {
+    cont.innerHTML += `
+      <div class="glass-card" style="padding: 10px 15px; border-color: ${b.color}; display: flex; align-items: center; gap: 10px;">
+        <i data-lucide="${b.icon}" style="width: 16px; color: ${b.color};"></i>
+        <span style="font-size: 0.75rem; font-weight: 800; color: ${b.color}; text-transform: uppercase;">${b.name}</span>
+      </div>
+    `;
+  });
+  lucide.createIcons();
 }
 
 function renderQuestionDetail() {
