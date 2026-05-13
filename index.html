@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarQ | Academy Portal</title>
-    <!-- CACHE BUSTING V107.2 -->
-    <link rel="stylesheet" href="styles.css?v=107.2">
+    <title>ScholarQ | Academy Platform</title>
+    <link rel="stylesheet" href="styles.css?v=110">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -13,192 +12,156 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <!-- Initializing Overlay -->
-    <div id="init-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:9999; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); flex-direction:column; gap:16px;">
-        <div style="width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--p-500); border-radius:50%; animation: spin 1s linear infinite;"></div>
-        <div style="font-weight:800; font-size:0.8rem; letter-spacing:1px;">ACADEMY INITIALIZING...</div>
+    <!-- System Overlay -->
+    <div id="init-overlay" style="position:fixed; inset:0; background:#0a0c10; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px;">
+        <div style="width:40px; height:40px; border:3px solid rgba(255,255,255,0.05); border-top-color:#f59e0b; border-radius:50%; animation: spin 1s linear infinite;"></div>
+        <div style="font-weight:800; font-size:0.7rem; color:#94a3b8; letter-spacing:2px;">ACADEMY INITIALIZING</div>
     </div>
 
     <div id="toast-container"></div>
 
-    <div id="app">
-        <!-- Sidebar Navigation -->
-        <nav id="sidebar" style="display:none;">
-            <div class="logo" style="margin-bottom: var(--s-4);">
-                <div class="glass-card" style="width:48px; height:48px; display:flex; align-items:center; justify-content:center; background:var(--p-500); border:none;">
+    <div id="app" style="display:none;">
+        <!-- Institutional Sidebar -->
+        <nav id="sidebar">
+            <div class="logo" style="margin-bottom: 40px; text-align:center;">
+                <div style="width:48px; height:48px; background:linear-gradient(135deg, #f59e0b, #ea580c); border-radius:14px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px;">
                     <i data-lucide="graduation-cap" style="color:white; width:28px;"></i>
                 </div>
-                <h2 style="margin-top:16px; font-weight:800; font-size:1.4rem;">ScholarQ</h2>
+                <h2 style="font-weight:800; font-size:1.2rem;">ScholarQ</h2>
             </div>
-            
-            <div class="side-nav" style="flex:1; display:flex; flex-direction:column; gap:8px;">
-                <div id="nav-home" class="nav-item active" onclick="navigateTo('home')"><i data-lucide="layout-grid"></i> Doubts Hub</div>
-                <div id="nav-marketplace" class="nav-item" onclick="navigateTo('marketplace')"><i data-lucide="library"></i> The Vault</div>
-                <div id="nav-leaderboard" class="nav-item" onclick="navigateTo('leaderboard')"><i data-lucide="award"></i> Leaderboard</div>
-                <div id="nav-profile" class="nav-item" onclick="navigateTo('profile')"><i data-lucide="user"></i> My Profile</div>
+            <div class="nav-links" style="flex:1;">
+                <div id="nav-home" class="nav-item active" onclick="navigateTo('home')"><i data-lucide="layout-grid"></i></div>
+                <div id="nav-marketplace" class="nav-item" onclick="navigateTo('marketplace')"><i data-lucide="library"></i></div>
+                <div id="nav-leaderboard" class="nav-item" onclick="navigateTo('leaderboard')"><i data-lucide="award"></i></div>
+                <div id="nav-profile" class="nav-item" onclick="navigateTo('profile')"><i data-lucide="user"></i></div>
             </div>
-
-            <div id="user-dashboard" class="glass-card" style="margin-top:auto; padding:16px;">
-                <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:4px;">Academy Points</div>
-                <div style="font-size:1.5rem; font-weight:800; color:var(--p-500);" id="dash-points">0</div>
-                <div id="dash-role" style="font-size:0.65rem; font-weight:700; margin-top:8px;">Active Student</div>
-            </div>
+            <button onclick="logout()" class="nav-item" style="color:#ef4444; margin-top:auto;"><i data-lucide="log-out"></i></button>
         </nav>
 
-        <!-- Main Content Area -->
         <main id="main-content">
-            <header id="top-bar" style="display:none;">
-                <div id="side-streak" style="font-weight:800; font-size:0.9rem;">🔥 0 Day Mastery</div>
-                <div style="display:flex; gap:16px; align-items:center;">
-                    <button onclick="toggleDarkMode()" class="btn-icon"><i id="theme-icon" data-lucide="moon"></i></button>
-                    <button onclick="logout()" class="btn-icon" style="color:#ef4444;"><i data-lucide="log-out"></i></button>
-                </div>
-            </header>
-
-            <!-- VIEW: AUTH -->
-            <div id="view-auth" class="view auth-container" style="display:none;">
-                <div class="auth-card glass-card">
-                    <div style="text-align:center; margin-bottom:32px;">
-                        <div style="width:64px; height:64px; background:var(--p-500); border-radius:16px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:16px;">
-                            <i data-lucide="graduation-cap" style="color:white; width:36px; height:36px;"></i>
-                        </div>
-                        <h1 style="margin-bottom:8px;">ScholarQ</h1>
-                        <p style="font-size:0.9rem;">Institutional Academic Portal</p>
-                    </div>
-
-                    <div style="display:flex; background:var(--surface-light); padding:4px; border-radius:12px; margin-bottom:24px;">
-                        <button onclick="toggleAuthMode('signin')" id="btn-signin" class="btn-mode active" style="flex:1; padding:10px; border:none; border-radius:8px; font-weight:700; cursor:pointer;">Sign In</button>
-                        <button onclick="toggleAuthMode('signup')" id="btn-signup" class="btn-mode" style="flex:1; padding:10px; border:none; border-radius:8px; font-weight:700; cursor:pointer; background:none; color:var(--text-secondary);">Register</button>
-                    </div>
-
-                    <form id="auth-form" style="display:flex; flex-direction:column; gap:16px;">
-                        <div id="signup-fields" style="display:none; flex-direction:column; gap:16px;">
-                            <input type="text" id="auth-name" placeholder="Full Name" class="auth-input">
-                            <input type="number" id="auth-score" placeholder="Last Exam Score %" class="auth-input">
-                        </div>
-                        <input type="email" id="auth-email" placeholder="Institutional Email" class="auth-input" required>
-                        <input type="password" id="auth-password" placeholder="Password" class="auth-input" required>
-                        <button type="submit" class="btn-primary" style="width:100%; justify-content:center; padding:14px; margin-top:8px;">Access Portal</button>
-                    </form>
-
-                    <div style="margin:24px 0; display:flex; align-items:center; gap:12px;">
-                        <div style="flex:1; height:1px; background:var(--border);"></div>
-                        <span style="font-size:0.7rem; color:var(--text-muted); font-weight:800;">OR</span>
-                        <div style="flex:1; height:1px; background:var(--border);"></div>
-                    </div>
-
-                    <button onclick="signInWithGoogle()" class="glass-card" style="width:100%; display:flex; align-items:center; justify-content:center; gap:12px; padding:12px; font-weight:600; cursor:pointer;">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/layout/google.svg" width="18">
-                        Continue with Google
-                    </button>
-                </div>
-            </div>
-
-            <!-- VIEW: FINISH PROFILE -->
-            <div id="view-finish-profile" class="view" style="display:none;">
-                <div class="auth-card glass-card">
-                    <h2>Academic Initialization</h2>
-                    <p style="margin-bottom:24px;">Enter your last exam percentage to determine your starting rank.</p>
-                    <form id="finish-profile-form">
-                        <input type="number" id="finish-score" placeholder="Exam Score %" class="auth-input" style="width:100%; margin-bottom:16px;" required>
-                        <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">Enter Academy</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- VIEW: HOME (DOUBTS HUB) -->
-            <div id="view-home" class="view" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:32px;">
+            <!-- VIEW: HOME (CINEMATIC) -->
+            <div id="view-home" class="view">
+                <section class="hero-section">
                     <div>
-                        <h1 style="margin-bottom:8px;">Doubts Hub</h1>
-                        <p>Global peer solutions and academic activity.</p>
+                        <h1 class="hero-title">Investing in <span>Knowledge</span> and Future</h1>
+                        <p style="font-size:1.1rem; color:var(--text-secondary); margin-bottom:40px; max-width:500px;">Join our elite academic ecosystem for peer mentorship and multimedia learning.</p>
+                        <button onclick="navigateTo('ask')" class="btn-primary">Post a Doubt</button>
                     </div>
-                    <button onclick="navigateTo('ask')" class="btn-primary"><i data-lucide="plus-circle"></i> New Doubt</button>
-                </div>
-                <div id="challenges-list" style="margin-bottom:32px;"></div>
-                <div style="display:flex; gap:16px; align-items:center; margin-bottom:24px; overflow-x:auto; padding-bottom:8px;" id="home-filters"></div>
-                <div id="home-questions"></div>
-            </div>
+                    <div style="position:relative;">
+                        <img id="hero-img" src="scholar_hero_concept_1778662852223.png" style="width:100%; border-radius:30px; box-shadow:var(--shadow-deep);">
+                        <div class="glass-card" style="position:absolute; top:20px; right:20px; padding:12px; font-weight:800; font-size:0.8rem;">175K Students</div>
+                    </div>
+                </section>
 
-            <!-- VIEW: ASK -->
-            <div id="view-ask" class="view" style="display:none;">
-                <div class="glass-card" style="max-width:800px; margin:0 auto; padding:32px;">
-                    <h2 style="margin-bottom:24px;">Broadcast Doubt</h2>
-                    <form id="ask-form" style="display:flex; flex-direction:column; gap:20px;">
-                        <input type="text" id="ask-title" placeholder="What is your question?" class="auth-input" required>
-                        <select id="ask-subject" class="auth-input" required>
-                            <option value="Math">Mathematics</option>
-                            <option value="Science">Science</option>
-                            <option value="History">History</option>
-                            <option value="Comp Sci">Computer Science</option>
-                        </select>
-                        <textarea id="ask-body" placeholder="Context..." class="auth-input" style="min-height:150px; padding:16px;" required></textarea>
-                        <button type="submit" class="btn-primary" style="justify-content:center;">Broadcast</button>
-                        <button type="button" onclick="navigateTo('home')" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">Cancel</button>
-                    </form>
+                <h2 style="margin-bottom:32px;">Browse Academy Domains</h2>
+                <div class="category-grid">
+                    <div class="category-card" style="background:var(--grad-pink);" onclick="setFilter('Math')"><i data-lucide="calculator"></i><h3>Mathematics</h3></div>
+                    <div class="category-card" style="background:var(--grad-cyan);" onclick="setFilter('Science')"><i data-lucide="flask-conical"></i><h3>Science</h3></div>
+                    <div class="category-card" style="background:var(--grad-orange);" onclick="setFilter('History')"><i data-lucide="landmark"></i><h3>History</h3></div>
+                    <div class="category-card" style="background:var(--grad-purple);" onclick="setFilter('Comp Sci')"><i data-lucide="code"></i><h3>Computing</h3></div>
+                </div>
+
+                <div class="hub-grid">
+                    <div id="hub-questions"></div>
+                    <div>
+                        <div id="mastery-widget" class="glass-card" style="margin-bottom:24px;"></div>
+                        <div class="glass-card" style="padding:20px;">
+                            <h3 style="font-size:0.9rem; margin-bottom:12px;">Academy Pulse</h3>
+                            <div style="font-size:0.75rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:8px;">
+                                <div style="display:flex; justify-content:space-between;"><span>Status</span><span style="color:var(--success); font-weight:800;">🟢 STABLE</span></div>
+                                <div style="display:flex; justify-content:space-between;"><span>Network</span><span>LOW</span></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- VIEW: MARKETPLACE -->
             <div id="view-marketplace" class="view" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:40px;">
-                    <div>
-                        <h1>The Vault</h1>
-                        <p>Peer-curated academic resources.</p>
-                    </div>
-                    <button onclick="openSellModal()" class="btn-primary"><i data-lucide="upload-cloud"></i> Publish</button>
+                    <div><h1>The Vault</h1><p>Curated Academy Resources</p></div>
+                    <button onclick="openSellModal()" class="btn-primary">Publish</button>
                 </div>
                 <div id="market-list"></div>
             </div>
 
-            <!-- LEADERBOARD & PROFILE -->
-            <div id="view-leaderboard" class="view" style="display:none;"></div>
+            <!-- VIEW: PROFILE -->
             <div id="view-profile" class="view" style="display:none;">
-                <div class="glass-card" style="padding:48px; text-align:center;">
-                    <div id="profile-avatar" style="width:100px; height:100px; background:var(--p-500); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:800; color:white; margin-bottom:24px;">A</div>
-                    <h1 id="profile-name">Student Name</h1>
-                    <p id="profile-email" style="margin-bottom:24px;">email@example.com</p>
-                    <div id="profile-badges" style="display:flex; gap:12px; justify-content:center; margin-bottom:40px;"></div>
-                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; border-top:1px solid var(--border); padding-top:40px;">
-                        <div><div style="font-size:1.5rem; font-weight:800; color:var(--p-500);" id="profile-points">0</div><div style="font-size:0.7rem; opacity:0.6;">POINTS</div></div>
-                        <div><div style="font-size:1.5rem; font-weight:800;" id="profile-asked">0</div><div style="font-size:0.7rem; opacity:0.6;">DOUBTS</div></div>
-                        <div><div style="font-size:1.5rem; font-weight:800;" id="profile-solved">0</div><div style="font-size:0.7rem; opacity:0.6;">SOLUTIONS</div></div>
+                <div class="glass-card" style="padding:40px; text-align:center;">
+                    <div id="profile-avatar" style="width:80px; height:80px; background:var(--p-500); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin:0 auto 20px; font-weight:800; font-size:2rem; color:white;">A</div>
+                    <h1 id="profile-name">Student</h1>
+                    <p id="profile-email" style="margin-bottom:32px; opacity:0.6;">email@example.com</p>
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; border-top:1px solid var(--border); padding-top:32px;">
+                        <div><div id="profile-points" style="font-size:1.5rem; font-weight:800; color:var(--p-500);">0</div><div style="font-size:0.6rem; opacity:0.5;">POINTS</div></div>
+                        <div><div id="profile-asked" style="font-size:1.5rem; font-weight:800;">0</div><div style="font-size:0.6rem; opacity:0.5;">DOUBTS</div></div>
+                        <div><div id="profile-solved" style="font-size:1.5rem; font-weight:800;">0</div><div style="font-size:0.6rem; opacity:0.5;">SOLUTIONS</div></div>
                     </div>
                 </div>
             </div>
-            
+
+            <!-- VIEW: ASK & QUESTION -->
+            <div id="view-ask" class="view" style="display:none;">
+                <div class="glass-card" style="max-width:700px; margin:0 auto; padding:32px;">
+                    <h2 style="margin-bottom:24px;">New Doubt</h2>
+                    <form id="ask-form" style="display:flex; flex-direction:column; gap:16px;">
+                        <input type="text" id="ask-title" placeholder="Title" class="auth-input" required>
+                        <select id="ask-subject" class="auth-input"><option value="Math">Math</option><option value="Science">Science</option></select>
+                        <textarea id="ask-body" placeholder="Detail..." class="auth-input" style="min-height:120px;"></textarea>
+                        <button type="submit" class="btn-primary" style="justify-content:center;">Publish</button>
+                    </form>
+                </div>
+            </div>
+
             <div id="view-question" class="view" style="display:none;">
-                <button onclick="navigateTo('home')" class="btn-icon" style="margin-bottom:24px;"><i data-lucide="arrow-left"></i></button>
+                <button onclick="navigateTo('home')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; margin-bottom:20px;">← Back</button>
                 <div id="qd-content"></div>
-                <div id="qd-answers"></div>
+                <div id="qd-answers" style="margin-top:32px;"></div>
                 <div class="glass-card" style="margin-top:32px; padding:24px;">
-                    <h3>Submit Solution</h3>
                     <form id="answer-form" style="display:flex; flex-direction:column; gap:16px;">
-                        <textarea id="answer-body" placeholder="Solution..." class="auth-input" style="min-height:120px;" required></textarea>
-                        <button type="submit" class="btn-primary" style="align-self:flex-end;">Publish</button>
+                        <textarea id="answer-body" placeholder="Solution..." class="auth-input" required></textarea>
+                        <button type="submit" class="btn-primary" style="align-self:flex-end;">Publish Solution</button>
                     </form>
                 </div>
             </div>
         </main>
+
+        <!-- AUTH OVERLAY -->
+        <div id="view-auth" class="view" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:1000; align-items:center; justify-content:center;">
+            <div class="glass-card" style="max-width:400px; width:90%; padding:40px;">
+                <div style="text-align:center; margin-bottom:32px;">
+                    <h1 style="margin-bottom:8px;">ScholarQ</h1>
+                    <p style="font-size:0.8rem; color:var(--text-secondary);">Academy Portal</p>
+                </div>
+                <form id="auth-form" style="display:flex; flex-direction:column; gap:16px;">
+                    <div id="signup-fields" style="display:none; flex-direction:column; gap:16px;">
+                        <input type="text" id="auth-name" placeholder="Full Name" class="auth-input">
+                        <input type="number" id="auth-score" placeholder="Exam Score %" class="auth-input">
+                    </div>
+                    <input type="email" id="auth-email" placeholder="Email" class="auth-input" required>
+                    <input type="password" id="auth-password" placeholder="Password" class="auth-input" required>
+                    <button type="submit" class="btn-primary" style="width:100%; justify-content:center; padding:14px;">Access Portal</button>
+                </form>
+                <div style="margin:20px 0; text-align:center; font-size:0.7rem; color:var(--text-muted);">OR</div>
+                <button onclick="signInWithGoogle()" class="glass-card" style="width:100%; display:flex; align-items:center; justify-content:center; gap:12px; padding:12px; font-weight:600; cursor:pointer;">Google</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="modal-sell" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1001; align-items:center; justify-content:center;">
+        <div class="glass-card" style="max-width:400px; width:90%; padding:32px;">
+            <h2 style="margin-bottom:24px;">Publish Resource</h2>
+            <form id="sell-form" style="display:flex; flex-direction:column; gap:16px;">
+                <input type="text" id="sell-title" placeholder="Title" class="auth-input" required>
+                <input type="number" id="sell-price" placeholder="Price" class="auth-input" required>
+                <input type="file" id="sell-file" class="auth-input" required>
+                <button type="submit" class="btn-primary" style="justify-content:center;">Upload</button>
+                <button type="button" onclick="closeSellModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">Cancel</button>
+            </form>
+        </div>
     </div>
 
     <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-    <script src="app.js?v=107.2"></script>
-    <script>
-        let authMode = 'signin';
-        function toggleAuthMode(mode) {
-            authMode = mode;
-            document.querySelectorAll('.btn-mode').forEach(b => {
-                b.classList.remove('active');
-                b.style.background = 'none';
-                b.style.color = 'var(--text-secondary)';
-            });
-            const btn = document.getElementById(`btn-${mode}`);
-            btn.classList.add('active');
-            btn.style.background = 'var(--surface-light)';
-            btn.style.color = 'var(--text-primary)';
-            document.getElementById('signup-fields').style.display = (mode === 'signup') ? 'flex' : 'none';
-        }
-    </script>
+    <script src="app.js?v=110"></script>
 </body>
 </html>
