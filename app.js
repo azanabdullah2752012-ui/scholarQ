@@ -1,4 +1,4 @@
-// ScholarQ - Quantum OS V202
+// ScholarQ - Master OS V203 (UI Restored)
 const SUPA_URL = 'https://kkcuyoxbrblbocazsjfn.supabase.co';
 const SUPA_KEY = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
 const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -11,7 +11,7 @@ let authMode = 'login';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (window.lucide) lucide.createIcons();
-    setTimeout(dismissShield, 3000);
+    setTimeout(dismissShield, 2000);
 
     const { data: { session: s } } = await db.auth.getSession();
     if (s) boot(s); else {
@@ -36,14 +36,13 @@ function dismissShield() {
 
 async function boot(s) {
     if (isBooting) return;
-    isBooting = true;
-    session = s;
+    isBooting = true; session = s;
 
     try {
         const { data } = await db.from('users').select('*').eq('id', s.user.id).maybeSingle();
         if (data) profile = data;
         else {
-            profile = { id: s.user.id, email: s.user.email, name: 'Student', role: 'STUDENT', score_percentage: 0 };
+            profile = { id: s.user.id, email: s.user.email, name: 'Scholar', role: 'STUDENT', score_percentage: 0 };
             await db.from('users').upsert([profile]);
         }
     } catch (e) { console.error(e); }
@@ -55,7 +54,7 @@ async function boot(s) {
     app.style.display = 'flex';
     setTimeout(() => app.style.opacity = '1', 50);
     
-    updateQuantumMetrics();
+    updateMasterMetrics();
     go('home');
     isBooting = false;
 }
@@ -83,24 +82,25 @@ function go(v, p) {
     const target = document.getElementById('view-' + v);
     if (target) target.style.display = 'block';
 
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    // Map view to nav item
-    const navMap = { 'home': 0, 'ask': 1, 'profile': 2 };
-    const navItems = document.querySelectorAll('.nav-item');
-    if (navItems[navMap[v]]) navItems[navMap[v]].classList.add('active');
+    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+    const navItems = document.querySelectorAll('.nav-link');
+    if (v === 'home') navItems[0].classList.add('active');
+    if (v === 'ask') navItems[1].classList.add('active');
+    if (v === 'profile') navItems[2].classList.add('active');
 
     if (v === 'home') renderHome();
     if (v === 'ask') renderAsk();
     if (v === 'question') renderQuestion(p);
     if (v === 'profile') renderProfile();
     
-    document.querySelector('.workspace-scroll').scrollTo(0,0);
+    document.querySelector('.scroll-area').scrollTo(0,0);
     if (window.lucide) lucide.createIcons();
 }
 
-function updateQuantumMetrics() {
+function updateMasterMetrics() {
     if (!profile) return;
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+    set('side-role', profile.role);
     set('side-score', (profile.score_percentage || 0) + '%');
     const bar = document.getElementById('side-progress');
     if (bar) bar.style.width = (profile.score_percentage || 0) + '%';
@@ -115,18 +115,18 @@ function renderHome() {
     const list = questions.filter(q => (currentFilter === 'All' || q.subject === currentFilter) && q.title.toLowerCase().includes(currentSearch.toLowerCase()));
     
     if (list.length === 0) {
-        feed.innerHTML = `<div class="quantum-card p-xl text-center"><p class="text-muted">Broadcast Signal Idle.</p></div>`;
+        feed.innerHTML = `<div class="glass-card p-40 text-center"><p class="text-muted">No doubts found.</p></div>`;
     } else {
         feed.innerHTML = list.map(q => `
             <div class="doubt-card" onclick="go('question', '${q.id}')">
                 <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                    <span class="badge-q">${q.subject}</span>
-                    <span class="text-muted" style="font-size:0.7rem; font-weight:700;">${timeAgo(q.created_at)}</span>
+                    <span class="badge-v">${q.subject}</span>
+                    <span class="text-muted" style="font-size:0.7rem; font-weight:800;">${timeAgo(q.created_at)}</span>
                 </div>
-                <h3 style="font-size:1.3rem; margin-bottom:16px; color:white;">${q.title}</h3>
+                <h3 style="font-size:1.2rem; margin-bottom:12px;">${q.title}</h3>
                 <div style="display:flex; gap:20px; font-size:0.65rem; font-weight:900; letter-spacing:1px; color:var(--text-muted);">
                     <span>${q.answers.length} RESPONSES</span>
-                    ${q.best_answer_id ? '<span style="color:#22c55e;">RESOLVED</span>' : '<span style="color:var(--primary);">PULSE ACTIVE</span>'}
+                    ${q.best_answer_id ? '<span style="color:#22c55e;">RESOLVED</span>' : '<span style="color:var(--primary);">ACTIVE PULSE</span>'}
                 </div>
             </div>
         `).join('');
@@ -139,32 +139,30 @@ function renderAsk() {
 }
 
 function renderQuestion(id) {
-    currentQId = id;
-    const q = questions.find(x => x.id === id);
-    if (!q) return;
+    currentQId = id; const q = questions.find(x => x.id === id); if (!q) return;
 
     const cont = document.getElementById('qd-container');
     cont.innerHTML = `
-        <div style="display:flex; align-items:center; gap:16px; margin-bottom:32px;">
-            <span class="badge-q" style="background:var(--primary); color:white; border:none;">${q.subject}</span>
-            <span class="text-muted" style="font-size:0.8rem; font-weight:700;">Origin: ${q.asker_name || 'Student'}</span>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+            <span class="badge-v">${q.subject}</span>
+            <span class="text-muted" style="font-size:0.75rem;">By ${q.asker_name || 'Scholar'}</span>
         </div>
-        <h1 style="font-size:2.8rem; line-height:1.1; margin-bottom:24px;">${q.title}</h1>
-        <p style="font-size:1.2rem; color:var(--text-muted); white-space:pre-wrap; line-height:1.8;">${q.body}</p>
+        <h1 style="font-size:2.5rem; line-height:1.1; margin-bottom:24px;">${q.title}</h1>
+        <p style="font-size:1.15rem; color:var(--text-muted); white-space:pre-wrap; line-height:1.8;">${q.body}</p>
     `;
 
     const ansList = document.getElementById('qd-answers');
     ansList.innerHTML = q.answers.length === 0 
-        ? '<div class="quantum-card p-xl text-center"><p class="text-muted">Awaiting Scholar Uplink...</p></div>' 
+        ? '<div class="glass-card p-40 text-center"><p class="text-muted">Awaiting Scholar Uplink...</p></div>' 
         : q.answers.map(a => `
             <div class="doubt-card ${a.id === q.best_answer_id ? 'best-answer' : ''}" style="cursor:default;">
-                ${a.id === q.best_answer_id ? '<span class="best-label">✓ QUANTUM SOLUTION VERIFIED</span>' : ''}
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                ${a.id === q.best_answer_id ? '<div class="section-label" style="color:#22c55e; margin-bottom:12px;">✓ BEST SOLUTION</div>' : ''}
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                     <div style="display:flex; align-items:center; gap:12px;">
                         <div class="avatar-mini">${a.author_name[0]}</div>
-                        <span style="font-weight:800; font-size:0.9rem;">${a.author_name}</span>
+                        <span style="font-weight:800; font-size:0.85rem;">${a.author_name}</span>
                     </div>
-                    ${(profile.id === q.asker_id && !q.best_answer_id) ? `<button class="badge-q" style="cursor:pointer; color:var(--primary);" onclick="markBest('${a.id}', '${a.author_id}')">Select Best</button>` : ''}
+                    ${(profile.id === q.asker_id && !q.best_answer_id) ? `<button class="badge-v" style="cursor:pointer; background:var(--primary); color:white;" onclick="markBest('${a.id}', '${a.author_id}')">Select Best</button>` : ''}
                 </div>
                 <p style="color:var(--text-muted); line-height:1.7;">${a.body}</p>
             </div>
@@ -175,23 +173,17 @@ function renderQuestion(id) {
 
 function renderProfile() {
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-    set('p-name', profile.name);
-    set('p-email', profile.email);
-    set('p-avatar', profile.name[0].toUpperCase());
-    set('p-role', profile.role);
-    set('p-total', profile.total_answers_count || 0);
-    set('p-best', profile.best_answers_count || 0);
-    set('p-score', (profile.score_percentage || 0) + '%');
+    set('p-name', profile.name); set('p-email', profile.email); set('p-avatar', profile.name[0].toUpperCase());
+    set('p-total', profile.total_answers_count || 0); set('p-best', profile.best_answers_count || 0);
 }
 
 function loadEliteScholars() {
-    db.from('users').select('*').order('best_answers_count', { ascending: false }).limit(4).then(({ data }) => {
-        const cont = document.getElementById('side-contributors');
-        if (!cont || !data) return;
+    db.from('users').select('*').order('best_answers_count', { ascending: false }).limit(5).then(({ data }) => {
+        const cont = document.getElementById('side-scholars'); if (!cont || !data) return;
         cont.innerHTML = data.map(u => `
-            <div class="avatar-row">
+            <div class="mini-card">
                 <div class="avatar-mini" style="background:${u.role==='SCHOLAR'?'var(--primary)':'var(--border)'}">${u.name[0]}</div>
-                <div style="flex:1">
+                <div>
                     <div style="font-size:0.8rem; font-weight:800;">${u.name}</div>
                     <div style="font-size:0.6rem; color:var(--text-muted);">${u.best_answers_count || 0} BEST ANSWERS</div>
                 </div>
@@ -215,8 +207,7 @@ async function handleAuth(e) {
         if (error) { toast(error.message); return; }
         if (data.user) {
             await db.from('users').upsert([{ id: data.user.id, email, name, score_percentage: score, role }]);
-            toast("Sync Established. Log in to continue.");
-            toggleAuthMode();
+            toast("Identity Created. Redirecting..."); toggleAuthMode();
         }
     }
 }
@@ -224,7 +215,7 @@ async function handleAuth(e) {
 async function handleAsk(e) {
     e.preventDefault();
     await db.from('questions').insert([{ id: 'q_' + Date.now(), title: document.getElementById('ask-title').value, subject: document.getElementById('ask-subject').value, body: document.getElementById('ask-body').value, asker_id: session.user.id, asker_name: profile.name }]);
-    toast('Broadcast Initialized.'); await refreshData(); go('home');
+    toast('Broadcast Complete.'); await refreshData(); go('home');
 }
 
 async function handleAnswer(e) {
@@ -233,22 +224,22 @@ async function handleAnswer(e) {
     await db.from('answers').insert([{ id: 'a_' + Date.now(), question_id: currentQId, author_id: session.user.id, author_name: profile.name, body }]);
     await db.from('users').update({ total_answers_count: (profile.total_answers_count || 0) + 1 }).eq('id', session.user.id);
     profile.total_answers_count = (profile.total_answers_count || 0) + 1;
-    toast('Transmission Successful.'); document.getElementById('answer-form').reset(); await refreshData(); go('question', currentQId);
+    toast('Solution Transmitted.'); document.getElementById('answer-form').reset(); await refreshData(); go('question', currentQId);
 }
 
 async function markBest(ansId, authorId) {
     await db.from('questions').update({ is_closed: true, best_answer_id: ansId }).eq('id', currentQId);
     const { data: scholar } = await db.from('users').select('best_answers_count').eq('id', authorId).single();
     await db.from('users').update({ best_answers_count: (scholar.best_answers_count || 0) + 1 }).eq('id', authorId);
-    toast('Solution Synchronized.'); await refreshData(); go('question', currentQId);
+    toast('Verification Complete.'); await refreshData(); go('question', currentQId);
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 function toggleAuthMode() {
     authMode = authMode === 'login' ? 'signup' : 'login';
-    document.getElementById('auth-toggle').innerText = authMode === 'login' ? 'New Identity? Register' : 'Access Key Found? Login';
-    document.getElementById('auth-btn').innerText = authMode === 'login' ? 'SYNCHRONIZE' : 'INITIALIZE PROFILE';
+    document.getElementById('auth-toggle').innerText = authMode === 'login' ? 'New Identity? Register' : 'Existing Key? Login';
+    document.getElementById('auth-btn').innerText = authMode === 'login' ? 'AUTHENTICATE' : 'INITIALIZE PROFILE';
     document.getElementById('role-fields').style.display = authMode === 'signup' ? 'block' : 'none';
 }
 

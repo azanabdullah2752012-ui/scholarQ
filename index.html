@@ -3,173 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarQ | Quantum OS</title>
+    <title>ScholarQ | Master OS</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="quantum-theme">
-    <!-- Animated Mesh Background -->
-    <div class="mesh-bg"></div>
-    <div class="grid-overlay"></div>
-
+<body class="master-os">
     <!-- Boot Shield -->
     <div id="init-shield" class="init-shield">
         <div class="shield-content">
-            <div class="quantum-loader"></div>
-            <div class="brand-os">Scholar<span>Q</span></div>
-            <div class="loading-bar"><div class="bar-fill"></div></div>
+            <div class="brand-v">Scholar<span>Q</span></div>
+            <p class="text-muted">MASTER OS V132</p>
         </div>
     </div>
 
     <!-- Auth Gateway -->
     <div id="view-auth" class="auth-overlay" style="display:none;">
-        <div class="auth-card">
-            <div class="brand-os">Scholar<span>Q</span></div>
-            <p class="text-muted">High-Fidelity Academic Network</p>
-            
-            <form id="auth-form" class="auth-stack">
-                <div class="input-wrap">
-                    <input type="email" id="auth-email" placeholder="Institutional Email" required>
-                </div>
-                <div class="input-wrap">
-                    <input type="password" id="auth-password" placeholder="Access Key" required>
-                </div>
-                
+        <div class="auth-modal">
+            <div class="brand-v">Scholar<span>Q</span></div>
+            <p class="text-muted mb-24">Institutional Peer Learning.</p>
+            <form id="auth-form">
+                <input type="email" id="auth-email" placeholder="Email Address" class="input-v" required>
+                <input type="password" id="auth-password" placeholder="Access Key" class="input-v" required>
                 <div id="role-fields" style="display:none; margin-top:16px;">
-                    <div class="input-wrap"><input type="text" id="auth-name" placeholder="Full Name"></div>
-                    <div class="input-wrap"><input type="number" id="auth-score" placeholder="Academic Score %" min="0" max="100"></div>
+                    <input type="text" id="auth-name" placeholder="Full Name" class="input-v">
+                    <input type="number" id="auth-score" placeholder="Recent Score %" class="input-v" min="0" max="100">
                 </div>
-                
-                <button type="submit" id="auth-btn" class="btn-quantum">SYNCHRONIZE</button>
-                <button type="button" onclick="toggleAuthMode()" class="btn-text" id="auth-toggle">New Identity? Register</button>
+                <button type="submit" id="auth-btn" class="btn-v">AUTHENTICATE</button>
+                <button type="button" onclick="toggleAuthMode()" class="btn-link" id="auth-toggle">New Identity? Register</button>
             </form>
         </div>
     </div>
 
-    <!-- Main OS Layout -->
-    <div id="app" class="os-layout" style="display:none; opacity:0;">
-        
-        <!-- Sidebar Nav -->
-        <aside class="os-sidebar">
-            <div class="brand-os" onclick="go('home')">SQ</div>
-            <nav class="nav-stack">
-                <div class="nav-item active" onclick="go('home')"><i data-lucide="layout-grid"></i><span>Hub</span></div>
-                <div class="nav-item" onclick="go('ask')"><i data-lucide="broadcast"></i><span>Broadcast</span></div>
-                <div class="nav-item" onclick="go('profile')"><i data-lucide="user"></i><span>Identity</span></div>
+    <!-- Main OS Shell -->
+    <div id="app" style="display:none; opacity:0;">
+        <aside class="sidebar">
+            <div class="brand-sq" onclick="go('home')">SQ</div>
+            <nav class="sidebar-nav">
+                <div class="nav-link active" onclick="go('home')"><i data-lucide="layout-grid"></i><span>Hub</span></div>
+                <div class="nav-link" onclick="go('ask')"><i data-lucide="broadcast"></i><span>Broadcast</span></div>
+                <div class="nav-link" onclick="go('profile')"><i data-lucide="user"></i><span>Identity</span></div>
             </nav>
-            <div class="nav-footer" onclick="logout()">
-                <i data-lucide="log-out"></i>
-            </div>
+            <div class="nav-link logout-btn" onclick="logout()"><i data-lucide="log-out"></i></div>
         </aside>
 
-        <!-- Main Workspace -->
-        <section class="os-workspace">
-            <!-- Top Bar -->
-            <header class="os-topbar">
-                <div class="search-box">
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-v">
                     <i data-lucide="search"></i>
-                    <input type="text" placeholder="Search Doubts..." oninput="handleSearch(this.value)">
+                    <input type="text" placeholder="Search doubts..." oninput="handleSearch(this.value)">
                 </div>
-                <div class="top-actions">
-                    <div id="status-pill" class="status-pill"><span class="pulse"></span> LIVE FEED</div>
+                <div class="status-box">
+                    <div class="pulse-dot"></div>
+                    <span style="font-size:0.65rem; font-weight:800; letter-spacing:1px;">LIVE FEED</span>
                 </div>
             </header>
 
-            <div class="workspace-scroll">
-                <!-- Home View -->
+            <div class="scroll-area">
+                <!-- Home -->
                 <div id="view-home" class="view">
-                    <div class="view-intro">
-                        <h1>Academic Pulse</h1>
-                        <div class="filter-chips">
+                    <div class="view-hero">
+                        <h1>Academic Feed</h1>
+                        <div class="chips">
                             <button class="chip active" onclick="setFilter('All')">All</button>
                             <button class="chip" onclick="setFilter('Math')">Math</button>
                             <button class="chip" onclick="setFilter('Science')">Science</button>
                         </div>
                     </div>
-                    <div id="home-feed" class="feed-grid"></div>
+                    <div id="home-feed" class="feed-stack"></div>
                 </div>
 
-                <!-- Ask View -->
+                <!-- Ask -->
                 <div id="view-ask" class="view" style="display:none;">
-                    <div class="view-intro"><h1>Broadcast Doubt</h1></div>
-                    <form id="ask-form" class="quantum-card p-xl">
-                        <div class="field-group">
-                            <label>DOUBT TITLE</label>
-                            <input type="text" id="ask-title" placeholder="Summary of your doubt" required>
-                        </div>
-                        <div class="field-group">
-                            <label>SUBJECT AREA</label>
-                            <select id="ask-subject">
-                                <option>Math</option><option>Science</option><option>Physics</option><option>History</option><option>CS</option>
-                            </select>
-                        </div>
-                        <div class="field-group">
-                            <label>DETAILED DESCRIPTION</label>
-                            <textarea id="ask-body" placeholder="Describe the problem..." style="min-height:200px;" required></textarea>
-                        </div>
-                        <button type="submit" class="btn-quantum">INITIALIZE BROADCAST</button>
+                    <div class="view-hero"><h1>Post Doubt</h1></div>
+                    <form id="ask-form" class="glass-card p-40">
+                        <div class="v-group"><label>TITLE</label><input type="text" id="ask-title" placeholder="Problem summary..." required></div>
+                        <div class="v-group"><label>SUBJECT</label><select id="ask-subject"><option>Math</option><option>Science</option><option>Physics</option><option>History</option><option>CS</option></select></div>
+                        <div class="v-group"><label>DETAIL</label><textarea id="ask-body" placeholder="Provide context..." style="min-height:180px;" required></textarea></div>
+                        <button type="submit" class="btn-v">BROADCAST TO NETWORK</button>
                     </form>
                 </div>
 
-                <!-- Detail View -->
+                <!-- Detail -->
                 <div id="view-question" class="view" style="display:none;">
-                    <div id="qd-container" class="quantum-card p-xl mb-32"></div>
-                    <div class="solutions-header"><h3>SCHOLAR RESPONSES</h3></div>
-                    <div id="qd-answers" class="feed-grid"></div>
-                    <div id="answer-box" class="quantum-card p-xl mt-32">
-                        <h3>SUBMIT SOLUTION</h3>
+                    <div id="qd-container" class="glass-card p-40 mb-24"></div>
+                    <div class="section-label">SOLUTIONS</div>
+                    <div id="qd-answers" class="feed-stack"></div>
+                    <div id="answer-box" class="glass-card p-40 mt-32">
+                        <h3>Submit Solution</h3>
                         <form id="answer-form">
-                            <textarea id="answer-body" placeholder="Provide a detailed solution..." style="min-height:150px;" required></textarea>
-                            <button type="submit" class="btn-quantum">TRANSMIT SOLUTION</button>
+                            <textarea id="answer-body" placeholder="Write your solution..." style="min-height:150px;" required></textarea>
+                            <button type="submit" class="btn-v">SUBMIT RESPONSE</button>
                         </form>
                     </div>
                 </div>
 
-                <!-- Profile View -->
+                <!-- Profile -->
                 <div id="view-profile" class="view" style="display:none;">
-                    <div class="profile-layout">
-                        <div class="quantum-card p-xl text-center">
-                            <div id="p-avatar" class="q-avatar">A</div>
-                            <h2 id="p-name">Scholar Name</h2>
-                            <p id="p-email" class="text-muted">email@school.com</p>
-                            <div class="p-role-badge" id="p-role">SCHOLAR</div>
-                        </div>
-                        <div class="q-stats-grid">
-                            <div class="q-stat-card">
-                                <div class="num" id="p-total">0</div>
-                                <div class="lab">TOTAL ANSWERS</div>
+                    <div class="profile-v text-center">
+                        <div id="p-avatar" class="v-avatar">A</div>
+                        <h2 id="p-name">Name</h2>
+                        <p id="p-email" class="text-muted mb-24">email@school.com</p>
+                        <div class="v-stats">
+                            <div class="v-stat">
+                                <div id="p-total" class="num">0</div>
+                                <div class="lab">SOLUTIONS</div>
                             </div>
-                            <div class="q-stat-card">
-                                <div class="num" id="p-best">0</div>
+                            <div class="v-stat">
+                                <div id="p-best" class="num">0</div>
                                 <div class="lab">BEST ANSWERS</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
+        </main>
 
-        <!-- System Panel (Right) -->
-        <aside class="os-panel">
+        <aside class="system-panel">
             <div class="panel-section">
-                <h3>MY METRICS</h3>
-                <div class="metric-card">
-                    <div class="metric-info"><span>SCORE</span><span id="side-score">0%</span></div>
-                    <div class="q-progress"><div id="side-progress" class="q-fill"></div></div>
+                <div class="section-label">IDENTITY STATUS</div>
+                <div class="status-card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                        <span id="side-role" class="badge-v">STUDENT</span>
+                        <span id="side-score" style="font-weight:900;">0%</span>
+                    </div>
+                    <div class="v-progress"><div id="side-progress" class="v-fill"></div></div>
                 </div>
             </div>
             <div class="panel-section">
-                <h3>ELITE SCHOLARS</h3>
-                <div id="side-contributors" class="mini-stack"></div>
+                <div class="section-label">ELITE SCHOLARS</div>
+                <div id="side-scholars" class="mini-stack"></div>
             </div>
         </aside>
     </div>
 
     <div id="toast-container"></div>
-    <script src="app.js?v=202"></script>
+    <script src="app.js?v=203"></script>
 </body>
 </html>
