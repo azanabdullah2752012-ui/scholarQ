@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarQ | Institutional Entrance</title>
+    <title>ScholarQ | Master Network</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
@@ -11,132 +11,136 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* ScholarQ Onboarding System - Institutional Standard */
+        /* ScholarQ Apex Singularity V7.0 - The Final Masterpiece */
         :root {
-            --bg: #0f1115; --card: #15181e; --border: #24292f;
-            --primary: #4f46e5; --primary-hover: #4338ca;
-            --text-main: #f1f5f9; --text-muted: #8b949e;
-            --student: #64748b; --scholar: #4f46e5; --elite: #10b981;
-            --space: 8px;
+            --bg: #0f1115; --sidebar: #15181e; --card: #1c2128; --border: #2d333b;
+            --primary: #4f46e5; --primary-glow: rgba(79, 70, 229, 0.2);
+            --success: #10b981; --warning: #f59e0b;
+            --text: #f1f5f9; --text-muted: #8b949e;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        body { background: var(--bg); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
-        h1, h2, h3, .brand-logo { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; }
+        body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+        h1, h2, h3, .brand-logo { font-family: 'Outfit', sans-serif; }
 
-        /* SPLIT SCREEN LAYOUT */
-        .onboarding-split { display: flex; width: 100%; height: 100%; }
-        
-        /* LEFT: BRANDING */
-        .brand-section { flex: 1.2; background: radial-gradient(circle at top right, #1e1b4b 0%, #0c0e12 100%); padding: 64px 80px; display: flex; flex-direction: column; position: relative; border-right: 1px solid var(--border); }
-        .logo-wrap { display: flex; align-items: center; gap: 12px; font-size: 1.8rem; margin-bottom: auto; }
-        .vision-text { margin: auto 0; max-width: 500px; }
-        .vision-text h1 { font-size: 3.5rem; line-height: 1.1; margin-bottom: 24px; font-weight: 900; }
-        .vision-text p { font-size: 1.1rem; color: var(--text-muted); line-height: 1.6; }
+        /* BOOT SCREEN */
+        #boot-screen { position: fixed; inset: 0; background: var(--bg); z-index: 100000; display: flex; align-items: center; justify-content: center; font-family: 'Outfit'; font-size: 3rem; color: var(--primary); transition: 0.5s; }
 
-        /* RIGHT: AUTH CARD */
-        .auth-section { flex: 0.8; display: flex; align-items: center; justify-content: center; padding: 40px; background: #0c0e12; }
-        .auth-card { width: 100%; max-width: 440px; }
-        .welcome-header { margin-bottom: 40px; }
-        .welcome-header h2 { font-size: 2.2rem; margin-bottom: 8px; }
-        .welcome-header p { color: var(--text-muted); }
+        /* AUTH ENTRANCE */
+        #auth-view { display: none; width: 100%; height: 100vh; }
+        .auth-left { flex: 1.2; background: radial-gradient(circle at top right, #1e1b4b 0%, #0c0e12 100%); padding: 64px 80px; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .auth-right { flex: 0.8; background: #0c0e12; display: flex; align-items: center; justify-content: center; padding: 40px; }
+        .auth-card { width: 100%; max-width: 420px; }
 
-        /* FORM ELEMENTS */
-        .input-group { margin-bottom: 24px; }
-        .input-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-        .field { width: 100%; background: #0f1115; border: 1px solid var(--border); padding: 16px; border-radius: 12px; color: white; outline: none; transition: 0.2s; font-size: 1rem; }
-        .field:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
-        
-        /* ROLE PREVIEW BADGE */
-        .role-preview { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 8px 14px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.3s; opacity: 0; transform: translateY(-5px); }
-        .role-preview.visible { opacity: 1; transform: translateY(0); }
-        .rp-student { background: rgba(100, 116, 139, 0.1); color: var(--student); }
-        .rp-scholar { background: rgba(79, 70, 229, 0.1); color: var(--scholar); }
-        .rp-elite { background: rgba(16, 185, 129, 0.1); color: var(--elite); }
+        /* APEX DASHBOARD */
+        #app-view { display: none; grid-template-columns: 260px 1fr 340px; height: 100vh; opacity: 0; transition: 0.5s; }
+        aside.sidebar { background: var(--sidebar); border-right: 1px solid var(--border); padding: 32px 24px; display: flex; flex-direction: column; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; color: var(--text-muted); cursor: pointer; transition: 0.1s; font-weight: 500; }
+        .nav-item.active { background: rgba(79, 70, 229, 0.1); color: var(--primary); }
 
-        /* BUTTONS */
-        .btn-google { width: 100%; background: #1c2128; border: 1px solid var(--border); padding: 16px; border-radius: 12px; color: white; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: 0.15s; margin-bottom: 24px; }
-        .btn-google:hover { background: #262c36; }
-        .btn-primary { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 1rem; transition: 0.2s; }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .workspace { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #0f1115; }
+        .top-bar { height: 72px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        .search-wrap { position: relative; width: 60%; }
+        .search-wrap input { width: 100%; background: #1c2128; border: 1px solid var(--border); padding: 12px 16px 12px 48px; border-radius: 10px; color: white; outline: none; }
+        .scroll-view { flex: 1; overflow-y: auto; padding: 40px; }
 
-        .divider { display: flex; align-items: center; gap: 16px; margin: 32px 0; color: var(--text-muted); font-size: 0.8rem; }
-        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        /* STATS (Restored) */
+        .analytics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px; }
+        .stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; display: flex; align-items: center; gap: 20px; }
+        .stat-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+        .stat-icon.purple { background: rgba(79, 70, 229, 0.1); color: var(--primary); }
+        .stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .stat-icon.yellow { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
 
-        /* LOADING SHIELD */
-        #boot-loader { position: fixed; inset: 0; background: #0f1115; z-index: 10000; display: flex; align-items: center; justify-content: center; font-family: 'Outfit'; font-size: 2.5rem; color: var(--primary); }
+        /* FEED (Restored) */
+        .doubt-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; margin-bottom: 16px; cursor: pointer; transition: 0.2s; position: relative; }
+        .doubt-card:hover { border-color: var(--primary); transform: translateX(8px); }
+        .subject-icon { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); flex-shrink: 0; }
 
-        @media (max-width: 1024px) {
-            .onboarding-split { flex-direction: column; overflow-y: auto; }
-            .brand-section { flex: none; padding: 40px; border-right: none; border-bottom: 1px solid var(--border); }
-            .auth-section { flex: none; padding: 40px 24px; }
-            .vision-text h1 { font-size: 2.5rem; }
-        }
+        /* PANEL (Restored) */
+        aside.panel { background: var(--sidebar); border-left: 1px solid var(--border); padding: 32px 24px; overflow-y: auto; }
+        .sec-title { font-size: 0.85rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px; }
+        .expertise-bar { margin-bottom: 20px; }
+        .bar-track { width: 100%; height: 6px; background: #2d333b; border-radius: 3px; margin-top: 8px; }
+        .bar-fill { height: 100%; background: var(--primary); border-radius: 3px; }
+
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--primary-glow); }
+
+        .hidden { display: none !important; }
+        .visible-grid { display: grid !important; }
+        .visible-flex { display: flex !important; }
     </style>
 </head>
 <body>
 
-    <div id="boot-loader">ScholarQ</div>
+    <div id="boot-screen">ScholarQ</div>
 
-    <div class="onboarding-split" id="auth-view" style="display: none;">
-        <!-- LEFT: BRANDING -->
-        <div class="brand-section">
-            <div class="logo-wrap"><i data-lucide="graduation-cap"></i> ScholarQ</div>
-            <div class="vision-text">
-                <h1>Organized Academic<br><span style="color: var(--primary);">Collaboration.</span></h1>
-                <p>Students ask doubts. Scholars provide trusted answers. Join the elite network designed for deep understanding and academic growth.</p>
+    <!-- ENTRANCE -->
+    <div id="auth-view">
+        <div class="auth-left">
+            <div style="font-size: 1.8rem; font-weight: 900; margin-bottom: auto;"><i data-lucide="graduation-cap"></i> ScholarQ</div>
+            <div style="margin: auto 0;">
+                <h1 style="font-size: 4rem; line-height: 1; margin-bottom: 24px; font-weight: 900;">Academic<br><span style="color: var(--primary);">Network.</span></h1>
+                <p style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.6;">Precision collaboration for institutional growth.</p>
             </div>
-            <div style="color: var(--text-muted); font-size: 0.8rem;">ESTABLISHED 2024 / INSTITUTIONAL EDITION</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted);">OS V7.0 / APEX EDITION</div>
         </div>
-
-        <!-- RIGHT: AUTH -->
-        <div class="auth-section">
+        <div class="auth-right">
             <div class="auth-card">
-                <div class="welcome-header">
-                    <h2>Welcome to ScholarQ</h2>
-                    <p>Join the academic network today.</p>
-                </div>
-
-                <form id="onboarding-form">
-                    <div class="input-group">
-                        <label class="input-label">Full Identity Name</label>
-                        <input type="text" id="user-name" placeholder="Enter full name" class="field" required minlength="3">
+                <h2 style="font-size: 2.2rem; margin-bottom: 32px;">Initialize Onboarding</h2>
+                <form id="auth-form" style="display:flex; flex-direction:column; gap:16px;">
+                    <div id="signup-fields" class="hidden" style="display:flex; flex-direction:column; gap:16px;">
+                        <input type="text" id="reg-name" placeholder="Full Identity Name" style="width:100%; background:#0f1115; border:1px solid var(--border); padding:16px; border-radius:12px; color:white;">
+                        <input type="number" id="reg-score" placeholder="Academic Score %" style="width:100%; background:#0f1115; border:1px solid var(--border); padding:16px; border-radius:12px; color:white;">
                     </div>
-
-                    <div class="input-group">
-                        <label class="input-label">Verified Academic Score (%)</label>
-                        <input type="number" id="user-score" placeholder="Ex: 94" class="field" required min="0" max="100" oninput="updateRolePreview(this.value)">
-                        <div id="role-badge" class="role-preview">
-                            <i data-lucide="shield-check" style="width: 14px;"></i>
-                            <span id="role-name">Student Access</span>
-                        </div>
-                    </div>
-
-                    <button type="button" class="btn-google" onclick="loginWithGoogle()">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo.svg" style="width: 18px;">
-                        Continue with Google
-                    </button>
-
-                    <div class="divider">OR CONTINUE WITH</div>
-
-                    <div class="input-group">
-                        <label class="input-label">Access Email</label>
-                        <input type="email" id="user-email" placeholder="email@institution.edu" class="field" required>
-                    </div>
-
-                    <div class="input-group">
-                        <label class="input-label">Access Token (Password)</label>
-                        <input type="password" id="user-password" placeholder="••••••••" class="field" required>
-                    </div>
-
-                    <button type="submit" id="submit-btn" class="btn-primary">Initialize Onboarding</button>
+                    <input type="email" id="auth-email" placeholder="Institutional Email" style="width:100%; background:#0f1115; border:1px solid var(--border); padding:16px; border-radius:12px; color:white;" required>
+                    <input type="password" id="auth-password" placeholder="Access Token" style="width:100%; background:#0f1115; border:1px solid var(--border); padding:16px; border-radius:12px; color:white;" required>
+                    <button type="submit" class="btn-primary" style="padding:18px;">Authenticate OS</button>
                 </form>
-                <p style="text-align: center; margin-top: 24px; font-size: 0.9rem; color: var(--text-muted);">
-                    By continuing, you agree to the Academic Code of Conduct.
-                </p>
+                <p style="text-align: center; margin-top: 32px;"><a href="#" onclick="toggleAuth()" id="auth-toggle" style="color: var(--primary); text-decoration: none; font-weight: 700;">Create System Identity</a></p>
             </div>
         </div>
+    </div>
+
+    <!-- APEX DASHBOARD -->
+    <div id="app-view">
+        <aside class="sidebar">
+            <div class="brand-logo" style="font-size: 1.5rem; font-weight: 900; margin-bottom: 48px;"><i data-lucide="graduation-cap"></i> ScholarQ</div>
+            <nav id="side-nav" style="display:flex; flex-direction:column; gap:6px; flex:1;"></nav>
+            <div style="background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; margin-top: auto;">
+                <div id="role-pill" style="display: inline-flex; background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; margin-bottom: 16px;">STUDENT</div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem;"><span>Academic Score</span><b id="user-score-side">0%</b></div>
+            </div>
+            <div class="nav-item" style="margin-top: 24px;" onclick="terminate()"><i data-lucide="log-out"></i> Sign Out</div>
+        </aside>
+
+        <main class="workspace">
+            <header class="top-bar">
+                <div class="search-wrap"><i data-lucide="search" style="position:absolute; left:16px; top:13px; color:var(--text-muted); width:18px;"></i><input type="text" placeholder="Query Knowledge Database..." oninput="handleSearch(this.value)"></div>
+                <button class="btn-primary" onclick="go('ask')">Submit Doubt</button>
+            </header>
+            <div class="scroll-view">
+                <div id="view-home">
+                    <h1 id="greeting" style="font-size: 2.2rem; margin-bottom: 8px;">Good evening, Azan! 👋</h1>
+                    <p id="sub-greeting" style="color: var(--text-muted); margin-bottom: 40px;">Need help with something? Our scholars are here for you.</p>
+                    <div id="analytics" class="analytics-row"></div>
+                    <div class="sec-title">Recent Community Doubts</div>
+                    <div id="feed-container"></div>
+                </div>
+                <div id="view-ask" class="hidden">
+                    <h1>Initialize System Query</h1>
+                    <form id="ask-form" style="margin-top: 32px; background: var(--card); padding: 40px; border-radius: 24px; border: 1px solid var(--border);">
+                        <input type="text" id="ask-title" placeholder="Problem Statement" style="width:100%; background:#0f1115; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; margin-bottom:20px;">
+                        <select id="ask-subj" style="width:100%; background:#0f1115; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; margin-bottom:20px;"><option>Mathematics</option><option>Physics</option><option>Chemistry</option></select>
+                        <textarea id="ask-body" placeholder="Specification details..." style="width:100%; background:#0f1115; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; min-height:200px; margin-bottom:20px;"></textarea>
+                        <button type="submit" class="btn-primary" style="width:100%; padding:18px;">Initialize Broadcast</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <aside id="right-panel" class="panel"></aside>
     </div>
 
     <script>
@@ -144,84 +148,130 @@
         const SUPA_KEY = 'sb_publishable_W42MaHoLDkYMkx3OmP0CcA_EGxcSpMW';
         const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
+        let session = null, profile = null, doubts = [], mode = 'login', searchVal = '';
+
         document.addEventListener('DOMContentLoaded', async () => {
-            if (window.lucide) lucide.createIcons();
-            const { data: { session } } = await db.auth.getSession();
-            if (session) {
-                // Redirect if already logged in (Logic for dashboards)
-                console.log("Session active. Redirecting to Dashboard...");
-                window.location.href = './index.html'; // Assuming dashboard is here
-            } else {
-                document.getElementById('boot-loader').style.display = 'none';
-                document.getElementById('auth-view').style.display = 'flex';
-                if (window.lucide) lucide.createIcons();
-            }
-            document.getElementById('onboarding-form').addEventListener('submit', handleOnboarding);
+            const { data: { session: s } } = await db.auth.getSession();
+            if (s) boot(s); else showEntrance();
+            document.getElementById('auth-form').addEventListener('submit', handleAuth);
+            document.getElementById('ask-form').addEventListener('submit', handleAsk);
+            
+            // EMERGENCY FAIL-SAFE
+            setTimeout(() => {
+                const b = document.getElementById('boot-screen');
+                if (b.style.display !== 'none') { b.style.opacity = '0'; setTimeout(()=>b.style.display='none', 500); }
+            }, 3000);
         });
 
-        function updateRolePreview(val) {
-            const badge = document.getElementById('role-badge');
-            const nameEl = document.getElementById('role-name');
-            if (!val) { badge.className = 'role-preview'; return; }
-            
-            badge.classList.add('visible');
-            const score = parseInt(val);
-            badge.className = 'role-preview visible';
-
-            if (score < 85) {
-                badge.classList.add('rp-student');
-                nameEl.innerText = 'Student Access Granted';
-            } else if (score >= 85 && score <= 91) {
-                badge.classList.add('rp-scholar');
-                nameEl.innerText = 'Verified Scholar Status';
-            } else if (score >= 92) {
-                badge.classList.add('rp-elite');
-                nameEl.innerText = 'Elite Scholar Prestige';
-            }
-        }
-
-        async function handleOnboarding(e) {
+        async function handleAuth(e) {
             e.preventDefault();
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true; btn.innerText = "Initializing Identity...";
-
-            const email = document.getElementById('user-email').value;
-            const pass = document.getElementById('user-password').value;
-            const name = document.getElementById('user-name').value;
-            const score = parseInt(document.getElementById('user-score').value);
-            
-            const role = score >= 92 ? 'ELITE' : (score >= 85 ? 'SCHOLAR' : 'STUDENT');
-
-            const { data, error } = await db.auth.signUp({ 
-                email, 
-                password: pass, 
-                options: { data: { full_name: name, score, role } } 
-            });
-
-            if (data.user) {
-                await db.from('users').upsert([{ 
-                    id: data.user.id, 
-                    email, 
-                    name, 
-                    score_percentage: score, 
-                    role,
-                    starting_points: 50,
-                    trust_score: 1.0
-                }]);
-                alert("Account Initialized. Redirecting to your " + role + " terminal.");
-                window.location.reload();
-            } else if (error) {
-                alert(error.message);
-                btn.disabled = false; btn.innerText = "Initialize Onboarding";
+            const email = document.getElementById('auth-email').value, pass = document.getElementById('auth-password').value;
+            if (mode === 'login') {
+                const { error } = await db.auth.signInWithPassword({ email, password: pass });
+                if (error) alert(error.message); else location.reload();
+            } else {
+                const name = document.getElementById('reg-name').value, score = parseInt(document.getElementById('reg-score').value);
+                const role = score >= 85 ? 'SCHOLAR' : 'STUDENT';
+                const { data, error } = await db.auth.signUp({ email, password: pass, options: { data: { full_name: name, score, role } } });
+                if (data.user) {
+                    await db.from('users').upsert([{ id: data.user.id, email, name, score_percentage: score, role }]);
+                    alert("Identity Created. Logging in."); location.reload();
+                } else if (error) alert(error.message);
             }
         }
 
-        async function loginWithGoogle() {
-            await db.auth.signInWithOAuth({ 
-                provider: 'google', 
-                options: { redirectTo: 'https://azanabdullah2752012-ui.github.io/scholarQ/' } 
-            });
+        async function boot(s) {
+            session = s;
+            const { data } = await db.from('users').select('*').eq('id', s.user.id).maybeSingle();
+            profile = data || { name: 'Operator', role: 'STUDENT', score_percentage: 92 };
+            await sync();
+            const b = document.getElementById('boot-screen');
+            b.style.opacity = '0'; setTimeout(() => b.style.display = 'none', 500);
+            document.getElementById('app-view').classList.add('visible-grid');
+            setTimeout(() => document.getElementById('app-view').style.opacity = '1', 50);
+            renderLayout();
         }
+
+        async function sync() {
+            const { data: q } = await db.from('questions').select('*').order('created_at', { ascending: false });
+            const { data: a } = await db.from('answers').select('*');
+            doubts = (q || []).map(d => ({ ...d, solutions: (a || []).filter(ans => ans.question_id === d.id) }));
+            renderFeed();
+        }
+
+        function renderLayout() {
+            const isS = profile.role === 'SCHOLAR';
+            document.getElementById('greeting').innerText = `Good evening, ${profile.name.split(' ')[0]}! 👋`;
+            document.getElementById('sub-greeting').innerText = isS ? "Ready to help and make an impact today?" : "Need help with something? Our scholars are here for you.";
+            document.getElementById('role-pill').innerText = profile.role;
+            document.getElementById('user-score-side').innerText = profile.score_percentage + '%';
+
+            // Sidebar Nav
+            const nav = document.getElementById('side-nav');
+            const items = isS ? [['Hub', 'grid'], ['Feed', 'list'], ['Answers', 'check'], ['Profile', 'user']] : [['Home', 'home'], ['Ask', 'plus-circle'], ['Doubts', 'message-square'], ['Profile', 'user']];
+            nav.innerHTML = items.map(i => `<div class="nav-item" onclick="go('home')"><i data-lucide="${i[1]}"></i> ${i[0]}</div>`).join('');
+
+            // Analytics
+            document.getElementById('analytics').innerHTML = isS 
+                ? `<div class="stat-box"><div class="stat-icon purple"><i data-lucide="list"></i></div><div><div class="a-val">24</div><div class="a-label">Priority</div></div></div>
+                   <div class="stat-box"><div class="stat-icon green"><i data-lucide="check"></i></div><div><div class="a-val">128</div><div class="a-label">Solved</div></div></div>
+                   <div class="stat-box"><div class="stat-icon yellow"><i data-lucide="star"></i></div><div><div class="a-val">96%</div><div class="a-label">Success</div></div></div>`
+                : `<div class="stat-box"><div class="stat-icon purple"><i data-lucide="help-circle"></i></div><div><div class="a-val">${doubts.length}</div><div class="a-label">Active</div></div></div>
+                   <div class="stat-box"><div class="stat-icon green"><i data-lucide="check-circle"></i></div><div><div class="a-val">${profile.total_answers_count || 0}</div><div class="a-label">Solved</div></div></div>
+                   <div class="stat-box"><div class="stat-icon yellow"><i data-lucide="award"></i></div><div><div class="a-val">4.8</div><div class="a-label">Trust</div></div></div>`;
+
+            // Panel
+            const panel = document.getElementById('right-panel');
+            panel.innerHTML = isS 
+                ? `<div class="sec-title">Expertise Mapping</div>
+                   <div class="expertise-bar"><span>Mathematics</span><div class="bar-track"><div class="bar-fill" style="width:96%;"></div></div></div>
+                   <div class="expertise-bar"><span>Physics</span><div class="bar-track"><div class="bar-fill" style="width:92%; background:var(--warning);"></div></div></div>`
+                : `<div class="sec-title">How it Works</div>
+                   <div style="position:relative; padding-left:32px;">
+                       <div style="position:absolute; left:14px; top:0; bottom:0; width:2px; background:var(--border);"></div>
+                       ${['Ask doubt', 'Scholars answer', 'Best answer', 'Learn'].map((t,i)=>`<div style="margin-bottom:24px; position:relative;"><div style="position:absolute; left:-32px; width:28px; height:28px; background:var(--card); border:2px solid var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:var(--primary); font-weight:800;">${i+1}</div><b>${t}</b></div>`).join('')}
+                   </div>`;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderFeed() {
+            const list = doubts.filter(d => d.title.toLowerCase().includes(searchVal.toLowerCase()));
+            document.getElementById('feed-container').innerHTML = list.map(d => `
+                <div class="doubt-card">
+                    <div style="display:flex; gap:20px;">
+                        <div class="subject-icon"><i data-lucide="help-circle" style="color:var(--primary);"></i></div>
+                        <div style="flex:1;">
+                            <span style="font-size:0.7rem; font-weight:800; color:var(--primary); text-transform:uppercase;">${d.subject}</span>
+                            <div style="font-size:1.1rem; font-weight:700; margin:4px 0 12px 0;">${d.title}</div>
+                            <div style="display:flex; align-items:center; gap:12px; font-size:0.8rem; color:var(--text-muted);">
+                                <span>by ${d.asker_name}</span><span>•</span><span>${d.solutions.length} Answers</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`).join('');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function go(v) {
+            document.querySelectorAll('#workspace > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-' + v).classList.remove('hidden');
+        }
+
+        async function handleAsk(e) {
+            e.preventDefault();
+            await db.from('questions').insert([{ id:'q_'+Date.now(), title:document.getElementById('ask-title').value, subject:document.getElementById('ask-subj').value, body:document.getElementById('ask-body').value, asker_id:session.user.id, asker_name:profile.name }]);
+            sync(); go('home');
+        }
+
+        function handleSearch(v) { searchVal = v; renderFeed(); }
+        function showEntrance() { 
+            const b = document.getElementById('boot-screen');
+            b.style.opacity = '0'; setTimeout(() => b.style.display = 'none', 500);
+            document.getElementById('auth-view').classList.add('visible-flex'); 
+        }
+        function toggleAuth() { mode = mode === 'login' ? 'signup' : 'login'; document.getElementById('signup-fields').classList.toggle('hidden'); }
+        function terminate() { db.auth.signOut(); location.reload(); }
+        async function loginWithGoogle() { await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://azanabdullah2752012-ui.github.io/scholarQ/' } }); }
     </script>
 </body>
 </html>
