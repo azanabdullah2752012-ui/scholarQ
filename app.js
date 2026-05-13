@@ -5,9 +5,7 @@ const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
 let session = null, profile = null, questions = [], currentView = 'home';
 let currentSearch = '', currentFilter = 'All', isBoosted = false, currentQId = null;
-let isBooting = false;
-
-const ICONS = { 'Calculus':'$fx$','Math':'$fx$','Biology':'🍃','Data Structures':'</>','Computer Science':'</>','Science':'🧪','Physics':'🧪','General':'🧠','History':'📜' };
+let isBooting = false, lastRefresh = 0;
 
 // ─── BOOT ────────────────────────────────────────────────────────────────────
 
@@ -19,12 +17,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (app && auth && app.style.display === 'none' && auth.style.display === 'none') auth.style.display = 'flex';
   }, 2000);
 
-  try {
-    const { data: { session: s } } = await db.auth.getSession();
-    clearTimeout(safety); boot(s);
-  } catch (e) { clearTimeout(safety); document.getElementById('view-auth').style.display = 'flex'; }
+  // Use a more robust auth init
+  const { data: { session: s } } = await db.auth.getSession();
+  clearTimeout(safety);
+  if (s) boot(s); else document.getElementById('view-auth').style.display = 'flex';
 
-  db.auth.onAuthStateChange((_, s) => { if (!session && s) boot(s); else if (session && !s) window.location.reload(); });
+  db.auth.onAuthStateChange((event, s) => {
+    if (event === 'SIGNED_IN' && !session) boot(s);
+    if (event === 'SIGNED_OUT') window.location.reload();
+  });
 
   document.getElementById('auth-form')?.addEventListener('submit', handleAuth);
   document.getElementById('ask-form')?.addEventListener('submit', handleAsk);
@@ -33,7 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function boot(s) {
-  if (isBooting) return; isBooting = true; session = s;
+  if (isBooting || (session && session.user.id === s?.user.id)) return;
+  isBooting = true; session = s;
   const app = document.getElementById('app'), auth = document.getElementById('view-auth');
   if (!s) { if (app) app.style.display = 'none'; if (auth) auth.style.display = 'flex'; isBooting = false; return; }
 
@@ -228,17 +230,35 @@ async function handleSell(e) {
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 function makeCard(q) {
+  if (!q) return '';
   const mult = isBoosted ? (parseFloat(profile?.multiplier || 1) + 0.5) : parseFloat(profile?.multiplier || 1);
-  return `<div class="doubt-card" onclick="navigateTo('question','${q.id}')"><div class="subject-icon-box">${ICONS[q.subject]||'🧠'}</div><div><h3 style="font-size:0.95rem;color:white;">${q.title}</h3><span style="font-size:0.7rem;color:#71717a;">${q.subject}</span></div><div class="pts-badge">+${Math.floor(25*mult)} PTS</div></div>`;
+  const baseReward = 25;
+  const icons = { 'Calculus':'$fx$','Math':'$fx$','Biology':'🍃','Data Structures':'</>','Computer Science':'</>','Science':'🧪','Physics':'🧪','General':'🧠','History':'📜' };
+  
+  return `<div class="doubt-card" onclick="navigateTo('question','${q.id}')">
+    <div class="subject-icon-box">${icons[q.subject]||'🧠'}</div>
+    <div>
+      <h3 style="font-size:0.95rem;color:white;">${q.title}</h3>
+      <span style="font-size:0.7rem;color:#71717a;">${q.subject}</span>
+    </div>
+    <div class="pts-badge">+${Math.floor(baseReward * mult)} PTS</div>
+  </div>`;
 }
 
 function updateMetrics() {
-  if (!profile) return; const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+  if (!profile) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
   const dMult = isBoosted ? (parseFloat(profile.multiplier || 1) + 0.5) : parseFloat(profile.multiplier || 1);
-  set('hub-user-name', profile.name); set('side-points', profile.points); set('stat-status', profile.points > 1000 ? 'ELITE' : 'SCHOLAR');
-  set('stat-streak', profile.streak + ' Days'); set('stat-trust', profile.trust_score + '%'); set('stat-multiplier', dMult.toFixed(2) + 'x');
-  const fill = document.getElementById('gauntlet-fill'); if (fill) fill.style.width = Math.min(((profile.gauntlet_progress || 0) / 3) * 100, 100) + '%';
-  const av = document.getElementById('user-avatar'); if (av) av.innerText = profile.name[0].toUpperCase();
+  set('hub-user-name', profile.name || 'Scholar'); 
+  set('side-points', profile.points || 0); 
+  set('stat-status', (profile.points || 0) > 1000 ? 'ELITE' : 'SCHOLAR');
+  set('stat-streak', (profile.streak || 0) + ' Days'); 
+  set('stat-trust', (profile.trust_score || 75) + '%'); 
+  set('stat-multiplier', dMult.toFixed(2) + 'x');
+  const fill = document.getElementById('gauntlet-fill'); 
+  if (fill) fill.style.width = Math.min(((profile.gauntlet_progress || 0) / 3) * 100, 100) + '%';
+  const av = document.getElementById('user-avatar'); 
+  if (av) av.innerText = (profile.name || 'S')[0].toUpperCase();
 }
 
 function loadContributors() {
@@ -255,4 +275,8 @@ function closeSellModal() { document.getElementById('modal-sell').style.display 
 function handleSearch(val) { currentSearch = val; if (currentView === 'home') renderHome(); if (currentView === 'warroom') renderWarRoom(); }
 function setFilter(f) { currentFilter = f; renderWarRoom(); }
 function toggleBoost() { isBoosted = !isBoosted; toast(isBoosted ? 'Hyper-Boost Active!' : 'Boost offline.'); updateMetrics(); }
+async function showInvite() { 
+  try { await navigator.clipboard.writeText(window.location.href); toast('Link Copied to Clipboard!'); } 
+  catch (e) { toast('Share this URL: ' + window.location.href); } 
+}
 function toast(msg) { const c = document.getElementById('toast-container'); const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg; c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000); }
