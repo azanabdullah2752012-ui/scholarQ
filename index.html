@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarQ | Master OS</title>
+    <title>ScholarQ | Master Network</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,27 +11,28 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="vision-theme">
+<body class="reference-theme">
+    <!-- Boot Shield -->
     <div id="init-shield" class="init-shield">
         <div class="shield-content">
             <div class="brand-logo"><i data-lucide="graduation-cap"></i> ScholarQ</div>
-            <div class="loading-line"></div>
         </div>
     </div>
 
-    <!-- Auth -->
+    <!-- Auth Gateway -->
     <div id="view-auth" class="auth-overlay" style="display:none;">
-        <div class="auth-card">
+        <div class="auth-box">
             <div class="brand-logo" style="justify-content:center; margin-bottom:12px;"><i data-lucide="graduation-cap"></i> ScholarQ</div>
-            <form id="auth-form" class="stack-sm">
-                <input type="email" id="auth-email" placeholder="Institutional Email" class="input-sq" required>
-                <input type="password" id="auth-password" placeholder="Password" class="input-sq" required>
+            <p class="text-muted text-center mb-32">Ask. Learn. Excel.</p>
+            <form id="auth-form">
+                <input type="email" id="auth-email" placeholder="Institutional Email" class="input-v" style="margin-bottom:12px; width:100%; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); padding:16px; border-radius:12px; color:white;" required>
+                <input type="password" id="auth-password" placeholder="Password" class="input-v" style="margin-bottom:12px; width:100%; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); padding:16px; border-radius:12px; color:white;" required>
                 <div id="role-fields" style="display:none; margin-top:16px;">
-                    <input type="text" id="auth-name" placeholder="Full Name" class="input-sq">
-                    <input type="number" id="auth-score" placeholder="Academic Score %" class="input-sq" min="0" max="100">
+                    <input type="text" id="auth-name" placeholder="Full Name" style="margin-bottom:12px; width:100%; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); padding:16px; border-radius:12px; color:white;">
+                    <input type="number" id="auth-score" placeholder="Recent Score %" style="margin-bottom:12px; width:100%; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); padding:16px; border-radius:12px; color:white;" min="0" max="100">
                 </div>
-                <button type="submit" id="auth-btn" class="btn-primary">Sign In</button>
-                <button type="button" onclick="toggleAuthMode()" class="btn-link" id="auth-toggle">New here? Register</button>
+                <button type="submit" id="auth-btn" style="width:100%; background:#6366f1; color:white; border:none; padding:16px; border-radius:12px; font-weight:700; cursor:pointer; margin-top:12px;">Sign In</button>
+                <button type="button" onclick="toggleAuthMode()" style="background:none; border:none; color:#6366f1; font-weight:700; width:100%; margin-top:20px; cursor:pointer;" id="auth-toggle">Create Account</button>
             </form>
         </div>
     </div>
@@ -39,12 +40,22 @@
     <!-- App Shell -->
     <div id="app" class="app-layout" style="display:none; opacity:0;">
         <aside class="sidebar">
-            <div class="brand-logo" onclick="go('home')"><i data-lucide="graduation-cap"></i> <div>ScholarQ<div class="brand-sub">Teach. Help. Lead.</div></div></div>
-            
-            <nav id="sidebar-nav" class="side-nav"></nav>
-
-            <div id="sidebar-status-area"></div>
-
+            <div class="brand-logo" onclick="go('home')"><i data-lucide="graduation-cap"></i> <div>ScholarQ<div class="brand-sub">Ask. Learn. Excel.</div></div></div>
+            <nav class="side-nav">
+                <div class="nav-item active" onclick="go('home')"><i data-lucide="home"></i> <span>Home</span></div>
+                <div class="nav-item" onclick="go('ask')"><i data-lucide="edit-2"></i> <span>Ask Doubt</span></div>
+                <div class="nav-item" onclick="go('profile')"><i data-lucide="message-square"></i> <span>My Doubts</span></div>
+                <div class="nav-item" onclick="go('leaderboard')"><i data-lucide="award"></i> <span>Top Scholars</span></div>
+                <div class="nav-item" onclick="go('profile')"><i data-lucide="user"></i> <span>Profile</span></div>
+            </nav>
+            <div class="sidebar-status-card">
+                <h3>YOUR STATUS</h3>
+                <div id="status-pill" class="badge-pill"><i data-lucide="shield-check"></i> Scholar</div>
+                <div class="status-line"><span>Score</span><b id="side-score">0%</b></div>
+                <div class="status-line"><span>Subjects</span><b>5</b></div>
+                <div class="status-line"><span>Reputation</span><b>A+</b></div>
+                <button class="btn-side-profile" onclick="go('profile')">View Profile</button>
+            </div>
             <div class="side-footer" onclick="logout()">
                 <i data-lucide="moon"></i> <span>Dark Mode</span>
             </div>
@@ -52,56 +63,102 @@
 
         <main class="main-workspace">
             <header class="top-bar">
-                <div class="search-wrap">
+                <div class="search-container">
                     <i data-lucide="search"></i>
                     <input type="text" placeholder="Search doubts, subjects or topics..." oninput="handleSearch(this.value)">
                 </div>
-                <button class="btn-ask-top" onclick="go('ask')"><i data-lucide="edit-3"></i> Ask Doubt</button>
+                <button class="btn-ask-doubt" onclick="go('ask')"><i data-lucide="edit-3"></i> Ask Doubt</button>
             </header>
 
-            <div class="workspace-content">
-                <div id="view-home" class="view"></div>
-                
-                <!-- Common Views -->
+            <div class="scroll-view">
+                <!-- Home -->
+                <div id="view-home" class="view">
+                    <div class="dashboard-greeting">
+                        <h1 id="user-greeting">Good evening, Azan! 👋</h1>
+                        <p class="text-muted">Need help with something? Our scholars are here for you.</p>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap icon-blue"><i data-lucide="help-circle"></i></div>
+                            <div class="stat-content"><div id="stat-unanswered" class="val">0</div><div class="lab">Unanswered Doubts</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap icon-green"><i data-lucide="check-circle"></i></div>
+                            <div class="stat-content"><div id="stat-solved" class="val">0</div><div class="lab">Doubts Solved by You</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap icon-yellow"><i data-lucide="star"></i></div>
+                            <div class="stat-content"><div id="stat-reputation" class="val">4.8</div><div class="lab">Your Reputation</div></div>
+                        </div>
+                    </div>
+                    <div class="feed-label-row">
+                        <h2>Recent Doubts</h2>
+                        <button class="btn-view-all" onclick="go('home')">View All</button>
+                    </div>
+                    <div id="home-feed"></div>
+                </div>
+
+                <!-- Ask -->
                 <div id="view-ask" class="view" style="display:none;">
-                    <div class="greeting"><h1>Broadcast Doubt</h1></div>
-                    <form id="ask-form" class="form-card">
-                        <div class="f-group"><label>TITLE</label><input type="text" id="ask-title" placeholder="Summary of your doubt" required></div>
-                        <div class="f-group"><label>SUBJECT</label><select id="ask-subject"><option>Mathematics</option><option>Chemistry</option><option>Physics</option><option>History</option><option>Biology</option></select></div>
-                        <div class="f-group"><label>DESCRIPTION</label><textarea id="ask-body" placeholder="Describe the problem clearly..." style="min-height:200px;" required></textarea></div>
-                        <button type="submit" class="btn-primary">Post Doubt</button>
+                    <div class="dashboard-greeting"><h1>Broadcast Doubt</h1></div>
+                    <form id="ask-form" style="background:#1c212c; padding:40px; border-radius:24px; border:1px solid rgba(255,255,255,0.05);">
+                        <div style="margin-bottom:24px;"><label style="display:block; font-size:0.7rem; letter-spacing:1px; color:var(--text-muted); margin-bottom:8px;">TITLE</label><input type="text" id="ask-title" placeholder="Problem summary" style="width:100%; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:16px; border-radius:12px; color:white;" required></div>
+                        <div style="margin-bottom:24px;"><label style="display:block; font-size:0.7rem; letter-spacing:1px; color:var(--text-muted); margin-bottom:8px;">SUBJECT</label><select id="ask-subject" style="width:100%; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:16px; border-radius:12px; color:white;"><option>Mathematics</option><option>Science</option><option>Physics</option><option>History</option></select></div>
+                        <div style="margin-bottom:24px;"><label style="display:block; font-size:0.7rem; letter-spacing:1px; color:var(--text-muted); margin-bottom:8px;">DESCRIPTION</label><textarea id="ask-body" placeholder="Detail your problem" style="width:100%; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:16px; border-radius:12px; color:white; min-height:180px;" required></textarea></div>
+                        <button type="submit" style="width:100%; background:#6366f1; color:white; border:none; padding:18px; border-radius:12px; font-weight:800; cursor:pointer;">POST DOUBT</button>
                     </form>
                 </div>
 
+                <!-- Question Detail -->
                 <div id="view-question" class="view" style="display:none;">
-                    <div id="qd-container" class="form-card mb-32"></div>
-                    <div id="qd-answers" class="feed-stack"></div>
-                    <div id="answer-box" class="form-card mt-32">
+                    <div id="qd-container" style="background:#1c212c; padding:40px; border-radius:24px; border:1px solid rgba(255,255,255,0.05); margin-bottom:24px;"></div>
+                    <div id="qd-answers"></div>
+                    <div id="answer-box" style="background:#1c212c; padding:40px; border-radius:24px; border:1px solid rgba(255,255,255,0.05); margin-top:40px;">
                         <h3>Submit Solution</h3>
                         <form id="answer-form">
-                            <textarea id="answer-body" placeholder="Provide a detailed solution..." style="min-height:150px;" required></textarea>
-                            <button type="submit" class="btn-primary">Submit Answer</button>
+                            <textarea id="answer-body" placeholder="Write your solution..." style="width:100%; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:16px; border-radius:12px; color:white; min-height:150px; margin-top:16px;" required></textarea>
+                            <button type="submit" style="width:100%; background:#6366f1; color:white; border:none; padding:16px; border-radius:12px; font-weight:700; cursor:pointer; margin-top:16px;">SUBMIT ANSWER</button>
                         </form>
                     </div>
                 </div>
 
+                <!-- Profile -->
                 <div id="view-profile" class="view" style="display:none;">
-                    <div class="form-card text-center">
-                        <div id="p-avatar" class="profile-avatar">A</div>
-                        <h2 id="p-name">Scholar Name</h2>
-                        <div class="p-stats-row">
-                            <div class="p-stat"><div id="p-total" class="p-val">0</div><div class="p-label">ANSWERS</div></div>
-                            <div class="p-stat"><div id="p-best" class="p-val">0</div><div class="p-label">BEST ANSWERS</div></div>
+                    <div style="background:#1c212c; padding:40px; border-radius:24px; border:1px solid rgba(255,255,255,0.05); text-align:center;">
+                        <div id="p-avatar" class="avatar-mini" style="width:80px; height:80px; border-radius:24px; background:#6366f1; display:flex; align-items:center; justify-content:center; font-size:2rem; color:white; margin:0 auto 24px; font-weight:900;">A</div>
+                        <h2 id="p-name" style="font-size:1.5rem; margin-bottom:8px;">Scholar Name</h2>
+                        <div style="display:flex; justify-content:center; gap:40px; margin-top:32px; border-top:1px solid rgba(255,255,255,0.05); padding-top:32px;">
+                            <div><div id="p-total" style="font-size:1.8rem; font-weight:900;">0</div><div style="font-size:0.6rem; color:var(--text-muted);">ANSWERS</div></div>
+                            <div><div id="p-best" style="font-size:1.8rem; font-weight:900;">0</div><div style="font-size:0.6rem; color:var(--text-muted);">BEST ANSWERS</div></div>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
 
-        <aside id="right-panel" class="right-panel"></aside>
+        <aside class="right-panel">
+            <div class="panel-section">
+                <div class="panel-h"><h3>Top Scholars</h3><button class="btn-view-all">View All</button></div>
+                <div id="side-scholars"></div>
+            </div>
+            <div class="panel-section">
+                <h3>How it works</h3>
+                <div class="timeline-ref">
+                    <div class="t-item"><div class="t-dot">1</div><div class="t-content"><h4>Ask your doubt</h4><p>Post your question clearly.</p></div></div>
+                    <div class="t-item"><div class="t-dot">2</div><div class="t-content"><h4>Scholars answer</h4><p>Top scoring students help you.</p></div></div>
+                    <div class="t-item"><div class="t-dot">3</div><div class="t-content"><h4>Best answer chosen</h4><p>Mark the best answer.</p></div></div>
+                    <div class="t-item"><div class="t-dot">4</div><div class="t-content"><h4>Everyone learns</h4><p>Knowledge grows together.</p></div></div>
+                </div>
+            </div>
+            <div class="quote-box-ref">
+                <p>The beautiful thing about learning is that no one can take it away from you.</p>
+                <div class="quote-author-ref">– B.B. King</div>
+                <i data-lucide="quote"></i>
+            </div>
+        </aside>
     </div>
 
     <div id="toast-container"></div>
-    <script src="app.js?v=301"></script>
+    <script src="app.js?v=400"></script>
 </body>
 </html>
