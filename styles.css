@@ -33,30 +33,33 @@ body { background: var(--bg); color: var(--text-primary); line-height: 1.5; over
 
 /* ONBOARDING CARD */
 .auth-container {
-  position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100vh;
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  width: 100vw; height: 100vh;
 }
 .glass-card {
-  background: rgba(18, 18, 18, 0.7); backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.05); border-radius: 32px;
-  padding: 48px; width: 440px; text-align: center;
-  box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 40px rgba(99, 102, 241, 0.1);
+  background: rgba(18, 18, 18, 0.7); backdrop-filter: blur(25px);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 32px;
+  padding: 56px 48px; width: 440px; text-align: center;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.8), 0 0 50px rgba(99, 102, 241, 0.1);
+  display: flex; flex-direction: column; gap: 8px;
 }
 
 .auth-input {
-  width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-  padding: 16px 20px; border-radius: 14px; color: white; font-size: 1rem; margin-bottom: 16px;
+  width: 100%; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+  padding: 18px 20px; border-radius: 14px; color: white; font-size: 1rem; margin-bottom: 12px;
   transition: all 0.3s;
 }
-.auth-input:focus { border-color: var(--p-500); background: rgba(99, 102, 241, 0.05); outline: none; }
+.auth-input:focus { border-color: var(--p-500); background: rgba(99, 102, 241, 0.05); outline: none; box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); }
 
 .btn-google {
   background: white; color: black; font-weight: 700; width: 100%; border: none;
-  padding: 14px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center;
-  justify-content: center; gap: 12px; cursor: pointer; transition: 0.2s;
+  padding: 16px; border-radius: 14px; margin-bottom: 12px; display: flex; align-items: center;
+  justify-content: center; gap: 12px; cursor: pointer; transition: 0.2s; font-size: 0.95rem;
 }
-.btn-google:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,255,255,0.2); }
+.btn-google:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(255,255,255,0.1); }
 
-.divider { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; color: var(--text-muted); font-size: 0.75rem; font-weight: 800; letter-spacing: 1px; }
+.divider { display: flex; align-items: center; gap: 16px; margin: 16px 0 24px; color: var(--text-muted); font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
 /* MAIN APP STYLES (RE-INTEGRATED) */
