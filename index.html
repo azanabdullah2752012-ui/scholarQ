@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarQ | Academy OS</title>
+    <title>ScholarQ | Master OS</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="vision-theme">
-    <!-- Boot Shield -->
     <div id="init-shield" class="init-shield">
         <div class="shield-content">
             <div class="brand-logo"><i data-lucide="graduation-cap"></i> ScholarQ</div>
@@ -24,7 +23,6 @@
     <div id="view-auth" class="auth-overlay" style="display:none;">
         <div class="auth-card">
             <div class="brand-logo" style="justify-content:center; margin-bottom:12px;"><i data-lucide="graduation-cap"></i> ScholarQ</div>
-            <p class="text-muted text-center mb-32">Ask. Learn. Excel.</p>
             <form id="auth-form" class="stack-sm">
                 <input type="email" id="auth-email" placeholder="Institutional Email" class="input-sq" required>
                 <input type="password" id="auth-password" placeholder="Password" class="input-sq" required>
@@ -33,42 +31,25 @@
                     <input type="number" id="auth-score" placeholder="Academic Score %" class="input-sq" min="0" max="100">
                 </div>
                 <button type="submit" id="auth-btn" class="btn-primary">Sign In</button>
-                <button type="button" onclick="toggleAuthMode()" class="btn-link" id="auth-toggle">New here? Create Account</button>
+                <button type="button" onclick="toggleAuthMode()" class="btn-link" id="auth-toggle">New here? Register</button>
             </form>
         </div>
     </div>
 
-    <!-- Main OS Shell -->
+    <!-- App Shell -->
     <div id="app" class="app-layout" style="display:none; opacity:0;">
-        <!-- SIDEBAR -->
         <aside class="sidebar">
-            <div class="brand-logo" onclick="go('home')"><i data-lucide="graduation-cap"></i> <div>ScholarQ<div class="brand-sub">Ask. Learn. Excel.</div></div></div>
+            <div class="brand-logo" onclick="go('home')"><i data-lucide="graduation-cap"></i> <div>ScholarQ<div class="brand-sub">Teach. Help. Lead.</div></div></div>
             
-            <nav class="side-nav">
-                <div class="nav-item active" onclick="go('home')"><i data-lucide="home"></i> <span>Home</span></div>
-                <div class="nav-item" onclick="go('ask')"><i data-lucide="plus-circle"></i> <span>Ask Doubt</span></div>
-                <div class="nav-item" onclick="go('my-doubts')"><i data-lucide="message-square"></i> <span>My Doubts</span></div>
-                <div class="nav-item" onclick="go('answers')"><i data-lucide="book-open"></i> <span>Answers</span></div>
-                <div class="nav-item" onclick="go('leaderboard')"><i data-lucide="award"></i> <span>Top Scholars</span></div>
-                <div class="nav-item" onclick="go('notifications')"><i data-lucide="bell"></i> <span>Notifications</span></div>
-                <div class="nav-item" onclick="go('profile')"><i data-lucide="user"></i> <span>Profile</span></div>
-            </nav>
+            <nav id="sidebar-nav" class="side-nav"></nav>
 
-            <div class="sidebar-status-card">
-                <h3>Your Status</h3>
-                <div id="status-badge" class="badge-scholar"><i data-lucide="shield-check"></i> Scholar</div>
-                <div class="status-row"><span>Score</span><span id="side-score" class="val">0%</span></div>
-                <div class="status-row"><span>Subjects</span><span id="side-subjects" class="val">5</span></div>
-                <div class="status-row"><span>Reputation</span><span id="side-rep" class="val">A+</span></div>
-                <button class="btn-profile-side" onclick="go('profile')">View Profile</button>
-            </div>
+            <div id="sidebar-status-area"></div>
 
             <div class="side-footer" onclick="logout()">
                 <i data-lucide="moon"></i> <span>Dark Mode</span>
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="main-workspace">
             <header class="top-bar">
                 <div class="search-wrap">
@@ -79,50 +60,9 @@
             </header>
 
             <div class="workspace-content">
-                <!-- HOME VIEW -->
-                <div id="view-home" class="view">
-                    <div class="greeting">
-                        <h1 id="user-greeting">Good evening, Scholar! 👋</h1>
-                        <p class="text-muted">Need help with something? Our scholars are here for you.</p>
-                    </div>
-
-                    <div class="stats-row">
-                        <div class="stat-box box-blue">
-                            <div class="stat-icon"><i data-lucide="help-circle"></i></div>
-                            <div>
-                                <div id="stat-unanswered" class="stat-num">0</div>
-                                <div class="stat-label">Unanswered Doubts</div>
-                            </div>
-                        </div>
-                        <div class="stat-box box-green">
-                            <div class="stat-icon"><i data-lucide="check-circle"></i></div>
-                            <div>
-                                <div id="stat-solved" class="stat-num">0</div>
-                                <div class="stat-label">Doubts Solved by You</div>
-                            </div>
-                        </div>
-                        <div class="stat-box box-yellow">
-                            <div class="stat-icon"><i data-lucide="star"></i></div>
-                            <div>
-                                <div id="stat-reputation" class="stat-num">4.8</div>
-                                <div class="stat-label">Your Reputation (Excellent)</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feed-section">
-                        <div class="section-header">
-                            <h2>Recent Doubts</h2>
-                            <button class="btn-link-sm" onclick="setFilter('All')">View All</button>
-                        </div>
-                        <div id="home-feed" class="feed-stack"></div>
-                        <div class="text-center mt-32">
-                            <button class="btn-link" onclick="go('warroom')">View all doubts →</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ASK VIEW -->
+                <div id="view-home" class="view"></div>
+                
+                <!-- Common Views -->
                 <div id="view-ask" class="view" style="display:none;">
                     <div class="greeting"><h1>Broadcast Doubt</h1></div>
                     <form id="ask-form" class="form-card">
@@ -133,7 +73,6 @@
                     </form>
                 </div>
 
-                <!-- QUESTION VIEW -->
                 <div id="view-question" class="view" style="display:none;">
                     <div id="qd-container" class="form-card mb-32"></div>
                     <div id="qd-answers" class="feed-stack"></div>
@@ -146,56 +85,23 @@
                     </div>
                 </div>
 
-                <!-- PROFILE -->
                 <div id="view-profile" class="view" style="display:none;">
                     <div class="form-card text-center">
                         <div id="p-avatar" class="profile-avatar">A</div>
                         <h2 id="p-name">Scholar Name</h2>
-                        <p id="p-email" class="text-muted mb-24">email@school.com</p>
                         <div class="p-stats-row">
-                            <div class="p-stat">
-                                <div id="p-total" class="p-val">0</div>
-                                <div class="p-label">ANSWERS</div>
-                            </div>
-                            <div class="p-stat">
-                                <div id="p-best" class="p-val">0</div>
-                                <div class="p-label">BEST ANSWERS</div>
-                            </div>
+                            <div class="p-stat"><div id="p-total" class="p-val">0</div><div class="p-label">ANSWERS</div></div>
+                            <div class="p-stat"><div id="p-best" class="p-val">0</div><div class="p-label">BEST ANSWERS</div></div>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
 
-        <!-- RIGHT PANEL -->
-        <aside class="right-panel">
-            <div class="panel-section">
-                <div class="section-header">
-                    <h3>Top Scholars</h3>
-                    <button class="btn-link-sm" onclick="go('leaderboard')">View All</button>
-                </div>
-                <div id="side-scholars" class="scholar-stack"></div>
-            </div>
-
-            <div class="panel-section">
-                <h3>How it works</h3>
-                <div class="timeline">
-                    <div class="time-item"><div class="time-num">1</div><div class="time-content"><h4>Ask your doubt</h4><p>Post your question clearly.</p></div></div>
-                    <div class="time-item"><div class="time-num">2</div><div class="time-content"><h4>Scholars answer</h4><p>Top scoring students help you.</p></div></div>
-                    <div class="time-item"><div class="time-num">3</div><div class="time-content"><h4>Best answer chosen</h4><p>Mark the best answer.</p></div></div>
-                    <div class="time-item"><div class="time-num">4</div><div class="time-content"><h4>Everyone learns</h4><p>Knowledge grows together.</p></div></div>
-                </div>
-            </div>
-
-            <div class="quote-card">
-                <i data-lucide="quote" class="quote-icon"></i>
-                <p>The beautiful thing about learning is that no one can take it away from you.</p>
-                <div class="quote-author">– B.B. King</div>
-            </div>
-        </aside>
+        <aside id="right-panel" class="right-panel"></aside>
     </div>
 
     <div id="toast-container"></div>
-    <script src="app.js?v=300"></script>
+    <script src="app.js?v=301"></script>
 </body>
 </html>
