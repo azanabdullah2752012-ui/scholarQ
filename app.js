@@ -40,29 +40,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function handleSessionUpdate(newS) {
   session = newS;
+  console.log("Session Update:", session ? "Active" : "None");
+
   if (session) {
     const ok = await fetchProfile();
     if (ok) {
       await handleDailyLogin();
       await fetchQuestions();
       setupSubscriptions();
+      // Only navigate to home if we're currently stuck on the auth page
       if (currentView === 'auth') navigateTo('home');
+    } else {
+      // If profile is missing, fetchProfile already redirects to finish-profile
+      console.log("Waiting for profile completion...");
     }
   } else {
-    navigateTo('auth');
+    // Only redirect to auth if we aren't already there
+    if (currentView !== 'auth') navigateTo('auth');
   }
 }
 
 async function fetchProfile() {
   if (!session) return false;
-  const { data, error } = await supabaseClient.from('users').select('*').eq('id', session.user.id).single();
-  if (data && !error) {
-    profile = data;
-    updateGlobalUI();
-    return true;
-  } else if (error?.code === 'PGRST116') {
-    navigateTo('finish-profile');
-    return false;
+  try {
+    const { data, error } = await supabaseClient.from('users').select('*').eq('id', session.user.id).single();
+    if (data && !error) {
+      profile = data;
+      updateGlobalUI();
+      return true;
+    } else if (error?.code === 'PGRST116') {
+      navigateTo('finish-profile');
+      return false;
+    }
+  } catch (e) {
+    console.error("Profile fetch error:", e);
   }
   return false;
 }
@@ -80,8 +91,16 @@ function navigateTo(view, param = null) {
   document.querySelectorAll('.view').forEach(v => { v.style.display = 'none'; v.style.opacity = '0'; });
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
 
-  if (!session && view !== 'auth') view = 'auth';
-  if (view === 'auth' && session) view = 'home';
+  // Enhanced Auth Guard
+  if (!session && view !== 'auth') {
+    console.log("No session found, redirecting to auth...");
+    view = 'auth';
+  }
+  
+  if (session && view === 'auth') {
+    console.log("Session active, skipping auth page...");
+    view = 'home';
+  }
 
   currentView = view;
   const sidebar = document.getElementById('sidebar');
