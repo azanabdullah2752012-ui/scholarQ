@@ -266,11 +266,26 @@ function renderMicroTasks() {
 
 // HANDLERS
 async function handleMicroTask(correct, reward) {
+  console.log("Challenge attempt:", correct, reward);
   if (!correct) return showToast('Incorrect! Try again.', 'error');
+  
   const today = new Date().toISOString().split('T')[0];
-  await supabaseClient.from('users').update({ points: (profile.points || 0) + reward, last_challenge_date: today }).eq('id', session.user.id);
-  showToast('Correct! Points awarded.', 'success');
-  await fetchProfile(); renderMicroTasks();
+  const newPoints = (profile.points || 0) + reward;
+
+  const { error } = await supabaseClient.from('users').update({ 
+    points: newPoints, 
+    last_challenge_date: today 
+  }).eq('id', session.user.id);
+
+  if (!error) {
+    showToast(`Correct! +${reward} points awarded.`, 'success');
+    await fetchProfile(); // Refresh global profile state
+    renderMicroTasks();   // Update the challenge view
+    updateGlobalUI();    // Update the top bar
+  } else {
+    console.error("Challenge Error:", error);
+    showToast("Failed to save points. Try again.", "error");
+  }
 }
 
 async function handleBuyItem(id, price, sId) {
