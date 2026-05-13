@@ -11,11 +11,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* ScholarQ Singularity CSS - Master OS V404 (Completionist) */
+        /* ScholarQ Singularity CSS - Master OS V405 (Pixel Perfect) */
         :root {
-            --bg: #0b0e14; --sidebar: #12151d; --card: #161922; --border: rgba(255, 255, 255, 0.06);
+            --bg: #0b0e14; --sidebar: #12151d; --card: #161922; --border: rgba(255, 255, 255, 0.05);
             --primary: #6366f1; --primary-glow: rgba(99, 102, 241, 0.2);
             --text: #f1f5f9; --text-muted: #94a3b8;
+            --math: #8b5cf6; --sci: #10b981; --phys: #f59e0b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
@@ -26,34 +27,46 @@
         .app-shell { display: grid; grid-template-columns: 260px 1fr 340px; height: 100vh; }
         aside.sidebar { background: var(--sidebar); border-right: 1px solid var(--border); padding: 32px 24px; display: flex; flex-direction: column; }
         .brand-logo { font-size: 1.5rem; display: flex; align-items: center; gap: 12px; margin-bottom: 48px; cursor: pointer; }
-        .nav-item { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-radius: 12px; color: var(--text-muted); cursor: pointer; transition: 0.2s; font-weight: 500; }
+        .brand-sub { font-size: 0.6rem; color: var(--text-muted); font-weight: 400; letter-spacing: 1px; }
+
+        .nav-item { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-radius: 12px; color: var(--text-muted); cursor: pointer; transition: 0.2s; font-weight: 500; font-size: 0.9rem; }
         .nav-item.active { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
 
-        .sidebar-status-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-top: auto; }
+        .sidebar-status-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; margin-top: auto; }
         .status-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; margin-bottom: 20px; }
-        
+        .status-line { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 12px; }
+        .btn-auth-main { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+
         .top-bar { padding: 24px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .search-container { position: relative; width: 60%; }
+        .search-container { position: relative; width: 65%; }
         .search-container input { width: 100%; background: #161922; border: 1px solid var(--border); padding: 14px 16px 14px 48px; border-radius: 12px; color: white; outline: none; }
-        
         .scroll-view { flex: 1; overflow-y: auto; padding: 40px; }
-        .btn-auth-main { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; }
-        .btn-auth-main:hover { transform: translateY(-2px); box-shadow: 0 10px 20px var(--primary-glow); }
 
-        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; display: flex; gap: 20px; align-items: center; }
-        .doubt-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; margin-bottom: 16px; transition: 0.3s; cursor: pointer; }
+        /* STATS (Restored Circles) */
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 24px; display: flex; gap: 20px; align-items: center; }
+        .stat-icon-circle { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .stat-icon-circle.purple { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+        .stat-icon-circle.green { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .stat-icon-circle.yellow { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+        /* DOUBT CARDS (Restored Subject Circles) */
+        .doubt-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 24px; margin-bottom: 16px; transition: 0.3s; cursor: pointer; position: relative; }
         .doubt-card:hover { border-color: var(--primary); transform: translateX(8px); }
+        .subject-circle { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .sc-math { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .sc-sci { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .pts-badge { position: absolute; top: 24px; right: 24px; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
 
-        /* AUTH OVERLAY SPLIT */
-        .auth-overlay { position: fixed; inset: 0; background: #000; z-index: 50000; display: flex; }
-        .auth-split { display: flex; width: 100%; height: 100%; }
-        .auth-left { flex: 1.1; background: radial-gradient(circle at top right, #1e1b4b 0%, #000 100%); padding: 60px 80px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-        .auth-right { flex: 0.9; background: #0c0d12; padding: 40px 80px; display: flex; flex-direction: column; border-left: 1px solid var(--border); }
-        .auth-input { width: 100%; background: #161922; border: 1px solid var(--border); padding: 16px; border-radius: 12px; color: white; margin-bottom: 16px; outline: none; }
+        /* RIGHT PANEL (Restored Timeline) */
+        .right-panel { background: var(--sidebar); border-left: 1px solid var(--border); padding: 40px 24px; overflow-y: auto; }
+        .timeline { position: relative; padding-left: 32px; margin-top: 24px; }
+        .timeline::before { content: ''; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+        .t-dot { position: absolute; left: -32px; width: 28px; height: 28px; border-radius: 50%; background: #1e293b; border: 2px solid var(--bg); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; z-index: 2; }
+        .quote-card { background: rgba(99, 102, 241, 0.05); padding: 24px; border-radius: 20px; position: relative; margin-top: 48px; }
 
         #init-shield { position: fixed; inset: 0; background: #000; z-index: 100000; display: flex; align-items: center; justify-content: center; transition: 0.8s; }
         .hidden { display: none !important; }
-        .best-answer { border: 2px solid #10b981 !important; background: rgba(16, 185, 129, 0.05) !important; }
     </style>
 </head>
 <body>
@@ -61,34 +74,31 @@
     <div id="init-shield">
         <div style="text-align:center;">
             <h1 style="color:var(--primary); font-size:3.5rem; margin-bottom:12px;">ScholarQ</h1>
-            <p style="color:var(--text-muted); letter-spacing:4px; font-size:0.8rem;">V404 MASTER SYSTEM BOOTING</p>
+            <p style="color:var(--text-muted); letter-spacing:4px; font-size:0.8rem;">RESTORING PIXEL PERFECTION</p>
         </div>
     </div>
 
     <!-- AUTH GATEWAY -->
-    <div id="view-auth" class="auth-overlay" style="display:none;">
-        <div class="auth-split">
-            <div class="auth-left">
+    <div id="view-auth" class="auth-overlay" style="display:none; position:fixed; inset:0; background:#000; z-index:50000;">
+        <div style="display:flex; width:100%; height:100%;">
+            <div style="flex:1.1; background:radial-gradient(circle at top right, #1e1b4b 0%, #000 100%); padding:60px 80px; display:flex; flex-direction:column;">
                 <div class="brand-logo"><i data-lucide="graduation-cap"></i> <div>ScholarQ<div class="brand-sub">Learn Together. Rise Together.</div></div></div>
-                <div style="margin-top:auto; margin-bottom:auto;">
-                    <h1 style="font-size:4rem; line-height:1; font-weight:900;">Where Scholars<br><span style="color:var(--primary);">Elevate Minds.</span><br>Together.</h1>
-                </div>
+                <h1 style="font-size:4rem; line-height:1; font-weight:900; margin:auto 0;">Where Scholars<br><span style="color:var(--primary);">Elevate Minds.</span><br>Together.</h1>
             </div>
-            <div class="auth-right">
+            <div style="flex:0.9; background:#0c0d12; padding:40px 80px; display:flex; flex-direction:column; border-left:1px solid var(--border);">
                 <div style="margin:auto; width:100%; max-width:400px;">
                     <h2 id="auth-title" style="font-size:2.5rem; margin-bottom:12px;">Welcome Back</h2>
-                    <p id="auth-subtitle" style="color:var(--text-muted); margin-bottom:32px;">Log in to continue your journey</p>
+                    <p style="color:var(--text-muted); margin-bottom:32px;">Log in to continue your journey</p>
                     <form id="auth-form">
                         <div id="signup-fields" class="hidden">
-                            <input type="text" id="auth-name" placeholder="Full Name" class="auth-input">
-                            <input type="number" id="auth-score" placeholder="Recent Score %" class="auth-input">
+                            <input type="text" id="auth-name" placeholder="Full Name" style="width:100%; background:#161922; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; margin-bottom:16px;">
+                            <input type="number" id="auth-score" placeholder="Recent Score %" style="width:100%; background:#161922; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; margin-bottom:16px;">
                         </div>
-                        <input type="email" id="auth-email" placeholder="Email" class="auth-input" required>
-                        <input type="password" id="auth-password" placeholder="Password" class="auth-input" required>
+                        <input type="email" id="auth-email" placeholder="Email" style="width:100%; background:#161922; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; margin-bottom:16px;" required>
+                        <input type="password" id="auth-password" placeholder="Password" style="width:100%; background:#161922; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; margin-bottom:16px;" required>
                         <button type="submit" id="auth-btn" class="btn-auth-main">Initialize OS</button>
                     </form>
-                    <button onclick="loginWithGoogle()" style="width:100%; background:#161922; border:1px solid var(--border); padding:16px; border-radius:12px; color:white; font-weight:700; margin-top:16px; cursor:pointer;">Continue with Google</button>
-                    <p style="text-align:center; margin-top:32px; font-size:0.9rem;"><span id="auth-switch-text">Don't have an account?</span> <a href="#" onclick="toggleAuthMode()" style="color:var(--primary); font-weight:700; text-decoration:none;" id="auth-switch-link">Sign up</a></p>
+                    <p style="text-align:center; margin-top:32px; font-size:0.9rem;"><a href="#" onclick="toggleAuthMode()" style="color:var(--primary); font-weight:700; text-decoration:none;" id="auth-switch-link">Sign up</a></p>
                 </div>
             </div>
         </div>
@@ -97,7 +107,7 @@
     <!-- MAIN OS -->
     <div id="app" class="app-shell" style="display:none; opacity:0; transition:0.5s;">
         <aside class="sidebar">
-            <div class="brand-logo" onclick="go('home')"><i data-lucide="graduation-cap"></i> <div>ScholarQ</div></div>
+            <div class="brand-logo" onclick="go('home')"><i data-lucide="graduation-cap"></i> <div>ScholarQ<div class="brand-sub">Ask. Learn. Excel.</div></div></div>
             <nav class="side-nav">
                 <div class="nav-item active" id="nav-home" onclick="go('home')"><i data-lucide="home"></i> <span>Home</span></div>
                 <div class="nav-item" id="nav-ask" onclick="go('ask')"><i data-lucide="edit-2"></i> <span>Ask Doubt</span></div>
@@ -108,7 +118,8 @@
             <div class="sidebar-status-card">
                 <h3>YOUR STATUS</h3>
                 <div id="status-pill" class="status-pill">Scholar</div>
-                <div class="status-line"><span>Score</span><b id="side-score">0%</b></div>
+                <div class="status-line"><span>Score</span><b id="side-score">92%</b></div>
+                <div class="status-line"><span>Reputation</span><b>A+</b></div>
                 <button class="btn-auth-main" style="padding:12px; font-size:0.8rem;" onclick="go('profile')">View Profile</button>
             </div>
             <div class="nav-item" style="margin-top:20px;" onclick="logout()"><i data-lucide="log-out"></i> <span>Sign Out</span></div>
@@ -116,54 +127,54 @@
 
         <main class="main-workspace">
             <header class="top-bar">
-                <div class="search-container"><i data-lucide="search" style="position:absolute; left:16px; top:18px; color:var(--text-muted);"></i><input type="text" placeholder="Search doubts..." oninput="handleSearch(this.value)"></div>
+                <div class="search-container"><i data-lucide="search" style="position:absolute; left:16px; top:18px; color:var(--text-muted);"></i><input type="text" placeholder="Search doubts, subjects or topics..." oninput="handleSearch(this.value)"></div>
                 <button class="btn-auth-main" style="width:auto; padding:12px 24px;" onclick="go('ask')"><i data-lucide="edit-3"></i> Ask Doubt</button>
             </header>
             <div class="scroll-view">
-                <!-- HOME -->
+                <!-- VIEW: HOME -->
                 <div id="view-home" class="view">
                     <h1 id="user-greeting" style="font-size:2.2rem; margin-bottom:8px;">Good evening! 👋</h1>
-                    <div class="stats-row" style="margin-top:40px; display:grid; grid-template-columns:repeat(3,1fr); gap:24px;">
-                        <div class="stat-card"><div class="stat-val" id="stat-unanswered">0</div><div class="stat-label" style="margin-left:12px;">Unanswered</div></div>
-                        <div class="stat-card"><div class="stat-val" id="stat-solved">0</div><div class="stat-label" style="margin-left:12px;">Solved</div></div>
-                        <div class="stat-card"><div class="stat-val" id="stat-rep">4.8</div><div class="stat-label" style="margin-left:12px;">Reputation</div></div>
+                    <p style="color:var(--text-muted); margin-bottom:40px;">Need help with something? Our scholars are here for you.</p>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-icon-circle purple"><i data-lucide="help-circle"></i></div>
+                            <div><div class="stat-val" id="stat-unanswered">0</div><div class="stat-label">Unanswered Doubts</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-circle green"><i data-lucide="check"></i></div>
+                            <div><div class="stat-val" id="stat-solved">0</div><div class="stat-label">Doubts Solved by You</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-circle yellow"><i data-lucide="star"></i></div>
+                            <div><div class="stat-val" id="stat-rep">4.8</div><div class="stat-label">Your Reputation (Excellent)</div></div>
+                        </div>
                     </div>
-                    <div id="home-feed" style="margin-top:48px;"></div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:24px;"><h2>Recent Doubts</h2><button class="btn-view-all" onclick="go('home')">View All</button></div>
+                    <div id="home-feed"></div>
                 </div>
-                <!-- ASK -->
+                <!-- VIEW: ASK -->
                 <div id="view-ask" class="view hidden">
                     <h1>Broadcast Doubt</h1>
-                    <form id="ask-form" style="background:var(--card); padding:32px; border-radius:20px; margin-top:32px;">
-                        <input type="text" id="ask-title" placeholder="Problem Title" class="auth-input">
-                        <select id="ask-subject" class="auth-input"><option>Mathematics</option><option>Science</option><option>Physics</option><option>Chemistry</option></select>
-                        <textarea id="ask-body" placeholder="Detail your problem..." class="auth-input" style="min-height:180px;"></textarea>
+                    <form id="ask-form" style="background:var(--card); padding:32px; border-radius:24px; margin-top:32px; border:1px solid var(--border);">
+                        <input type="text" id="ask-title" placeholder="Problem Title" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border); padding:16px; border-radius:12px; color:white; margin-bottom:20px;">
+                        <select id="ask-subject" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border); padding:16px; border-radius:12px; color:white; margin-bottom:20px;"><option>Mathematics</option><option>Science</option><option>Physics</option><option>Chemistry</option></select>
+                        <textarea id="ask-body" placeholder="Detail your problem..." style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border); padding:16px; border-radius:12px; color:white; min-height:180px; margin-bottom:20px;"></textarea>
                         <button type="submit" class="btn-auth-main">Broadcast to Scholars</button>
                     </form>
                 </div>
                 <!-- QUESTION DETAIL -->
                 <div id="view-question" class="view hidden">
-                    <div id="qd-content" style="background:var(--card); padding:40px; border-radius:24px;"></div>
+                    <div id="qd-content" style="background:var(--card); padding:40px; border-radius:24px; border:1px solid var(--border);"></div>
                     <div id="qd-answers" style="margin-top:40px;"></div>
-                    <form id="answer-form" style="margin-top:40px; background:var(--card); padding:32px; border-radius:20px;">
-                        <textarea id="answer-body" placeholder="Write your solution..." class="auth-input" style="min-height:120px;"></textarea>
+                    <form id="answer-form" style="margin-top:40px; background:var(--card); padding:32px; border-radius:20px; border:1px solid var(--border);">
+                        <textarea id="answer-body" placeholder="Write your solution..." style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border); padding:16px; border-radius:12px; color:white; min-height:120px; margin-bottom:16px;"></textarea>
                         <button type="submit" class="btn-auth-main">Submit Solution</button>
                     </form>
                 </div>
                 <!-- LEADERBOARD -->
                 <div id="view-leaderboard" class="view hidden">
                     <h1>Top Scholars</h1>
-                    <div id="leader-list" style="margin-top:32px;"></div>
-                </div>
-                <!-- PROFILE -->
-                <div id="view-profile" class="view hidden">
-                    <div style="background:var(--card); padding:60px; border-radius:32px; text-align:center;">
-                        <div id="p-avatar" style="width:100px; height:100px; background:var(--primary); margin:0 auto 24px; border-radius:30px; display:flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:900;">A</div>
-                        <h2 id="p-name" style="font-size:2rem;">Scholar Name</h2>
-                        <div style="display:flex; justify-content:center; gap:60px; margin-top:40px;">
-                            <div><div id="p-total" style="font-size:2.5rem; font-weight:900;">0</div><div style="color:var(--text-muted);">ANSWERS</div></div>
-                            <div><div id="p-best" style="font-size:2.5rem; font-weight:900;">0</div><div style="color:var(--text-muted);">BEST</div></div>
-                        </div>
-                    </div>
+                    <div id="leader-list" style="margin-top:32px; display:grid; gap:16px;"></div>
                 </div>
                 <!-- MY DOUBTS -->
                 <div id="view-my-doubts" class="view hidden">
@@ -172,9 +183,26 @@
                 </div>
             </div>
         </main>
-        <aside class="right-panel" style="background:var(--sidebar); border-left:1px solid var(--border); padding:40px 24px;">
-            <h3>Quick Status</h3>
-            <div id="side-scholars" style="margin-top:24px;"></div>
+
+        <aside class="right-panel">
+            <div class="panel-section">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><h3>Top Scholars</h3><span style="color:var(--primary); font-size:0.8rem; font-weight:700; cursor:pointer;" onclick="go('leaderboard')">View All</span></div>
+                <div id="side-scholars"></div>
+            </div>
+            <div class="panel-section">
+                <h3>How it works</h3>
+                <div class="timeline">
+                    <div class="t-item"><div class="t-dot">1</div><h4>Ask your doubt</h4><p>Post your question clearly.</p></div>
+                    <div class="t-item"><div class="t-dot">2</div><h4>Scholars answer</h4><p>Top scoring students help you.</p></div>
+                    <div class="t-item"><div class="t-dot">3</div><h4>Best answer chosen</h4><p>Mark the best answer.</p></div>
+                    <div class="t-item"><div class="t-dot">4</div><h4>Everyone learns</h4><p>Knowledge grows together.</p></div>
+                </div>
+            </div>
+            <div class="quote-card">
+                <i data-lucide="quote" style="position:absolute; top:20px; left:20px; opacity:0.1; width:40px; height:40px;"></i>
+                <p style="font-style:italic; font-size:0.9rem; margin-top:20px; line-height:1.6;">The beautiful thing about learning is that no one can take it away from you.</p>
+                <p style="text-align:right; margin-top:12px; font-weight:700; font-size:0.8rem;">- B.B. King</p>
+            </div>
         </aside>
     </div>
 
@@ -193,6 +221,7 @@
             if (s) boot(s); else {
                 document.getElementById('init-shield').style.display = 'none';
                 document.getElementById('view-auth').style.display = 'flex';
+                if (window.lucide) lucide.createIcons();
             }
             document.getElementById('auth-form').addEventListener('submit', handleAuth);
             document.getElementById('ask-form').addEventListener('submit', handleAsk);
@@ -216,7 +245,7 @@
             const { data: q } = await db.from('questions').select('*').order('created_at', { ascending: false });
             const { data: a } = await db.from('answers').select('*');
             questions = (q || []).map(x => ({ ...x, answers: (a || []).filter(ans => ans.question_id === x.id).sort((a, b) => b.is_best ? 1 : -1) }));
-            renderFeeds();
+            renderFeeds(); renderSideScholars();
         }
 
         function go(v, p) {
@@ -225,7 +254,6 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             if (document.getElementById('nav-' + v)) document.getElementById('nav-' + v).classList.add('active');
             if (v === 'question') renderQuestion(p);
-            if (v === 'profile') renderProfile();
             if (v === 'leaderboard') renderLeaderboard();
             if (v === 'my-doubts') renderMyDoubts();
             if (window.lucide) lucide.createIcons();
@@ -248,12 +276,31 @@
         }
 
         function makeCard(q) {
-            return `<div class="doubt-card" onclick="go('question', '${q.id}')"><div style="display:flex; gap:20px;"><div style="width:48px; height:48px; background:rgba(99,102,241,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--primary);"><i data-lucide="help-circle"></i></div><div style="flex:1;"><h3 style="font-size:1.1rem; margin-bottom:8px;">${q.title}</h3><div style="display:flex; gap:12px; font-size:0.75rem; color:var(--text-muted);"><span style="color:var(--primary); font-weight:700;">${q.subject}</span><span>•</span><span>${q.asker_name}</span><span style="margin-left:auto; color:var(--primary);">${q.answers.length} Answers</span></div></div></div></div>`;
+            const sc = q.subject === 'Mathematics' ? 'sc-math' : 'sc-sci';
+            return `
+                <div class="doubt-card" onclick="go('question', '${q.id}')">
+                    <div class="pts-badge">10 pts</div>
+                    <div style="display:flex; gap:20px;">
+                        <div class="subject-circle ${sc}"><i data-lucide="help-circle"></i></div>
+                        <div style="flex:1;">
+                            <div style="display:flex; gap:12px; margin-bottom:8px;">
+                                <span style="background:var(--primary-glow); color:var(--primary); padding:2px 8px; border-radius:4px; font-size:0.6rem; font-weight:800; text-transform:uppercase;">Blitz</span>
+                                <span style="color:var(--text-muted); font-size:0.7rem;">now</span>
+                            </div>
+                            <h3 style="font-size:1.1rem; margin-bottom:8px;">${q.title}</h3>
+                            <div style="display:flex; align-items:center; gap:12px; font-size:0.75rem; color:var(--text-muted);">
+                                <span style="color:var(--primary); font-weight:700;">${q.subject}</span>
+                                <span>•</span><span>Class 12</span><span>•</span><span>${q.asker_name}</span>
+                                <span style="margin-left:auto; color:var(--primary);">${q.answers.length} Answers</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
         }
 
         function renderQuestion(id) {
             currentQId = id; const q = questions.find(x => x.id === id);
-            document.getElementById('qd-content').innerHTML = `<h1>${q.title}</h1><div style="margin-top:20px; color:var(--text-muted); font-size:1.1rem; line-height:1.7;">${q.body}</div>`;
+            document.getElementById('qd-content').innerHTML = `<h1>${q.title}</h1><div style="margin-top:20px; color:var(--text-muted); line-height:1.7;">${q.body}</div>`;
             document.getElementById('qd-answers').innerHTML = q.answers.map(a => `
                 <div class="doubt-card ${a.is_best ? 'best-answer' : ''}" style="cursor:default;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -261,21 +308,22 @@
                         ${(profile.id === q.asker_id && !q.best_answer_id) ? `<button onclick="markBest('${a.id}', '${a.author_id}')" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Mark Best</button>` : ''}
                     </div>
                     <div style="color:var(--text-muted);">${a.body}</div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
-        async function markBest(aid, uid) {
-            await db.from('questions').update({ best_answer_id: aid }).eq('id', currentQId);
-            await db.from('answers').update({ is_best: true }).eq('id', aid);
-            const { data } = await db.from('users').select('best_answers_count').eq('id', uid).single();
-            await db.from('users').update({ best_answers_count: (data.best_answers_count || 0) + 1 }).eq('id', uid);
-            await refreshData(); go('question', currentQId);
+        async function renderSideScholars() {
+            const { data } = await db.from('users').select('*').order('best_answers_count', { ascending: false }).limit(5);
+            document.getElementById('side-scholars').innerHTML = (data || []).map((u, i) => `
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                    <div style="width:24px; height:24px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; ${i<3?'background:var(--primary);color:white;':''}">${i+1}</div>
+                    <div style="flex:1; font-size:0.9rem;"><b>${u.name}</b></div>
+                    <div style="color:#10b981; font-weight:700;">${u.score_percentage || 0}%</div>
+                </div>`).join('');
         }
 
         async function renderLeaderboard() {
             const { data } = await db.from('users').select('*').order('best_answers_count', { ascending: false }).limit(20);
-            document.getElementById('leader-list').innerHTML = data.map((u, i) => `<div class="stat-card" style="margin-bottom:12px;"><div style="width:32px;">${i+1}</div><div style="flex:1;"><b>${u.name}</b></div><div style="color:#10b981;">${u.best_answers_count || 0} Best Answers</div></div>`).join('');
+            document.getElementById('leader-list').innerHTML = data.map((u, i) => `<div class="stat-card"><b>${i+1}</b><div style="flex:1; margin-left:16px;">${u.name}</div><div style="color:#10b981;">${u.best_answers_count || 0} Best Answers</div></div>`).join('');
         }
 
         function renderMyDoubts() {
@@ -315,6 +363,14 @@
             e.preventDefault();
             await db.from('answers').insert([{ id: 'a_'+Date.now(), question_id: currentQId, author_id: session.user.id, author_name: profile.name, body: document.getElementById('answer-body').value }]);
             await db.from('users').update({ total_answers_count: (profile.total_answers_count || 0) + 1 }).eq('id', session.user.id);
+            await refreshData(); go('question', currentQId);
+        }
+
+        async function markBest(aid, uid) {
+            await db.from('questions').update({ best_answer_id: aid }).eq('id', currentQId);
+            await db.from('answers').update({ is_best: true }).eq('id', aid);
+            const { data } = await db.from('users').select('best_answers_count').eq('id', uid).single();
+            await db.from('users').update({ best_answers_count: (data.best_answers_count || 0) + 1 }).eq('id', uid);
             await refreshData(); go('question', currentQId);
         }
 
