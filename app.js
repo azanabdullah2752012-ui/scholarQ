@@ -32,27 +32,33 @@ async function handleSessionUpdate(newS) {
   const auth = document.getElementById('view-auth');
   const shield = document.getElementById('init-shield');
 
-  if (session) {
-    const ok = await fetchProfile();
-    if (ok) {
-      await fetchQuestions(); await fetchBookmarks(); await fetchMarketplace(); await fetchTransactions(); setupSubscriptions();
-      if (currentView === 'auth') currentView = 'home';
-      
-      // SHOW APP, HIDE AUTH
-      if (auth) auth.style.display = 'none';
-      if (app) { app.style.display = 'flex'; setTimeout(() => app.style.opacity = '1', 50); }
-    } else { await handleFinishProfile(); }
-  } else {
-    // SHOW AUTH, HIDE APP
-    if (app) { app.style.display = 'none'; app.style.opacity = '0'; }
-    if (auth) auth.style.display = 'flex';
+  try {
+    if (session) {
+      const ok = await fetchProfile();
+      if (ok) {
+        await fetchQuestions(); await fetchBookmarks(); await fetchMarketplace(); await fetchTransactions(); setupSubscriptions();
+        if (currentView === 'auth') currentView = 'home';
+        
+        // SHOW APP, HIDE AUTH
+        if (auth) auth.style.display = 'none';
+        if (app) { app.style.display = 'flex'; setTimeout(() => app.style.opacity = '1', 50); }
+      } else { 
+        await handleFinishProfile(); 
+      }
+    } else {
+      // SHOW AUTH, HIDE APP
+      if (app) { app.style.display = 'none'; app.style.opacity = '0'; }
+      if (auth) auth.style.display = 'flex';
+    }
+  } catch (err) {
+    console.error("Institutional Calibration Error:", err);
+  } finally {
+    // ALWAYS DISMISS SHIELD
+    setTimeout(() => {
+      if (shield) { shield.style.opacity = '0'; setTimeout(() => shield.style.display = 'none', 500); }
+      bindForms();
+    }, 1000);
   }
-  
-  // DISMISS SHIELD
-  setTimeout(() => {
-    if (shield) { shield.style.opacity = '0'; setTimeout(() => shield.style.display = 'none', 500); }
-    bindForms();
-  }, 500);
 }
 
 function showToast(msg) {
