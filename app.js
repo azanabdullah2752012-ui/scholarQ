@@ -138,10 +138,26 @@ function renderQuestionCard(q) {
 function navigateTo(v, p = null) {
   if (!session && v !== 'auth') v = 'auth';
   currentView = v;
+  
+  const app = document.getElementById('app');
+  const auth = document.getElementById('view-auth');
+
+  // FORCE VISIBILITY
+  if (v === 'auth') {
+    if (app) app.style.display = 'none';
+    if (auth) auth.style.display = 'flex';
+  } else {
+    if (auth) auth.style.display = 'none';
+    if (app) { app.style.display = 'flex'; app.style.opacity = '1'; }
+  }
+
   document.querySelectorAll('.view').forEach(x => x.style.display = 'none');
-  const t = document.getElementById(`view-${v}`); if (t) t.style.display = 'block';
+  const t = document.getElementById(`view-${v}`); 
+  if (t) t.style.display = 'block';
+  
   document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
   document.getElementById(`nav-${v}`)?.classList.add('active');
+  
   if (v === 'home') renderHome();
   if (v === 'warroom') renderWarRoom();
   if (v === 'marketplace') renderMarketplace();
