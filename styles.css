@@ -1,116 +1,140 @@
-/* ScholarQ - Academy OS (V108 Bento Edition) */
+/* ScholarQ - E-Online Aesthetic (V109) */
 :root {
-  --bg: #0a0c10;
-  --surface: #14171d;
-  --surface-light: #1c2128;
-  --p-500: #6366f1;
-  --p-600: #4f46e5;
-  --success: #10b981;
-  --text-primary: #f8fafc;
+  --bg: #0d0f14;
+  --surface: #161920;
+  --surface-light: #1f242d;
+  --p-500: #f59e0b; /* Orange-Gold Accent */
+  --p-600: #ea580c;
+  --text-primary: #ffffff;
   --text-secondary: #94a3b8;
-  --text-muted: #475569;
-  --border: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.05);
+  
+  --grad-orange: linear-gradient(135deg, #f59e0b, #ea580c);
+  --grad-pink: linear-gradient(135deg, #ec4899, #be185d);
+  --grad-cyan: linear-gradient(135deg, #06b6d4, #0891b2);
+  --grad-purple: linear-gradient(135deg, #8b5cf6, #6d28d9);
   
   --s-1: 8px; --s-2: 16px; --s-3: 24px; --s-4: 32px;
-  --radius: 16px;
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --radius: 20px;
+  --shadow-deep: 0 20px 50px rgba(0, 0, 0, 0.6);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
-body { background: var(--bg); color: var(--text-primary); line-height: 1.5; font-size: 15px; }
+body { background: var(--bg); color: var(--text-primary); line-height: 1.4; overflow-x: hidden; }
 
-#app { display: flex; min-height: 100vh; }
-
-/* SIDEBAR REFINEMENT */
-#sidebar {
-  width: 260px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  padding: var(--s-3);
-  position: fixed;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-#main-content {
-  flex: 1;
-  margin-left: 260px;
-  padding: var(--s-4);
-  max-width: 1400px;
-}
-
-/* BENTO GRID LAYOUT */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: var(--s-4);
-  align-items: start;
-}
-
-/* CARDS & BUTTONS */
+/* PREMIUM COMPONENTS */
 .glass-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: var(--s-3);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-deep);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.glass-card:hover { border-color: var(--p-500); transform: translateY(-2px); }
+.glass-card:hover { transform: translateY(-8px); border-color: rgba(255,255,255,0.1); }
 
 .btn-primary {
-  background: var(--p-500);
+  background: var(--grad-orange);
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 700;
+  padding: 14px 28px;
+  border-radius: 30px;
+  font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: var(--s-1);
+  gap: 10px;
+  box-shadow: 0 10px 20px rgba(245, 158, 11, 0.2);
 }
 
-.btn-primary:hover { background: var(--p-600); transform: scale(1.02); }
+.btn-primary:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(245, 158, 11, 0.4); }
 
-/* MASTERY WIDGET (Compact V108) */
-.mastery-widget {
-  background: linear-gradient(145deg, var(--surface-light), var(--surface));
-  padding: var(--s-3);
-  border-radius: var(--radius);
-  border-top: 4px solid var(--p-500);
-}
-
-.mastery-btn {
-  flex: 1;
-  padding: 10px;
-  background: var(--surface-light);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text-primary);
-  font-weight: 700;
+/* VIBRANT CATEGORY CARDS (E-Online Grid) */
+.category-card {
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.mastery-btn:hover { background: var(--p-500); border-color: var(--p-500); }
+.category-card i { font-size: 2rem; margin-bottom: auto; }
+.category-card h3 { font-size: 1.1rem; font-weight: 800; line-height: 1.2; }
+.category-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.4), transparent); }
 
-/* TYPOGRAPHY */
-h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; }
-h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
-.badge { font-size: 10px; font-weight: 800; padding: 4px 8px; background: rgba(99, 102, 241, 0.1); color: var(--p-500); border-radius: 6px; }
+/* LAYOUT */
+#sidebar {
+  width: 100px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: var(--s-3) 0;
+  position: fixed;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+}
 
-/* MOBILE (V108 Bottom Nav) */
-@media (max-width: 1024px) {
-  .dashboard-grid { grid-template-columns: 1fr; }
-  #sidebar { width: 100%; height: 70px; bottom: 0; top: auto; flex-direction: row; padding: 0 20px; border-top: 1px solid var(--border); }
+#main-content {
+  flex: 1;
+  margin-left: 100px;
+  padding: 60px;
+  max-width: 1600px;
+}
+
+/* HERO SECTION */
+.hero-section {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 60px;
+  align-items: center;
+  margin-bottom: 80px;
+}
+
+.hero-title {
+  font-size: 4.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  margin-bottom: 24px;
+}
+
+.hero-title span { color: #a78bfa; }
+
+/* BENTO GRID (V109 REFINED) */
+.hub-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 40px;
+}
+
+/* NAVIGATION */
+.nav-item {
+  width: 50px; height: 50px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover, .nav-item.active { background: var(--surface-light); color: var(--p-500); }
+
+/* MOBILE REFINEMENT */
+@media (max-width: 1100px) {
+  .hero-section { grid-template-columns: 1fr; text-align: center; }
+  .hero-title { font-size: 3rem; }
+  .hub-grid { grid-template-columns: 1fr; }
+  #sidebar { width: 100%; height: 70px; bottom: 0; top: auto; flex-direction: row; border-right: none; border-top: 1px solid var(--border); }
   #main-content { margin-left: 0; padding: 20px; margin-bottom: 80px; }
-  .logo, #user-dashboard { display: none; }
-  .side-nav { flex-direction: row; width: 100%; justify-content: space-around; height: 100%; align-items: center; }
-  .nav-item { padding: 10px; font-size: 0; }
-  .nav-item i { margin: 0; width: 24px; height: 24px; }
 }
-
-/* LOADING OVERLAY */
-#init-overlay { background: var(--bg); position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
-@keyframes spin { to { transform: rotate(360deg); } }
