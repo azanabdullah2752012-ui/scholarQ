@@ -1,4 +1,4 @@
-/* ScholarQ - Academy Life (V115) */
+/* ScholarQ - Universal Utility (V116) */
 :root {
   --bg: #0b0d12;
   --surface: #13161d;
@@ -121,6 +121,43 @@ body {
 
 .nav-item.active { background: rgba(99, 102, 241, 0.1); color: var(--p-500); }
 
+/* NOTICE BOARD */
+.notice-item {
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notice-item:hover { background: rgba(99, 102, 241, 0.1); border-color: var(--p-500); }
+
+/* UTILITY BUTTONS */
+.btn-insightful {
+  background: rgba(167, 139, 250, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center; gap: 8px;
+  transition: all 0.2s;
+}
+
+.btn-insightful:hover { background: rgba(167, 139, 250, 0.2); transform: translateY(-2px); }
+
+.bookmark-icon {
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-muted);
+}
+
+.bookmark-icon.active { color: var(--p-500); transform: scale(1.1); }
+
 /* PULSE ANIMATION */
 @keyframes pulse-green {
   0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
@@ -132,8 +169,6 @@ body {
   width: 8px; height: 8px;
   background: var(--success);
   border-radius: 50%;
-  display: inline-block;
-  margin-right: 8px;
   animation: pulse-green 2s infinite;
 }
 
