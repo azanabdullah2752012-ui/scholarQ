@@ -3,283 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarQ | Academy Operating System</title>
+    <title>ScholarQ | Peer Learning</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="theme-dark">
-    <!-- Auth Screen -->
-    <div id="view-auth" class="auth-container" style="display:none;">
-        <div class="auth-card">
-            <div style="text-align:center; margin-bottom:40px;">
-                <div class="logo-shield">S</div>
-                <h1 style="font-family:'Outfit'; font-weight:900; font-size:2rem; letter-spacing:-1px;">ScholarQ</h1>
-                <p class="label-eyebrow" style="color:var(--p-500); margin-top:8px;">Academy Operating System</p>
-            </div>
-            <form id="auth-form" style="display:flex; flex-direction:column; gap:16px;">
-                <input type="email" id="auth-email" placeholder="Institutional Email" class="auth-input" required>
-                <input type="password" id="auth-password" placeholder="Access Key" class="auth-input" required>
-                <button type="submit" class="btn-primary" style="padding:18px;">Initiate Boot Sequence</button>
+<body class="clean-theme">
+    <!-- Auth & Role Setup -->
+    <div id="view-auth" class="auth-overlay" style="display:none;">
+        <div class="auth-modal">
+            <div class="brand-minimal">Scholar<span>Q</span></div>
+            <p id="auth-sub" class="text-muted">Academic Help. Organized.</p>
+            
+            <form id="auth-form">
+                <input type="email" id="auth-email" placeholder="School Email" class="input-field" required>
+                <input type="password" id="auth-password" placeholder="Password" class="input-field" required>
+                
+                <div id="role-fields" style="display:none; margin-top:16px; border-top:1px solid #eee; padding-top:16px;">
+                    <input type="text" id="auth-name" placeholder="Full Name" class="input-field">
+                    <input type="number" id="auth-score" placeholder="Recent Score %" class="input-field" min="0" max="100">
+                    <p class="text-xs">Scholars (85%+) get answering privileges.</p>
+                </div>
+                
+                <button type="submit" id="auth-btn" class="btn-main">Enter Platform</button>
+                <button type="button" onclick="toggleAuthMode()" class="btn-link" id="auth-toggle">New here? Create Account</button>
             </form>
-            <div style="margin-top:24px; text-align:center;">
-                <p class="text-muted" style="font-size:0.8rem; margin-bottom:16px;">OR CONNECT VIA</p>
-                <button onclick="signInWithGoogle()" class="btn-ghost" style="width:100%; border:1px solid var(--border);">
-                    <img src="https://www.google.com/favicon.ico" style="width:16px; margin-right:8px;"> Google Gateway
-                </button>
-            </div>
         </div>
     </div>
 
-    <!-- Main OS Shell -->
-    <div id="app" style="display:none; opacity:0; transition: opacity 0.5s;">
-        <!-- Left Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-top">
-                <div class="brand">
-                    <div class="brand-icon">S</div>
-                    <span style="font-family:'Outfit'; font-weight:900; font-size:1.2rem;">ScholarQ</span>
-                </div>
-                
-                <nav class="sidebar-nav">
-                    <div id="nav-home" class="nav-link active" onclick="navigateTo('home')"><i data-lucide="layout-grid" style="width:20px;"></i> Master Hub</div>
-                    <div id="nav-warroom" class="nav-link" onclick="navigateTo('warroom')"><i data-lucide="swords" style="width:20px;"></i> War Room</div>
-                    <div id="nav-gauntlet" class="nav-link" onclick="navigateTo('gauntlet')"><i data-lucide="zap" style="width:20px;"></i> Daily Gauntlet</div>
-                    <div id="nav-marketplace" class="nav-link" onclick="navigateTo('marketplace')"><i data-lucide="vault" style="width:20px;"></i> The Vault</div>
-                    <div id="nav-library" class="nav-link" onclick="navigateTo('library')"><i data-lucide="library" style="width:20px;"></i> My Library</div>
-                    <div id="nav-leaderboard" class="nav-link" onclick="navigateTo('leaderboard')"><i data-lucide="award" style="width:20px;"></i> Leaderboard</div>
-                    <div id="nav-profile" class="nav-link" onclick="navigateTo('profile')"><i data-lucide="user" style="width:20px;"></i> My Profile</div>
-                    <div id="nav-instructions" class="nav-link" onclick="navigateTo('instructions')"><i data-lucide="book-open" style="width:20px;"></i> How to Use</div>
-                </nav>
-            </div>
-
-            <div class="sidebar-bottom">
-                <div class="user-pill" onclick="navigateTo('profile')">
-                    <div id="user-avatar" class="avatar-sm">A</div>
-                    <div style="flex:1;">
-                        <div id="hub-user-name" style="font-size:0.8rem; font-weight:700; color:white;">Scholar</div>
-                        <div style="font-size:0.6rem; color:var(--zinc-500);"><span id="side-points">0</span> PTS</div>
+    <!-- App Shell -->
+    <div id="app" style="display:none;">
+        <header class="navbar">
+            <div class="nav-container">
+                <div class="brand-minimal" onclick="go('home')">Scholar<span>Q</span></div>
+                <div class="nav-right">
+                    <button id="btn-ask-nav" class="btn-main-sm" onclick="go('ask')">Ask Doubt</button>
+                    <div class="user-trigger" onclick="go('profile')">
+                        <div id="nav-avatar" class="avatar-circle">A</div>
                     </div>
                 </div>
-                <button onclick="logout()" class="btn-ghost" style="width:100%; justify-content:flex-start; padding:12px; margin-top:12px; color:var(--zinc-500);">
-                    <i data-lucide="log-out" style="width:18px;"></i>
-                </button>
             </div>
-        </aside>
+        </header>
 
-        <!-- Central Display -->
-        <main class="main-content">
-            <!-- Universal Top Bar -->
-            <header class="top-bar">
-                <div class="search-terminal">
-                    <i data-lucide="search" style="width:18px; color:var(--zinc-500);"></i>
-                    <input type="text" placeholder="Search Master OS..." oninput="handleSearch(this.value)">
-                </div>
-                <div class="top-actions">
-                    <button class="action-btn" onclick="showNotifications()"><i data-lucide="bell" style="width:20px;"></i></button>
-                    <button class="btn-primary" onclick="navigateTo('ask')">+ Post Doubt</button>
-                </div>
-            </header>
+        <main class="content-limit">
+            <!-- Role Bar -->
+            <div id="role-banner" class="role-banner">
+                <span id="role-label" class="badge">STUDENT</span>
+                <span id="role-stats" class="text-muted text-sm">Welcome back, Scholar.</span>
+            </div>
 
-            <!-- Dynamic Views -->
+            <!-- Home View -->
             <div id="view-home" class="view">
-                <div class="home-grid">
-                    <div class="feed-section">
-                        <div class="section-header">
-                            <h2 style="font-size:1.4rem; font-weight:800;">Academic Pulse</h2>
-                            <span class="link-subtle" onclick="navigateTo('warroom')">View All →</span>
-                        </div>
-                        <div id="home-feed" class="scroll-feed"></div>
-                    </div>
-                    
-                    <div class="side-widgets">
-                        <div class="widget">
-                            <div class="widget-header">
-                                <h3 class="label-eyebrow">Institutional Status</h3>
-                            </div>
-                            <div class="metric-grid">
-                                <div class="metric-card">
-                                    <span class="label-eyebrow" style="font-size:0.5rem;">STREAK</span>
-                                    <div id="stat-streak" class="metric-val">0 Days</div>
-                                </div>
-                                <div class="metric-card">
-                                    <span class="label-eyebrow" style="font-size:0.5rem;">TRUST</span>
-                                    <div id="stat-trust" class="metric-val">75%</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="widget">
-                            <div class="widget-header">
-                                <h3 class="label-eyebrow">Daily Gauntlet</h3>
-                                <span id="gauntlet-count" style="font-size:0.7rem; color:white; font-weight:700;">0 / 3</span>
-                            </div>
-                            <div class="progress-track" onclick="navigateTo('gauntlet')">
-                                <div id="gauntlet-fill" class="progress-fill" style="width:0%;"></div>
-                            </div>
-                        </div>
-
-                        <div class="widget">
-                            <div class="widget-header">
-                                <h3 class="label-eyebrow">Top Contributors</h3>
-                                <span class="link-subtle" onclick="navigateTo('leaderboard')" style="cursor:pointer;">Full Ranking →</span>
-                            </div>
-                            <div id="top-contributors-list" class="contributor-stack"></div>
-                        </div>
+                <div class="view-header">
+                    <h2>Recent Doubts</h2>
+                    <div class="subject-filters" id="subject-filters">
+                        <button class="chip active" onclick="setFilter('All')">All</button>
+                        <button class="chip" onclick="setFilter('Math')">Math</button>
+                        <button class="chip" onclick="setFilter('Science')">Science</button>
+                        <button class="chip" onclick="setFilter('English')">English</button>
                     </div>
                 </div>
+                <div id="home-feed" class="stack"></div>
             </div>
 
-            <div id="view-warroom" class="view" style="display:none;">
-                <div style="margin-bottom:40px;">
-                    <h1 style="font-size:2.4rem; font-weight:800; margin-bottom:12px;">War Room</h1>
-                    <div class="filter-bar">
-                        <button class="filter-chip active" onclick="setFilter('All')">All Pulse</button>
-                        <button class="filter-chip" onclick="setFilter('Math')">Mathematics</button>
-                        <button class="filter-chip" onclick="setFilter('Science')">Science</button>
-                        <button class="filter-chip" onclick="setFilter('Computer Science')">CS</button>
-                    </div>
-                </div>
-                <div id="warroom-feed" class="warroom-grid"></div>
-            </div>
-
-            <div id="view-marketplace" class="view" style="display:none;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:48px;">
-                <h1 style="font-size:2.4rem; font-weight:800;">The Vault</h1>
-                <button class="btn-primary" onclick="openSellModal()">+ Sell Resource</button>
-              </div>
-              <div id="market-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:24px;"></div>
-            </div>
-
-            <div id="view-transactions" class="view" style="display:none;">
-                <h1 style="font-size:2.4rem; font-weight:800; margin-bottom:48px;">Institutional Ledger</h1>
-                <div id="transaction-list" style="display:flex;flex-direction:column;gap:12px;"></div>
-            </div>
-
-            <div id="view-instructions" class="view" style="display:none;"></div>
-            <div id="view-library" class="view" style="display:none;"></div>
-            
-            <div id="view-question" class="view" style="display:none;">
-                <button onclick="navigateTo('warroom')" class="link-subtle" style="margin-bottom:32px; display:flex; align-items:center; gap:8px; background:none; border:none; cursor:pointer; color:var(--zinc-400); font-family:inherit;">
-                    <i data-lucide="arrow-left" style="width:18px;"></i> Return to War Room
-                </button>
-                <div id="qd-content" class="widget-content" style="margin-bottom:40px;"></div>
-                <div style="margin-bottom:24px; display:flex; gap:12px;">
-                  <button class="btn-ghost" onclick="saveBookmarkFromDetail()" style="font-size:0.8rem; border:1px solid var(--border);">🔖 Save to Library</button>
-                </div>
-                <div class="section-header" style="margin-bottom:24px;">
-                    <h3 class="label-eyebrow">Solutions</h3>
-                </div>
-                <div id="qd-answers" style="margin-bottom:40px;"></div>
-                <div class="widget-content" style="padding:32px;">
-                    <h3 style="margin-bottom:20px; font-weight:800;">Broadcast Your Solution</h3>
-                    <form id="answer-form">
-                        <textarea id="answer-body" placeholder="Describe the solution in detail..." class="auth-input" style="min-height:150px; margin-bottom:16px;" required></textarea>
-                        <button type="submit" class="btn-primary" style="width:100%;">Broadcast Solution</button>
-                    </form>
-                </div>
-            </div>
-
+            <!-- Ask View -->
             <div id="view-ask" class="view" style="display:none;">
-                <h1 style="font-size:2.4rem; font-weight:800; margin-bottom:48px;">Post Doubt</h1>
-                <div class="widget-content" style="padding:40px; max-width:600px;">
-                    <form id="ask-form" style="display:flex; flex-direction:column; gap:20px;">
-                        <div>
-                            <label class="label-eyebrow">TITLE</label>
-                            <input type="text" id="ask-title" placeholder="Brief summary of your doubt" class="auth-input" required>
-                        </div>
-                        <div>
-                            <label class="label-eyebrow">SUBJECT</label>
-                            <select id="ask-subject" class="auth-input" required>
-                                <option>Math</option>
-                                <option>Science</option>
-                                <option>Physics</option>
-                                <option>Calculus</option>
-                                <option>Computer Science</option>
-                                <option>Biology</option>
-                                <option>History</option>
-                                <option>General</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="label-eyebrow">CONTEXT</label>
-                            <textarea id="ask-body" placeholder="Provide all necessary details..." class="auth-input" style="min-height:150px;" required></textarea>
-                        </div>
-                        <button type="submit" class="btn-primary" style="padding:18px;">Broadcast to War Room</button>
+                <div class="view-header">
+                    <h2>Ask your Doubt</h2>
+                </div>
+                <form id="ask-form" class="card-form">
+                    <input type="text" id="ask-title" placeholder="Title (e.g. Help with Quadratic Equations)" class="input-field" required>
+                    <select id="ask-subject" class="input-field">
+                        <option>Math</option><option>Science</option><option>Physics</option><option>History</option><option>CS</option>
+                    </select>
+                    <textarea id="ask-body" placeholder="Describe your doubt in detail..." class="input-field" style="min-height:150px;" required></textarea>
+                    <button type="submit" class="btn-main">Post Doubt</button>
+                </form>
+            </div>
+
+            <!-- Detail View -->
+            <div id="view-question" class="view" style="display:none;">
+                <div id="qd-container"></div>
+                <div class="answers-section">
+                    <h3 id="ans-count">Answers</h3>
+                    <div id="qd-answers" class="stack"></div>
+                </div>
+                <div id="answer-box" class="answer-box">
+                    <h3>Submit Solution</h3>
+                    <form id="answer-form">
+                        <textarea id="answer-body" placeholder="Write your solution clearly..." class="input-field" required></textarea>
+                        <button type="submit" class="btn-main">Submit Answer</button>
                     </form>
                 </div>
             </div>
 
-            <div id="view-gauntlet" class="view" style="display:none;"></div>
-            <div id="view-leaderboard" class="view" style="display:none;"></div>
+            <!-- Profile View -->
             <div id="view-profile" class="view" style="display:none;">
-                <div id="profile-container"></div>
+                <div id="profile-card" class="profile-card"></div>
+                <button onclick="logout()" class="btn-outline" style="margin-top:24px;">Logout</button>
             </div>
         </main>
-
-        <!-- Right System Panel -->
-        <aside class="system-panel">
-            <div class="widget">
-                <div class="widget-header">
-                    <h3 class="label-eyebrow">Quick Actions</h3>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                    <button class="btn-ghost" style="justify-content:flex-start;" onclick="toggleBoost()"><i data-lucide="zap" style="width:16px;"></i> Initiate Hyper-Boost</button>
-                    <button class="btn-ghost" style="justify-content:flex-start;" onclick="showInvite()"><i data-lucide="share-2" style="width:16px;"></i> Generate Invite link</button>
-                </div>
-            </div>
-
-            <div class="widget">
-                <div class="widget-header">
-                    <h3 class="label-eyebrow">Master Status</h3>
-                    <div id="stat-status" class="pts-badge" style="background:var(--p-500); color:white;">SCHOLAR</div>
-                </div>
-                <div class="metric-card" style="margin-top:16px;">
-                    <span class="label-eyebrow" style="font-size:0.5rem;">EARNING MULTIPLIER</span>
-                    <div id="stat-multiplier" class="metric-val" style="font-size:1.5rem;">1.00x</div>
-                </div>
-            </div>
-            
-            <div class="widget">
-                <div class="widget-header">
-                    <h3 class="label-eyebrow">Notice Board</h3>
-                    <span class="link-subtle">Archive →</span>
-                </div>
-                <div class="widget-content" style="padding:16px; border:none; background:rgba(255,255,255,0.02);">
-                    <div style="display:flex; gap:12px; margin-bottom:12px;">
-                        <div style="width:2px; background:var(--p-500);"></div>
-                        <div>
-                            <div style="font-size:0.6rem; color:var(--zinc-500); font-weight:800;">MAY 15</div>
-                            <div style="font-size:0.8rem; font-weight:700; color:white;">Gauntlet Hard Mode unlocked.</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </aside>
     </div>
 
-    <!-- Sell Modal -->
-    <div id="modal-sell" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;align-items:center;justify-content:center;">
-      <div style="background:#121214;border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:48px;width:480px;max-width:90vw;">
-        <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:32px;">Sell a Resource</h2>
-        <form id="sell-form" style="display:flex;flex-direction:column;gap:16px;">
-          <input id="sell-title" placeholder="Resource Title" class="auth-input" required>
-          <input id="sell-price" type="number" placeholder="Price in PTS" class="auth-input" required min="1">
-          <input id="sell-link" placeholder="Google Drive / Link URL" class="auth-input" required>
-          <div style="display:flex;gap:12px;margin-top:8px;">
-            <button type="submit" class="btn-primary" style="flex:1;">Publish to Vault</button>
-            <button type="button" class="btn-ghost" onclick="closeSellModal()">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <div id="toast-container"></div>
 
-    <div id="toast-container" style="position:fixed; bottom:24px; right:24px; z-index:1000; display:flex; flex-direction:column; gap:12px;"></div>
-
-    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-    <script src="app.js?v=132"></script>
+    <script src="app.js?v=200"></script>
 </body>
 </html>
