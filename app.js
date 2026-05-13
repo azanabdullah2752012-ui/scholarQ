@@ -275,3 +275,29 @@ function renderQuestionDetail(id) {
   if (ans) ans.innerHTML = (q.answers || []).map(a => `<div class="widget-content" style="margin-bottom:12px;padding:24px;"><div style="color:#6366f1;font-weight:800;font-size:0.75rem;margin-bottom:12px;">${a.author_name}</div><p style="color:white;">${a.body}</p></div>`).join('');
   lucide.createIcons();
 }
+function renderMarketplace() {
+  const cont = document.getElementById('market-list');
+  if (!cont) return;
+  db.from('marketplace').select('*').order('created_at', { ascending: false }).then(({ data }) => {
+    if (!data || data.length === 0) { cont.innerHTML = '<div class="empty-state"><p style="color:#71717a;">No resources yet. Sell the first one!</p><button class="btn-primary" style="margin-top:16px;" onclick="openSellModal()">+ Sell Resource</button></div>'; return; }
+    cont.innerHTML = data.map(i => `<div class="widget-content" style="padding:24px;"><div style="font-size:0.6rem;color:#6366f1;font-weight:800;letter-spacing:1px;margin-bottom:8px;">ASSET</div><h3 style="color:white;margin-bottom:4px;">${i.title}</h3><p style="font-size:0.75rem;color:#71717a;margin-bottom:16px;">By ${i.seller_name}</p><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:800;color:white;">${i.price} PTS</span><button class="btn-primary" style="padding:8px 16px;font-size:0.75rem;" onclick="buyItem('${i.id}',${i.price},'${i.link}','${i.seller_id}')">Unlock</button></div></div>`).join('');
+  });
+}
+
+async function buyItem(id, price, link, sellerId) {
+  if ((profile.points || 0) < price) { toast('Not enough points!'); return; }
+  await db.from('users').update({ points: (profile.points || 0) - price }).eq('id', session.user.id);
+  const { data: s } = await db.from('users').select('points').eq('id', sellerId).single();
+  if (s) await db.from('users').update({ points: (s.points || 0) + price }).eq('id', sellerId);
+  profile.points -= price; updateMetrics();
+  toast('Unlocked! Opening resource...'); window.open(link, '_blank');
+}
+
+function renderTransactions() {
+  const cont = document.getElementById('transaction-list');
+  if (!cont) return;
+  db.from('transactions').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }).then(({ data }) => {
+    if (!data || data.length === 0) { cont.innerHTML = '<div class="empty-state"><p style="color:#71717a;">No transactions yet.</p></div>'; return; }
+    cont.innerHTML = data.map(t => `<div class="doubt-card" style="cursor:default;"><div class="subject-icon-box">${t.type === 'EARN' ? '📈' : '📤'}</div><div><div style="font-weight:700;color:white;">${t.description}</div><div style="font-size:0.7rem;color:#71717a;">${new Date(t.created_at).toLocaleDateString()}</div></div><div style="font-weight:800;color:${t.type === 'EARN' ? '#22c55e' : '#ef4444'};">${t.type === 'EARN' ? '+' : ''}${t.amount} PTS</div></div>`).join('');
+  });
+}
