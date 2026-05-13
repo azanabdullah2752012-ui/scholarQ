@@ -1,6 +1,7 @@
 {
   "name": "scholarq",
   "version": "1.0.0",
+  "homepage": "https://azanabdullah2752012-ui.github.io/scholarQ/",
   "description": "ScholarQ Academic Platform",
   "main": "app.js",
   "scripts": {
