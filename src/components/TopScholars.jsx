@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Star, TrendingUp, GraduationCap, ChevronRight } from 'lucide-react';
 
+import { supabase } from '../lib/supabase';
+
 const ScholarRow = ({ scholar, index }) => (
   <motion.div 
     className="scholar-row-item"
@@ -21,25 +23,25 @@ const ScholarRow = ({ scholar, index }) => (
     
     <div className="scholar-profile">
       <div className="scholar-avatar-large">
-        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${scholar.name}`} alt="avatar" />
+        <img src={scholar.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${scholar.full_name}`} alt="avatar" />
       </div>
       <div className="scholar-names">
-        <h4>{scholar.name}</h4>
-        <span className="scholar-tag">{scholar.level} Scholar</span>
+        <h4>{scholar.full_name}</h4>
+        <span className="scholar-tag">{scholar.role}</span>
       </div>
     </div>
 
     <div className="scholar-stats-grid">
       <div className="stat-box">
-        <span className="stat-value">{scholar.solved}</span>
+        <span className="stat-value">{scholar.solved_count || 0}</span>
         <span className="stat-label">Solved</span>
       </div>
       <div className="stat-box">
-        <span className="stat-value">{scholar.accuracy}%</span>
-        <span className="stat-label">Accuracy</span>
+        <span className="stat-value">{scholar.academic_percentage}%</span>
+        <span className="stat-label">Score</span>
       </div>
       <div className="stat-box">
-        <span className="stat-value primary">{scholar.reputation}</span>
+        <span className="stat-value primary">{scholar.academic_percentage >= 90 ? 'A+' : scholar.academic_percentage >= 80 ? 'A' : 'B'}</span>
         <span className="stat-label">Reputation</span>
       </div>
     </div>
@@ -56,19 +58,20 @@ export default function TopScholars() {
   const [scholars, setScholars] = useState([]);
 
   useEffect(() => {
-    setTimeout(() => {
-      setScholars([
-        { id: 1, name: "Arjun Dev", level: "Senior", solved: 142, accuracy: 96, reputation: "A+" },
-        { id: 2, name: "Meera Verma", level: "Senior", solved: 128, accuracy: 95, reputation: "A+" },
-        { id: 3, name: "Rohan Iyer", level: "Junior", solved: 95, accuracy: 94, reputation: "A" },
-        { id: 4, name: "Ananya Gupta", level: "Junior", solved: 88, accuracy: 93, reputation: "A" },
-        { id: 5, name: "Vihaan Patel", level: "Sophomore", solved: 76, accuracy: 93, reputation: "B+" },
-        { id: 6, name: "Sara Khan", level: "Senior", solved: 64, accuracy: 92, reputation: "B+" },
-        { id: 7, name: "Ishaan Sharma", level: "Junior", solved: 58, accuracy: 90, reputation: "B" }
-      ]);
-      setLoading(false);
-    }, 800);
+    fetchTopScholars();
   }, []);
+
+  const fetchTopScholars = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('academic_percentage', { ascending: false })
+      .limit(20);
+
+    if (data) setScholars(data);
+    setLoading(false);
+  };
 
   if (loading) {
     return (

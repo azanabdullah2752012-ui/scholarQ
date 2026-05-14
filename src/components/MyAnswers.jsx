@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, Clock, ChevronRight, CheckCircle, Search } from 'lucide-react';
 
+import { useAuth } from '../lib/context';
+import { supabase } from '../lib/supabase';
+
 const AnswerListItem = ({ item, onClick }) => (
   <motion.div 
     className="answer-list-item"
-    onClick={() => onClick(item)}
+    onClick={() => onClick(item.doubts)}
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     whileHover={{ x: 4, borderColor: '#10B981' }}
@@ -16,19 +19,19 @@ const AnswerListItem = ({ item, onClick }) => (
       </div>
       <div className="answer-item-content">
         <div className="answer-item-header">
-          <span className="answer-item-subject" style={{ color: item.color }}>{item.subject}</span>
-          {item.isBest && <span className="best-badge">Best Answer</span>}
+          <span className="answer-item-subject" style={{ color: item.doubts?.color || '#4F46E5' }}>{item.doubts?.subject}</span>
+          {item.is_best && <span className="best-badge">Best Answer</span>}
         </div>
-        <h4 className="answer-item-title">{item.title}</h4>
-        <p className="answer-snippet">" {item.myAnswerSnippet} "</p>
+        <h4 className="answer-item-title">{item.doubts?.title}</h4>
+        <p className="answer-snippet">" {item.content.substring(0, 100)}{item.content.length > 100 ? '...' : ''} "</p>
         <div className="answer-item-meta">
           <div className="meta-group">
             <Clock size={14} />
-            <span>Answered {item.timestamp}</span>
+            <span>Answered {new Date(item.created_at).toLocaleDateString()}</span>
           </div>
           <div className="meta-group">
             <MessageCircle size={14} />
-            <span>{item.totalAnswers} total answers</span>
+            <span>{item.doubts?.answer_count || 0} total answers</span>
           </div>
         </div>
       </div>
@@ -38,37 +41,27 @@ const AnswerListItem = ({ item, onClick }) => (
 );
 
 export default function MyAnswers({ onDoubtClick }) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState([]);
 
   useEffect(() => {
-    // Simulate loading from API
-    setTimeout(() => {
-      setAnswers([
-        {
-          id: 101,
-          title: "How to solve trigonometric equations of the form sin(x) = k?",
-          subject: "Mathematics",
-          timestamp: "1 day ago",
-          totalAnswers: 5,
-          myAnswerSnippet: "You should start by identifying the principal value of x...",
-          isBest: true,
-          color: "#4F46E5"
-        },
-        {
-          id: 102,
-          title: "Explain the photoelectric effect with a neat diagram.",
-          subject: "Physics",
-          timestamp: "3 days ago",
-          totalAnswers: 3,
-          myAnswerSnippet: "The photoelectric effect is the emission of electrons when...",
-          isBest: false,
-          color: "#F59E0B"
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    if (user) {
+      fetchMyAnswers();
+    }
+  }, [user]);
+
+  const fetchMyAnswers = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('answers')
+      .select('*, doubts(*)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (data) setAnswers(data);
+    setLoading(false);
+  };
 
   if (loading) {
     return (

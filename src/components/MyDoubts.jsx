@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, Clock, ChevronRight, HelpCircle, Inbox } from 'lucide-react';
 
+import { useAuth } from '../lib/context';
+import { supabase } from '../lib/supabase';
+
 const DoubtListItem = ({ doubt, onClick }) => (
   <motion.div 
     className="doubt-list-item"
@@ -11,23 +14,23 @@ const DoubtListItem = ({ doubt, onClick }) => (
     whileHover={{ x: 4, borderColor: 'var(--primary)' }}
   >
     <div className="doubt-item-main">
-      <div className="doubt-item-icon" style={{ backgroundColor: `${doubt.color}22`, color: doubt.color }}>
+      <div className="doubt-item-icon" style={{ backgroundColor: `${doubt.color || '#4F46E5'}22`, color: doubt.color || '#4F46E5' }}>
         <HelpCircle size={20} />
       </div>
       <div className="doubt-item-content">
         <div className="doubt-item-header">
-          <span className="doubt-item-subject" style={{ color: doubt.color }}>{doubt.subject}</span>
-          <span className="doubt-item-status" data-status={doubt.status}>{doubt.status}</span>
+          <span className="doubt-item-subject" style={{ color: doubt.color || '#4F46E5' }}>{doubt.subject}</span>
+          <span className="doubt-item-status" data-status={doubt.status || 'Open'}>{doubt.status || 'Open'}</span>
         </div>
         <h4 className="doubt-item-title">{doubt.title}</h4>
         <div className="doubt-item-meta">
           <div className="meta-group">
             <Clock size={14} />
-            <span>{doubt.timestamp}</span>
+            <span>{new Date(doubt.created_at).toLocaleDateString()}</span>
           </div>
           <div className="meta-group">
             <MessageCircle size={14} />
-            <span>{doubt.answers} Answers</span>
+            <span>{doubt.answer_count || 0} Answers</span>
           </div>
         </div>
       </div>
@@ -37,35 +40,27 @@ const DoubtListItem = ({ doubt, onClick }) => (
 );
 
 export default function MyDoubts({ onDoubtClick }) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [doubts, setDoubts] = useState([]);
 
   useEffect(() => {
-    // Simulate loading from API
-    setTimeout(() => {
-      setDoubts([
-        {
-          id: 1,
-          title: "Derivative of e^x using first principles",
-          subject: "Mathematics",
-          timestamp: "2 hours ago",
-          status: "Open",
-          answers: 2,
-          color: "#4F46E5"
-        },
-        {
-          id: 2,
-          title: "Newton's second law of motion derivation",
-          subject: "Physics",
-          timestamp: "5 hours ago",
-          status: "Resolved",
-          answers: 4,
-          color: "#F59E0B"
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    if (user) {
+      fetchMyDoubts();
+    }
+  }, [user]);
+
+  const fetchMyDoubts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('doubts')
+      .select('*, profiles(full_name)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (data) setDoubts(data);
+    setLoading(false);
+  };
 
   if (loading) {
     return (
