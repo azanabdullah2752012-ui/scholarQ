@@ -33,7 +33,7 @@ const ScholarRow = ({ scholar, index, onProfileClick }) => (
 
     <div className="scholar-stats-grid">
       <div className="stat-box">
-        <span className="stat-value">{scholar.solved_count || 0}</span>
+        <span className="stat-value">{scholar.answers_given || 0}</span>
         <span className="stat-label">Solved</span>
       </div>
       <div className="stat-box">

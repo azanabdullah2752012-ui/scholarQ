@@ -4,7 +4,7 @@ import { User, Mail, Award, Calendar, Settings, Edit3, ShieldCheck, MapPin, Save
 import { useAuth } from '../lib/context';
 import { supabase } from '../lib/supabase';
 
-export default function Profile({ userId }) {
+export default function Profile({ userId, onRequestHelp }) {
   const { user, profile: myProfile, setProfile: setMyProfile } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -95,7 +95,7 @@ export default function Profile({ userId }) {
             {!isOwnProfile ? (
               <button 
                 className="btn-save-profile" 
-                onClick={() => alert(`Direct request sent to ${profile.full_name}!`)}
+                onClick={() => onRequestHelp(profile)}
               >
                 Request Help
               </button>

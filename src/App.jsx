@@ -11,6 +11,7 @@ import TopScholars from './components/TopScholars';
 import Notifications from './components/Notifications';
 import Profile from './components/Profile';
 import DoubtThread from './components/DoubtThread';
+import StudentRequests from './components/StudentRequests';
 import LoginPage from './components/LoginPage';
 import OnboardingModal from './components/OnboardingModal';
 import { useAuth, useTheme } from './lib/context';
@@ -23,6 +24,7 @@ function App() {
   const [selectedDoubt, setSelectedDoubt] = useState(null);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [targetScholar, setTargetScholar] = useState(null);
   
   const isScholar = profile?.role === 'Scholar' || profile?.role === 'Elite Scholar';
 
@@ -103,7 +105,13 @@ function App() {
           )}
 
           {activeTab === 'Profile' && !selectedDoubt && (
-            <Profile userId={selectedProfileId} />
+            <Profile 
+              userId={selectedProfileId} 
+              onRequestHelp={(scholar) => {
+                setTargetScholar(scholar);
+                setIsModalOpen(true);
+              }}
+            />
           )}
 
           {selectedDoubt && (
@@ -114,10 +122,7 @@ function App() {
           )}
 
           {activeTab === 'Student Requests' && !selectedDoubt && (
-            <div className="view-placeholder">
-              <h2>Student Requests</h2>
-              <p>Direct requests for your help will appear here.</p>
-            </div>
+            <StudentRequests onDoubtClick={handleDoubtClick} />
           )}
 
           {activeTab !== 'Home' && activeTab !== 'Scholar Hub' && activeTab !== 'My Doubts' && activeTab !== 'Unanswered Feed' && activeTab !== 'Answers' && activeTab !== 'My Answers' && activeTab !== 'Top Scholars' && activeTab !== 'Scholars' && activeTab !== 'Leaderboard' && activeTab !== 'Notifications' && activeTab !== 'Profile' && activeTab !== 'Student Requests' && !selectedDoubt && (
@@ -133,7 +138,11 @@ function App() {
       
       <AskDoubtModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => {
+          setIsModalOpen(false);
+          setTargetScholar(null);
+        }} 
+        targetScholar={targetScholar}
       />
 
       <OnboardingModal 

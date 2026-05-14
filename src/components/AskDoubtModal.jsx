@@ -5,7 +5,7 @@ import { X, Send, HelpCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../lib/context';
 import { supabase } from '../lib/supabase';
 
-export default function AskDoubtModal({ isOpen, onClose }) {
+export default function AskDoubtModal({ isOpen, onClose, targetScholar }) {
   const { profile } = useAuth();
   const [subject, setSubject] = useState('');
   const [title, setTitle] = useState('');
@@ -33,6 +33,7 @@ export default function AskDoubtModal({ isOpen, onClose }) {
         content: description,
         subject,
         user_id: profile.id,
+        target_scholar_id: targetScholar?.id || null,
         status: 'open'
       });
 
@@ -67,7 +68,7 @@ export default function AskDoubtModal({ isOpen, onClose }) {
                 <div className="icon-box">
                   <HelpCircle size={20} color="var(--primary)" />
                 </div>
-                <h3>Ask a Doubt</h3>
+                <h3>{targetScholar ? `Request Help from ${targetScholar.full_name}` : 'Ask a Doubt'}</h3>
               </div>
               <button className="close-btn" onClick={onClose}>
                 <X size={20} />
@@ -83,8 +84,8 @@ export default function AskDoubtModal({ isOpen, onClose }) {
                 <div className="success-icon">
                   <CheckCircle2 size={48} color="#10B981" />
                 </div>
-                <h4>Doubt Posted Successfully!</h4>
-                <p>Scholars will be notified and will answer soon.</p>
+                <h4>{targetScholar ? 'Request Sent!' : 'Doubt Posted Successfully!'}</h4>
+                <p>{targetScholar ? `${targetScholar.full_name} has been notified and will review your request.` : 'Scholars will be notified and will answer soon.'}</p>
               </motion.div>
             ) : (
               <form className="modal-form" onSubmit={handleSubmit}>

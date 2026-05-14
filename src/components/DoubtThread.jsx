@@ -42,9 +42,19 @@ export default function DoubtThread({ doubt, onBack }) {
     if (error) {
       console.error(error);
       alert(error.message);
-    }
+    } else {
+      // Update doubt answer count
+      await supabase
+        .from('doubts')
+        .update({ answer_count: (doubt.answer_count || 0) + 1 })
+        .eq('id', doubt.id);
 
-    if (!error) {
+      // Update profile answers given
+      await supabase
+        .from('profiles')
+        .update({ answers_given: (profile.answers_given || 0) + 1 })
+        .eq('id', profile.id);
+
       setNewAnswer('');
       fetchAnswers();
     }
