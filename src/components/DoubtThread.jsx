@@ -30,35 +30,53 @@ export default function DoubtThread({ doubt, onBack }) {
     if (!newAnswer.trim()) return;
     setLoading(true);
     
-    const { error } = await supabase
-      .from('answers')
-      .insert({
-        doubt_id: doubt.id,
-        user_id: profile.id,
-        content: newAnswer,
-        is_best: false
-      });
+    try {
+      // 1. Post the answer
+      const { error: ansError } = await supabase
+        .from('answers')
+        .insert({
+          doubt_id: doubt.id,
+          user_id: profile.id,
+          content: newAnswer,
+          is_best: false
+        });
 
-    if (error) {
-      console.error(error);
-      alert(error.message);
-    } else {
-      // Update doubt answer count
+      if (ansError) throw ansError;
+
+      // 2. Fetch current doubt to get fresh answer_count
+      const { data: latestDoubt } = await supabase
+        .from('doubts')
+        .select('answer_count')
+        .eq('id', doubt.id)
+        .single();
+
+      // 3. Update doubt answer count
       await supabase
         .from('doubts')
-        .update({ answer_count: (doubt.answer_count || 0) + 1 })
+        .update({ answer_count: (latestDoubt?.answer_count || 0) + 1 })
         .eq('id', doubt.id);
 
-      // Update profile answers given
+      // 4. Fetch current profile to get fresh answers_given
+      const { data: latestProfile } = await supabase
+        .from('profiles')
+        .select('answers_given')
+        .eq('id', profile.id)
+        .single();
+
+      // 5. Update profile answers given
       await supabase
         .from('profiles')
-        .update({ answers_given: (profile.answers_given || 0) + 1 })
+        .update({ answers_given: (latestProfile?.answers_given || 0) + 1 })
         .eq('id', profile.id);
 
       setNewAnswer('');
       fetchAnswers();
+    } catch (error) {
+      console.error(error);
+      alert("Error updating data: " + error.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
