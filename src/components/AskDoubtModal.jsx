@@ -32,11 +32,8 @@ export default function AskDoubtModal({ isOpen, onClose }) {
         title,
         content: description,
         subject,
-        asker_id: profile.id,
-        asker_name: profile.full_name,
-        points: 10,
-        status: 'open',
-        grade: profile.grade || '12'
+        user_id: profile.id,
+        status: 'open'
       });
 
     if (dbError) {

@@ -4,11 +4,29 @@ import { User, Mail, Award, Calendar, Settings, Edit3, ShieldCheck, MapPin, Save
 import { useAuth } from '../lib/context';
 import { supabase } from '../lib/supabase';
 
-export default function Profile() {
-  const { profile, setProfile } = useAuth();
+export default function Profile({ userId }) {
+  const { user, profile: myProfile, setProfile: setMyProfile } = useAuth();
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
+
+  const isOwnProfile = !userId || (user && userId === user.id);
+
+  useEffect(() => {
+    if (isOwnProfile) {
+      setProfile(myProfile);
+    } else {
+      fetchOtherProfile(userId);
+    }
+  }, [userId, myProfile, isOwnProfile]);
+
+  const fetchOtherProfile = async (id) => {
+    setLoading(true);
+    const { data } = await supabase.from('profiles').select('*').eq('id', id).single();
+    if (data) setProfile(data);
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (profile) setEditData(profile);
@@ -29,6 +47,7 @@ export default function Profile() {
       .single();
 
     if (data) {
+      setMyProfile(data);
       setProfile(data);
       setIsEditing(false);
     }
@@ -50,7 +69,7 @@ export default function Profile() {
             <div className="profile-avatar-large">
               <img src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.full_name}`} alt="avatar" />
             </div>
-            <button className="edit-avatar-btn"><Edit3 size={14} /></button>
+            {isOwnProfile && <button className="edit-avatar-btn"><Edit3 size={14} /></button>}
           </div>
           <div className="profile-text-header">
             <div className="name-row">
@@ -73,7 +92,7 @@ export default function Profile() {
             </div>
           </div>
           <div className="profile-actions">
-            {isEditing ? (
+            {!isOwnProfile ? null : isEditing ? (
               <>
                 <button className="btn-save-profile" onClick={handleSave} disabled={loading}>
                   {loading ? <div className="spinner-mini"></div> : <><Save size={16} /> Save</>}

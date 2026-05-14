@@ -4,7 +4,7 @@ import { Trophy, Star, TrendingUp, GraduationCap, ChevronRight } from 'lucide-re
 
 import { supabase } from '../lib/supabase';
 
-const ScholarRow = ({ scholar, index }) => (
+const ScholarRow = ({ scholar, index, onProfileClick }) => (
   <motion.div 
     className="scholar-row-item"
     initial={{ opacity: 0, y: 10 }}
@@ -46,14 +46,14 @@ const ScholarRow = ({ scholar, index }) => (
       </div>
     </div>
 
-    <button className="btn-view-scholar">
+    <button className="btn-view-scholar" onClick={() => { console.log('Viewing scholar ID:', scholar.id); onProfileClick(scholar.id); }}>
       <span>View Profile</span>
       <ChevronRight size={16} />
     </button>
   </motion.div>
 );
 
-export default function TopScholars() {
+export default function TopScholars({ onProfileClick }) {
   const [loading, setLoading] = useState(true);
   const [scholars, setScholars] = useState([]);
 
@@ -100,7 +100,7 @@ export default function TopScholars() {
 
       <div className="scholars-list-container">
         {scholars.map((scholar, index) => (
-          <ScholarRow key={scholar.id} scholar={scholar} index={index} />
+          <ScholarRow key={scholar.id} scholar={scholar} index={index} onProfileClick={onProfileClick} />
         ))}
       </div>
 

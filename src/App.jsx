@@ -21,6 +21,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('Home');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDoubt, setSelectedDoubt] = useState(null);
+  const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleTabChange = (tab) => {
@@ -29,11 +30,18 @@ function App() {
     } else {
       setActiveTab(tab);
       setSelectedDoubt(null);
+      setSelectedProfileId(null);
     }
   };
 
   const handleDoubtClick = (doubt) => {
     setSelectedDoubt(doubt);
+  };
+
+  const handleProfileClick = (id) => {
+    setSelectedProfileId(id);
+    setActiveTab('Profile');
+    setSelectedDoubt(null);
   };
 
   if (authLoading) {
@@ -73,7 +81,7 @@ function App() {
           )}
 
           {activeTab === 'Top Scholars' && !selectedDoubt && (
-            <TopScholars />
+            <TopScholars onProfileClick={handleProfileClick} />
           )}
 
           {activeTab === 'Notifications' && !selectedDoubt && (
@@ -81,7 +89,7 @@ function App() {
           )}
 
           {activeTab === 'Profile' && !selectedDoubt && (
-            <Profile />
+            <Profile userId={selectedProfileId} />
           )}
 
           {selectedDoubt && (
