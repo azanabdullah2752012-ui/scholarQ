@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Award, Calendar, Settings, Edit3, ShieldCheck, MapPin, Save, X } from 'lucide-react';
+import { User, Mail, Award, Calendar, Settings, Edit3, ShieldCheck, MapPin, Save, X, BookOpen } from 'lucide-react';
 import { useAuth } from '../lib/context';
 import { supabase } from '../lib/supabase';
 
