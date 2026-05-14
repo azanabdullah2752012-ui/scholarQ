@@ -88,3 +88,4 @@ body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidde
 
 @media (max-width: 1100px) { .auth-left { display: none; } }
 /* cache bust */
+/* cache bust */
