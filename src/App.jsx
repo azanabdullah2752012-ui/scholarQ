@@ -75,7 +75,13 @@ function App() {
         <div className="layout-body">
           {(activeTab === 'Home' || activeTab === 'Scholar Hub' || activeTab === 'Unanswered Feed') && !selectedDoubt && (
             <>
-              <MainContent searchQuery={searchQuery} isScholar={isScholar} activeTab={activeTab} />
+              <MainContent 
+                searchQuery={searchQuery} 
+                isScholar={isScholar} 
+                activeTab={activeTab} 
+                onDoubtClick={handleDoubtClick}
+                onViewAll={() => handleTabChange('Unanswered Feed')}
+              />
               {activeTab !== 'Unanswered Feed' && <RightPanel setActiveTab={handleTabChange} />}
             </>
           )}

@@ -63,7 +63,7 @@ const DoubtCard = ({ doubt, onClick }) => {
   );
 };
 
-export default function MainContent({ searchQuery, isScholar, activeTab }) {
+export default function MainContent({ searchQuery, isScholar, activeTab, onDoubtClick, onViewAll }) {
   const { profile } = useAuth();
   const [doubts, setDoubts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -161,7 +161,7 @@ export default function MainContent({ searchQuery, isScholar, activeTab }) {
                   : 'Recent Doubts'
             }
           </h2>
-          {!searchQuery && <button className="btn-link">View All</button>}
+          {!searchQuery && activeTab !== 'Unanswered Feed' && <button className="btn-link" onClick={onViewAll}>View All</button>}
         </div>
 
         {loading ? (
@@ -180,14 +180,14 @@ export default function MainContent({ searchQuery, isScholar, activeTab }) {
         ) : (
           <div className="doubts-list">
             {doubts.map(doubt => (
-              <DoubtCard key={doubt.id} doubt={doubt} onClick={() => {}} />
+              <DoubtCard key={doubt.id} doubt={doubt} onClick={() => onDoubtClick?.(doubt)} />
             ))}
           </div>
         )}
 
-        {!searchQuery && doubts.length > 0 && (
+        {!searchQuery && doubts.length > 0 && activeTab !== 'Unanswered Feed' && (
           <div className="section-footer">
-            <button className="btn-view-all">View all doubts →</button>
+            <button className="btn-view-all" onClick={onViewAll}>View all doubts →</button>
           </div>
         )}
       </div>

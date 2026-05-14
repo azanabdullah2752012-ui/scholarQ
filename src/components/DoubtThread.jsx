@@ -18,7 +18,7 @@ export default function DoubtThread({ doubt, onBack }) {
   const fetchAnswers = async () => {
     const { data, error } = await supabase
       .from('answers')
-      .select('*')
+      .select('*, profiles(full_name, role)')
       .eq('doubt_id', doubt.id)
       .order('is_best', { ascending: false })
       .order('created_at', { ascending: true });
@@ -34,12 +34,15 @@ export default function DoubtThread({ doubt, onBack }) {
       .from('answers')
       .insert({
         doubt_id: doubt.id,
-        author_id: profile.id,
-        author_name: profile.full_name,
-        author_role: profile.role,
+        user_id: profile.id,
         content: newAnswer,
         is_best: false
       });
+
+    if (error) {
+      console.error(error);
+      alert(error.message);
+    }
 
     if (!error) {
       setNewAnswer('');
@@ -96,11 +99,11 @@ export default function DoubtThread({ doubt, onBack }) {
                 <div className="answer-header">
                   <div className="answer-author">
                     <div className="avatar-small">
-                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${ans.author_name}`} alt="avatar" />
+                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${ans.profiles?.full_name || 'User'}`} alt="avatar" />
                     </div>
                     <div>
-                      <span className="author-name">{ans.author_name}</span>
-                      <span className="author-role">{ans.author_role}</span>
+                      <span className="author-name">{ans.profiles?.full_name || 'Anonymous'}</span>
+                      <span className="author-role">{ans.profiles?.role || 'Scholar'}</span>
                     </div>
                   </div>
                   <span className="answer-time">{new Date(ans.created_at).toLocaleDateString()}</span>

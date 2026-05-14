@@ -92,7 +92,14 @@ export default function Profile({ userId }) {
             </div>
           </div>
           <div className="profile-actions">
-            {!isOwnProfile ? null : isEditing ? (
+            {!isOwnProfile ? (
+              <button 
+                className="btn-save-profile" 
+                onClick={() => alert(`Direct request sent to ${profile.full_name}!`)}
+              >
+                Request Help
+              </button>
+            ) : isEditing ? (
               <>
                 <button className="btn-save-profile" onClick={handleSave} disabled={loading}>
                   {loading ? <div className="spinner-mini"></div> : <><Save size={16} /> Save</>}
