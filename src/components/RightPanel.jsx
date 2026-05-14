@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { HelpCircle, Users, CheckCircle, MessageSquare, Quote } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '../lib/supabase';
 
 const ScholarItem = ({ rank, name, subjects, score, avatar }) => (
   <div className="scholar-item">
@@ -35,6 +36,21 @@ const StepItem = ({ number, icon: Icon, title, description }) => (
 );
 
 export default function RightPanel({ setActiveTab }) {
+  const [topScholars, setTopScholars] = useState([]);
+
+  useEffect(() => {
+    fetchTopScholars();
+  }, []);
+
+  const fetchTopScholars = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('academic_percentage', { ascending: false })
+      .limit(5);
+    if (data) setTopScholars(data);
+  };
+
   return (
     <motion.aside 
       className="right-panel"
@@ -53,11 +69,18 @@ export default function RightPanel({ setActiveTab }) {
           </button>
         </div>
         <div className="scholars-list">
-          <ScholarItem rank={1} name="Arjun Dev" subjects="Physics, Math" score={96} avatar="Arjun" />
-          <ScholarItem rank={2} name="Meera Verma" subjects="Chemistry, Biology" score={95} avatar="Meera" />
-          <ScholarItem rank={3} name="Rohan Iyer" subjects="Math, CS" score={94} avatar="Rohan" />
-          <ScholarItem rank={4} name="Ananya Gupta" subjects="Chemistry, Bio" score={93} avatar="Ananya" />
-          <ScholarItem rank={5} name="Vihaan Patel" subjects="Physics, Math" score={93} avatar="Vihaan" />
+          {topScholars.length > 0 ? topScholars.map((scholar, i) => (
+            <ScholarItem 
+              key={scholar.id} 
+              rank={i + 1} 
+              name={scholar.full_name} 
+              subjects={(scholar.subjects || []).slice(0, 2).join(', ') || 'General'} 
+              score={scholar.academic_percentage} 
+              avatar={scholar.full_name} 
+            />
+          )) : (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading scholars...</div>
+          )}
         </div>
       </div>
 

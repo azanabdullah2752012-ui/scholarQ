@@ -49,48 +49,33 @@ export default function Notifications() {
   const [notifs, setNotifs] = useState([]);
 
   useEffect(() => {
-    setTimeout(() => {
-      setNotifs([
-        {
-          id: 1,
-          type: 'answer',
-          user: 'Arjun Dev',
-          text: 'answered your doubt',
-          target: 'How to solve trigonometric equations...',
-          time: '10 min ago',
-          unread: true
-        },
-        {
-          id: 2,
-          type: 'best',
-          user: 'System',
-          text: 'Your answer was selected as the',
-          target: 'Best Answer in Chemistry',
-          time: '2 hours ago',
-          unread: true
-        },
-        {
-          id: 3,
-          type: 'upvote',
-          user: 'Meera Verma',
-          text: 'upvoted your solution to',
-          target: 'Newton Second Law',
-          time: '5 hours ago',
-          unread: false
-        },
-        {
-          id: 4,
-          type: 'rank',
-          user: 'System',
-          text: 'Congratulations! You reached the',
-          target: 'Scholar Level 5',
-          time: '1 day ago',
-          unread: false
-        }
-      ]);
+    const saved = localStorage.getItem('scholarq_notifications');
+    if (saved) {
+      setNotifs(JSON.parse(saved));
       setLoading(false);
-    }, 800);
+    } else {
+      const initialNotifs = [
+        { id: 1, type: 'answer', user: 'Arjun Dev', text: 'answered your doubt', target: 'How to solve trigonometric equations...', time: '10 min ago', unread: true },
+        { id: 2, type: 'best', user: 'System', text: 'Your answer was selected as the', target: 'Best Answer in Chemistry', time: '2 hours ago', unread: true },
+        { id: 3, type: 'upvote', user: 'Meera Verma', text: 'upvoted your solution to', target: 'Newton Second Law', time: '5 hours ago', unread: false },
+        { id: 4, type: 'rank', user: 'System', text: 'Congratulations! You reached the', target: 'Scholar Level 5', time: '1 day ago', unread: false }
+      ];
+      setNotifs(initialNotifs);
+      localStorage.setItem('scholarq_notifications', JSON.stringify(initialNotifs));
+      setLoading(false);
+    }
   }, []);
+
+  const handleMarkAllRead = () => {
+    const updated = notifs.map(n => ({ ...n, unread: false }));
+    setNotifs(updated);
+    localStorage.setItem('scholarq_notifications', JSON.stringify(updated));
+  };
+
+  const handleClearAll = () => {
+    setNotifs([]);
+    localStorage.setItem('scholarq_notifications', JSON.stringify([]));
+  };
 
   if (loading) {
     return (
@@ -109,13 +94,18 @@ export default function Notifications() {
     >
       <div className="page-header notifs-header">
         <h1>Notifications</h1>
-        <button className="mark-all-btn">Mark all as read</button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="mark-all-btn" onClick={handleMarkAllRead}>Mark all as read</button>
+          <button className="mark-all-btn" onClick={handleClearAll} style={{ color: '#EF4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}>Clear all</button>
+        </div>
       </div>
 
       <div className="notifs-list">
-        {notifs.map(item => (
+        {notifs.length > 0 ? notifs.map(item => (
           <NotificationItem key={item.id} item={item} />
-        ))}
+        )) : (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>You have no notifications.</div>
+        )}
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `

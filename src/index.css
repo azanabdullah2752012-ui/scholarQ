@@ -1,4 +1,4 @@
-:root {
+:root, [data-theme='dark'] {
   --bg-deep: #0B0E14;
   --bg-surface: #151921;
   --bg-card: #1C2128;
@@ -12,6 +12,15 @@
   --accent-green: #3FB950;
   --sidebar-width: 260px;
   --panel-width: 340px;
+}
+
+[data-theme='light'] {
+  --bg-deep: #F3F4F6;
+  --bg-surface: #FFFFFF;
+  --bg-card: #F9FAFB;
+  --border: #E5E7EB;
+  --text-main: #111827;
+  --text-muted: #6B7280;
 }
 
 * {
