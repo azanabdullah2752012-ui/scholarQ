@@ -63,7 +63,7 @@ const DoubtCard = ({ doubt, onClick }) => {
   );
 };
 
-export default function MainContent({ searchQuery }) {
+export default function MainContent({ searchQuery, isScholar, activeTab }) {
   const { profile } = useAuth();
   const [doubts, setDoubts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -79,8 +79,15 @@ export default function MainContent({ searchQuery }) {
     try {
       let query = supabase
         .from('doubts')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
+
+      if (activeTab === 'Unanswered Feed') {
+        query = query.eq('status', 'open').order('created_at', { ascending: true });
+      } else if (activeTab === 'Scholar Hub') {
+        query = query.eq('status', 'open').order('created_at', { ascending: false });
+      } else {
+        query = query.order('created_at', { ascending: false });
+      }
 
       if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`);
@@ -109,38 +116,51 @@ export default function MainContent({ searchQuery }) {
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="greeting-section">
-        <h1>Good evening, {profile?.full_name?.split(' ')[0] || 'Scholar'}! 👋</h1>
-        <p>Need help with something? Our scholars are here for you.</p>
-      </div>
+      {activeTab !== 'Unanswered Feed' && (
+        <div className="greeting-section">
+          <h1>Good evening, {profile?.full_name?.split(' ')[0] || 'Scholar'}! 👋</h1>
+          <p>{isScholar ? 'Ready to share your expertise? Here are students waiting for help.' : 'Need help with something? Our scholars are here for you.'}</p>
+        </div>
+      )}
 
-      <div className="stats-row">
-        <StatCard 
-          icon={HelpCircle} 
-          value={stats.unanswered} 
-          label="Unanswered" 
-          subtitle="Doubts"
-          colorClass="blue"
-        />
-        <StatCard 
-          icon={CheckCircle} 
-          value={stats.solved} 
-          label="Doubts Solved" 
-          subtitle="by Community"
-          colorClass="green"
-        />
-        <StatCard 
-          icon={Star} 
-          value={profile?.reputation || '4.8'} 
-          label="Your Reputation" 
-          subtitle="(Excellent)"
-          colorClass="yellow"
-        />
-      </div>
+      {isScholar && activeTab !== 'Unanswered Feed' && (
+        <div className="stats-row">
+          <StatCard 
+            icon={HelpCircle} 
+            value={stats.unanswered} 
+            label="Unanswered" 
+            subtitle="Doubts"
+            colorClass="blue"
+          />
+          <StatCard 
+            icon={CheckCircle} 
+            value={stats.solved} 
+            label="Doubts Solved" 
+            subtitle="by Community"
+            colorClass="green"
+          />
+          <StatCard 
+            icon={Star} 
+            value={profile?.reputation || '4.8'} 
+            label="Your Reputation" 
+            subtitle="(Excellent)"
+            colorClass="yellow"
+          />
+        </div>
+      )}
 
       <div className="recent-doubts-section">
         <div className="section-header">
-          <h2>{searchQuery ? `Search Results for "${searchQuery}"` : 'Recent Doubts'}</h2>
+          <h2>
+            {searchQuery 
+              ? `Search Results for "${searchQuery}"` 
+              : activeTab === 'Unanswered Feed' 
+                ? 'Unanswered Feed' 
+                : activeTab === 'Scholar Hub'
+                  ? 'High Priority Doubts'
+                  : 'Recent Doubts'
+            }
+          </h2>
           {!searchQuery && <button className="btn-link">View All</button>}
         </div>
 

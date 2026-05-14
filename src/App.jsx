@@ -23,6 +23,14 @@ function App() {
   const [selectedDoubt, setSelectedDoubt] = useState(null);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const isScholar = profile?.role === 'Scholar' || profile?.role === 'Elite Scholar';
+
+  useEffect(() => {
+    if (profile) {
+      setActiveTab(isScholar ? 'Scholar Hub' : 'Home');
+    }
+  }, [profile?.id, isScholar]);
 
   const handleTabChange = (tab) => {
     if (tab === 'Ask Doubt') {
@@ -65,10 +73,10 @@ function App() {
       <div className="content-wrapper">
         <Topbar setActiveTab={handleTabChange} onSearch={setSearchQuery} />
         <div className="layout-body">
-          {activeTab === 'Home' && !selectedDoubt && (
+          {(activeTab === 'Home' || activeTab === 'Scholar Hub' || activeTab === 'Unanswered Feed') && !selectedDoubt && (
             <>
-              <MainContent searchQuery={searchQuery} />
-              <RightPanel setActiveTab={handleTabChange} />
+              <MainContent searchQuery={searchQuery} isScholar={isScholar} activeTab={activeTab} />
+              {activeTab !== 'Unanswered Feed' && <RightPanel setActiveTab={handleTabChange} />}
             </>
           )}
           
@@ -76,11 +84,11 @@ function App() {
             <MyDoubts onDoubtClick={handleDoubtClick} />
           )}
 
-          {activeTab === 'Answers' && !selectedDoubt && (
+          {(activeTab === 'Answers' || activeTab === 'My Answers') && !selectedDoubt && (
             <MyAnswers onDoubtClick={handleDoubtClick} />
           )}
 
-          {activeTab === 'Top Scholars' && !selectedDoubt && (
+          {(activeTab === 'Top Scholars' || activeTab === 'Scholars' || activeTab === 'Leaderboard') && !selectedDoubt && (
             <TopScholars onProfileClick={handleProfileClick} />
           )}
 
@@ -99,7 +107,14 @@ function App() {
             />
           )}
 
-          {activeTab !== 'Home' && activeTab !== 'My Doubts' && activeTab !== 'Answers' && activeTab !== 'Top Scholars' && activeTab !== 'Notifications' && activeTab !== 'Profile' && !selectedDoubt && (
+          {activeTab === 'Student Requests' && !selectedDoubt && (
+            <div className="view-placeholder">
+              <h2>Student Requests</h2>
+              <p>Direct requests for your help will appear here.</p>
+            </div>
+          )}
+
+          {activeTab !== 'Home' && activeTab !== 'Scholar Hub' && activeTab !== 'My Doubts' && activeTab !== 'Unanswered Feed' && activeTab !== 'Answers' && activeTab !== 'My Answers' && activeTab !== 'Top Scholars' && activeTab !== 'Scholars' && activeTab !== 'Leaderboard' && activeTab !== 'Notifications' && activeTab !== 'Profile' && activeTab !== 'Student Requests' && !selectedDoubt && (
             <div className="view-placeholder">
               <h2>{activeTab}</h2>
               <p>This section is being initialized. Please check back soon.</p>

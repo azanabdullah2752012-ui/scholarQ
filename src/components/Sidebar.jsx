@@ -16,6 +16,29 @@ import { useTheme, useAuth } from '../lib/context';
 export default function Sidebar({ activeTab, setActiveTab }) {
   const { theme, toggleTheme } = useTheme();
   const { profile } = useAuth();
+  const isScholar = profile?.role === 'Scholar' || profile?.role === 'Elite Scholar';
+
+  const studentNav = [
+    { icon: Home, label: 'Home' },
+    { icon: PlusCircle, label: 'Ask Doubt' },
+    { icon: MessageSquare, label: 'My Doubts' },
+    { icon: CheckCircle, label: 'Answers' },
+    { icon: Trophy, label: 'Scholars' },
+    { icon: Bell, label: 'Notifications' },
+    { icon: User, label: 'Profile' }
+  ];
+
+  const scholarNav = [
+    { icon: Home, label: 'Scholar Hub' },
+    { icon: MessageSquare, label: 'Unanswered Feed' },
+    { icon: CheckCircle, label: 'My Answers' },
+    { icon: PlusCircle, label: 'Student Requests' },
+    { icon: Trophy, label: 'Leaderboard' },
+    { icon: Bell, label: 'Notifications' },
+    { icon: User, label: 'Profile' }
+  ];
+
+  const currentNav = isScholar ? scholarNav : studentNav;
   const isDark = theme === 'dark';
 
   return (
@@ -31,15 +54,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
       </div>
 
       <nav className="sidebar-nav">
-        {[
-          { icon: Home, label: 'Home' },
-          { icon: PlusCircle, label: 'Ask Doubt' },
-          { icon: MessageSquare, label: 'My Doubts' },
-          { icon: CheckCircle, label: 'Answers' },
-          { icon: Trophy, label: 'Top Scholars' },
-          { icon: Bell, label: 'Notifications' },
-          { icon: User, label: 'Profile' }
-        ].map((item) => (
+        {currentNav.map((item) => (
           <div 
             key={item.label}
             className={`nav-item ${activeTab === item.label ? 'active' : ''}`}

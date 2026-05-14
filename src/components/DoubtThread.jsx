@@ -6,6 +6,7 @@ import { useAuth } from '../lib/context';
 
 export default function DoubtThread({ doubt, onBack }) {
   const { profile } = useAuth();
+  const isScholar = profile?.role === 'Scholar' || profile?.role === 'Elite Scholar';
   const [answers, setAnswers] = useState([]);
   const [newAnswer, setNewAnswer] = useState('');
   const [loading, setLoading] = useState(false);
@@ -68,16 +69,18 @@ export default function DoubtThread({ doubt, onBack }) {
           <p className="question-body">{doubt.content}</p>
         </div>
 
-        <div className="post-answer-box">
-          <textarea 
-            placeholder="Write your answer..." 
-            value={newAnswer}
-            onChange={(e) => setNewAnswer(e.target.value)}
-          />
-          <button onClick={handlePostAnswer} disabled={loading || !newAnswer.trim()}>
-            {loading ? <div className="spinner-mini"></div> : <><Send size={16} /> Post Answer</>}
-          </button>
-        </div>
+        {isScholar && (
+          <div className="post-answer-box">
+            <textarea 
+              placeholder="Write your answer..." 
+              value={newAnswer}
+              onChange={(e) => setNewAnswer(e.target.value)}
+            />
+            <button onClick={handlePostAnswer} disabled={loading || !newAnswer.trim()}>
+              {loading ? <div className="spinner-mini"></div> : <><Send size={16} /> Post Answer</>}
+            </button>
+          </div>
+        )}
 
         <div className="answers-section">
           <h3>{answers.length} Answers</h3>

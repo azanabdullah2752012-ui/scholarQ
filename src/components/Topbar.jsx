@@ -1,7 +1,10 @@
 import React from 'react';
 import { Search, Plus } from 'lucide-react';
+import { useAuth } from '../lib/context';
 
 export default function Topbar({ setActiveTab, onSearch }) {
+  const { profile } = useAuth();
+  const isScholar = profile?.role === 'Scholar' || profile?.role === 'Elite Scholar';
   const [loading, setLoading] = React.useState(false);
   const [query, setQuery] = React.useState('');
 
@@ -32,20 +35,22 @@ export default function Topbar({ setActiveTab, onSearch }) {
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-      <button 
-        className="btn-ask" 
-        onClick={handleAsk}
-        disabled={loading}
-      >
-        {loading ? (
-          <div className="spinner"></div>
-        ) : (
-          <>
-            <Plus size={18} />
-            <span>Ask Doubt</span>
-          </>
-        )}
-      </button>
+      {!isScholar && (
+        <button 
+          className="btn-ask" 
+          onClick={handleAsk}
+          disabled={loading}
+        >
+          {loading ? (
+            <div className="spinner"></div>
+          ) : (
+            <>
+              <Plus size={18} />
+              <span>Ask Doubt</span>
+            </>
+          )}
+        </button>
+      )}
 
       <style dangerouslySetInnerHTML={{ __html: `
         .spinner {
