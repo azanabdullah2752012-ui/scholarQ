@@ -1,15 +1,26 @@
 {
   "name": "scholarq",
+  "private": true,
   "version": "1.0.0",
-  "homepage": "https://azanabdullah2752012-ui.github.io/scholarQ/",
-  "description": "ScholarQ Academic Platform",
-  "main": "app.js",
+  "type": "module",
   "scripts": {
-    "deploy": "gh-pages -d ."
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "author": "",
-  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.4",
+    "clsx": "^2.0.0",
+    "framer-motion": "^10.16.4",
+    "lucide-react": "^0.284.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "^1.14.0"
+  },
   "devDependencies": {
-    "gh-pages": "^6.1.1"
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.3",
+    "vite": "^4.4.5"
   }
 }
