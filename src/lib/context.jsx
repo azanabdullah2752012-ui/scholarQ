@@ -44,6 +44,9 @@ export const AuthProvider = ({ children }) => {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
+      options: {
+        redirectTo: 'https://azanabdullah2752012-ui.github.io/scholarQ/'
+      }
     });
     return { error };
   };
