@@ -50,7 +50,10 @@ export default function OnboardingModal({ isOpen, user }) {
       .select()
       .single();
 
-    if (!error) {
+    if (error) {
+      console.error("Supabase Error:", error);
+      alert("Failed to save profile: " + error.message);
+    } else {
       setProfile(data);
       // App.jsx will handle closing the modal by checking profile state
     }
