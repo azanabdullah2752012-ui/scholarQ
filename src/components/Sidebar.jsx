@@ -76,6 +76,10 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         </div>
         <div className="status-grid">
           <div className="status-row">
+            <span className="label">Points</span>
+            <span className="value" style={{ color: '#F59E0B' }}>{profile?.points || 0}</span>
+          </div>
+          <div className="status-row">
             <span className="label">Score</span>
             <span className="value">{profile?.academic_percentage || '92'}%</span>
           </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MessageSquare, User, Clock, CheckCircle, Send } from 'lucide-react';
+import { ArrowLeft, MessageSquare, User, Clock, CheckCircle, Send, Star } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/context';
 
@@ -50,6 +50,48 @@ export default function DoubtThread({ doubt, onBack }) {
     setLoading(false);
   };
 
+  const handleMarkBest = async (answer) => {
+    if (doubt.status === 'resolved') return;
+    
+    setLoading(true);
+    try {
+      // 1. Mark answer as best
+      await supabase
+        .from('answers')
+        .update({ is_best: true })
+        .eq('id', answer.id);
+
+      // 2. Mark doubt as resolved
+      await supabase
+        .from('doubts')
+        .update({ status: 'resolved' })
+        .eq('id', doubt.id);
+
+      // 3. Fetch scholar's profile to reward points
+      const { data: scholarProfile } = await supabase
+        .from('profiles')
+        .select('points, best_answers')
+        .eq('id', answer.user_id)
+        .single();
+
+      // 4. Reward scholar: 15 (base) + 25 (bonus) = 40 total
+      await supabase
+        .from('profiles')
+        .update({ 
+          points: (scholarProfile?.points || 0) + 40,
+          best_answers: (scholarProfile?.best_answers || 0) + 1
+        })
+        .eq('id', answer.user_id);
+
+      alert(`Scholar rewarded with 40 points!`);
+      fetchAnswers();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <motion.div 
       className="doubt-thread-container"
@@ -95,18 +137,30 @@ export default function DoubtThread({ doubt, onBack }) {
                     <span>Best Answer</span>
                   </div>
                 )}
-                <div className="answer-header">
-                  <div className="answer-author">
-                    <div className="avatar-small">
-                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${ans.profiles?.full_name || 'User'}`} alt="avatar" />
+                  <div className="answer-header">
+                    <div className="answer-author">
+                      <div className="avatar-small">
+                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${ans.profiles?.full_name || 'User'}`} alt="avatar" />
+                      </div>
+                      <div>
+                        <span className="author-name">{ans.profiles?.full_name || 'Anonymous'}</span>
+                        <span className="author-role">{ans.profiles?.role || 'Scholar'}</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="author-name">{ans.profiles?.full_name || 'Anonymous'}</span>
-                      <span className="author-role">{ans.profiles?.role || 'Scholar'}</span>
+                    <div className="answer-actions-meta">
+                      <span className="answer-time">{new Date(ans.created_at).toLocaleDateString()}</span>
+                      {doubt.user_id === profile?.id && doubt.status !== 'resolved' && (
+                        <button 
+                          className="btn-mark-best"
+                          onClick={() => handleMarkBest(ans)}
+                          disabled={loading}
+                        >
+                          <Star size={14} />
+                          Mark as Best
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <span className="answer-time">{new Date(ans.created_at).toLocaleDateString()}</span>
-                </div>
                 <p className="answer-text">{ans.content}</p>
               </div>
             ))}
@@ -314,6 +368,32 @@ export default function DoubtThread({ doubt, onBack }) {
           color: var(--text-main);
           line-height: 1.6;
           font-size: 1rem;
+        }
+
+        .answer-actions-meta {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .btn-mark-best {
+          background-color: rgba(245, 158, 11, 0.1);
+          color: #F59E0B;
+          border: 1px solid rgba(245, 158, 11, 0.2);
+          padding: 4px 10px;
+          border-radius: 8px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .btn-mark-best:hover {
+          background-color: #F59E0B;
+          color: white;
         }
 
         .spinner-mini {

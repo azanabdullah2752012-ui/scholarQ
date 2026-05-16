@@ -132,6 +132,10 @@ export default function Profile({ userId, onRequestHelp }) {
             )}
           </div>
           <div className="profile-stat-card">
+            <span className="p-stat-label">Point Balance</span>
+            <span className="p-stat-value" style={{ color: '#F59E0B' }}>{profile.points || 0}</span>
+          </div>
+          <div className="profile-stat-card">
             <span className="p-stat-label">Answers Given</span>
             <span className="p-stat-value" style={{ color: '#10B981' }}>{profile.answers_given || 0}</span>
           </div>

@@ -17,7 +17,7 @@ import OnboardingModal from './components/OnboardingModal';
 import { useAuth, useTheme } from './lib/context';
 
 function App() {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, setProfile } = useAuth();
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('Home');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,8 +31,38 @@ function App() {
   useEffect(() => {
     if (profile) {
       setActiveTab(isScholar ? 'Scholar Hub' : 'Home');
+      checkDailyReward();
     }
   }, [profile?.id, isScholar]);
+
+  const checkDailyReward = async () => {
+    if (!profile) return;
+    
+    const lastReward = profile.last_daily_reward ? new Date(profile.last_daily_reward) : null;
+    const today = new Date();
+    
+    const isSameDay = lastReward && 
+      lastReward.getDate() === today.getDate() &&
+      lastReward.getMonth() === today.getMonth() &&
+      lastReward.getFullYear() === today.getFullYear();
+      
+    if (!isSameDay) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ 
+          points: (profile.points || 0) + 5,
+          last_daily_reward: new Date().toISOString()
+        })
+        .eq('id', profile.id)
+        .select()
+        .single();
+        
+      if (!error && data) {
+        setProfile(data);
+        alert("Daily reward claimed: +5 points");
+      }
+    }
+  };
 
   const handleTabChange = (tab) => {
     if (tab === 'Ask Doubt') {

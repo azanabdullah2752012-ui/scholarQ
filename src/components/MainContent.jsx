@@ -71,15 +71,15 @@ export default function MainContent({ searchQuery, isScholar, activeTab, onDoubt
 
   useEffect(() => {
     fetchDoubts();
-    fetchStats();
-  }, [searchQuery]);
+    if (isScholar) fetchStats();
+  }, [searchQuery, activeTab]);
 
   const fetchDoubts = async () => {
     setLoading(true);
     try {
       let query = supabase
         .from('doubts')
-        .select('*');
+        .select('*, profiles(full_name)');
 
       if (activeTab === 'Unanswered Feed') {
         query = query.eq('status', 'open').order('created_at', { ascending: true });
@@ -93,7 +93,7 @@ export default function MainContent({ searchQuery, isScholar, activeTab, onDoubt
         query = query.or(`title.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`);
       }
 
-      const { data, error } = await query.limit(10);
+      const { data, error } = await query.limit(20);
       if (data) setDoubts(data);
     } catch (e) {
       console.error(e);
@@ -103,9 +103,21 @@ export default function MainContent({ searchQuery, isScholar, activeTab, onDoubt
   };
 
   const fetchStats = async () => {
-    const { count: unanswered } = await supabase.from('doubts').select('*', { count: 'exact', head: true }).eq('status', 'open');
-    const { count: solved } = await supabase.from('doubts').select('*', { count: 'exact', head: true }).eq('status', 'resolved');
-    setStats({ unanswered: unanswered || 0, solved: solved || 0 });
+    // 1. Get unanswered doubts
+    const { count: unanswered } = await supabase
+      .from('doubts')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'open');
+
+    // 2. Get total community answers (as a measure of "solved by community")
+    const { count: totalAnswers } = await supabase
+      .from('answers')
+      .select('*', { count: 'exact', head: true });
+
+    setStats({ 
+      unanswered: unanswered || 0, 
+      solved: totalAnswers || 0 
+    });
   };
 
   return (

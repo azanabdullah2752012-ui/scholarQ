@@ -6,7 +6,7 @@ import { useAuth } from '../lib/context';
 import { supabase } from '../lib/supabase';
 
 export default function AskDoubtModal({ isOpen, onClose, targetScholar }) {
-  const { profile } = useAuth();
+  const { profile, setProfile } = useAuth();
   const [subject, setSubject] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -22,10 +22,16 @@ export default function AskDoubtModal({ isOpen, onClose, targetScholar }) {
       setError('Please fill in all fields.');
       return;
     }
+
+    if ((profile?.points || 0) < 5) {
+      setError('You need at least 5 points to post a doubt.');
+      return;
+    }
     
     setError('');
     setLoading(true);
     
+    // 1. Insert Doubt
     const { error: dbError } = await supabase
       .from('doubts')
       .insert({
@@ -41,6 +47,20 @@ export default function AskDoubtModal({ isOpen, onClose, targetScholar }) {
       setError(dbError.message);
       setLoading(false);
     } else {
+      // 2. Deduct Points
+      const { data: updatedProfile, error: pointError } = await supabase
+        .from('profiles')
+        .update({ points: (profile.points || 0) - 5 })
+        .eq('id', profile.id)
+        .select()
+        .single();
+
+      if (pointError) {
+        console.error("Failed to deduct points:", pointError);
+      } else if (updatedProfile) {
+        setProfile(updatedProfile);
+      }
+
       setLoading(false);
       setSuccess(true);
       setTimeout(() => {
