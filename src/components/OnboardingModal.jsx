@@ -298,6 +298,27 @@ export default function OnboardingModal({ isOpen, user }) {
               border-radius: 50%;
               animation: spin 1s linear infinite;
             }
+
+            @media (max-width: 480px) {
+              .onboarding-card {
+                padding: 24px 20px;
+                border-radius: 24px;
+              }
+              .onboarding-header h2 {
+                font-size: 1.25rem;
+                margin-bottom: 6px;
+              }
+              .onboarding-header p {
+                font-size: 0.8rem;
+              }
+              .subjects-grid {
+                grid-template-columns: 1fr;
+              }
+              .onboarding-form {
+                gap: 16px;
+                margin-bottom: 24px;
+              }
+            }
           `}} />
         </div>
       )}

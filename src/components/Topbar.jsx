@@ -16,11 +16,7 @@ export default function Topbar({ setActiveTab, onSearch }) {
   }, [query]);
 
   const handleAsk = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setActiveTab('Ask Doubt');
-    }, 800);
+    setActiveTab('Ask Doubt');
   };
 
   return (

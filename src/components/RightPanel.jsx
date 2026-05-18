@@ -3,8 +3,8 @@ import { HelpCircle, Users, CheckCircle, MessageSquare, Quote } from 'lucide-rea
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 
-const ScholarItem = ({ rank, name, subjects, score, avatar }) => (
-  <div className="scholar-item">
+const ScholarItem = ({ rank, name, subjects, score, avatar, onClick }) => (
+  <div className="scholar-item" onClick={onClick}>
     <div className={`rank-badge rank-${rank}`}>{rank}</div>
     <div className="scholar-avatar">
       <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatar}`} alt="avatar" />
@@ -35,7 +35,7 @@ const StepItem = ({ number, icon: Icon, title, description }) => (
   </div>
 );
 
-export default function RightPanel({ setActiveTab }) {
+export default function RightPanel({ setActiveTab, onProfileClick }) {
   const [topScholars, setTopScholars] = useState([]);
 
   useEffect(() => {
@@ -77,6 +77,7 @@ export default function RightPanel({ setActiveTab }) {
               subjects={(scholar.subjects || []).slice(0, 2).join(', ') || 'General'} 
               score={scholar.academic_percentage} 
               avatar={scholar.full_name} 
+              onClick={() => onProfileClick?.(scholar.id)}
             />
           )) : (
             <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading scholars...</div>

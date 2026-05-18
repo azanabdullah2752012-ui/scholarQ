@@ -130,8 +130,8 @@ export default function DoubtThread({ doubt, onBack }) {
           <h3>{answers.length} Answers</h3>
           <div className="answers-list">
             {answers.map(ans => (
-              <div key={ans.id} className={`answer-card ${ans.isBest ? 'best' : ''}`}>
-                {ans.isBest && (
+              <div key={ans.id} className={`answer-card ${ans.is_best ? 'best' : ''}`}>
+                {ans.is_best && (
                   <div className="best-answer-tag">
                     <CheckCircle size={14} />
                     <span>Best Answer</span>

@@ -1,20 +1,33 @@
 import React from 'react';
-import { Home, PlusCircle, MessageSquare, User } from 'lucide-react';
+import { Home, PlusCircle, MessageSquare, User, CheckCircle } from 'lucide-react';
+import { useAuth } from '../lib/context';
 
 export default function MobileNav({ activeTab, setActiveTab }) {
-  const navItems = [
+  const { profile } = useAuth();
+  const isScholar = profile?.role === 'Scholar' || profile?.role === 'Elite Scholar';
+
+  const studentItems = [
     { icon: Home, label: 'Home' },
     { icon: PlusCircle, label: 'Ask Doubt' },
     { icon: MessageSquare, label: 'My Doubts' },
     { icon: User, label: 'Profile' }
   ];
 
+  const scholarItems = [
+    { icon: Home, label: 'Scholar Hub' },
+    { icon: MessageSquare, label: 'Unanswered Feed' },
+    { icon: CheckCircle, label: 'My Answers' },
+    { icon: User, label: 'Profile' }
+  ];
+
+  const navItems = isScholar ? scholarItems : studentItems;
+
   return (
     <nav className="mobile-nav">
       {navItems.map((item) => (
         <div 
           key={item.label}
-          className={`mobile-nav-item ${activeTab === item.label ? 'active' : ''}`}
+          className={`mobile-nav-item ${(activeTab === item.label || (item.label === 'Scholar Hub' && activeTab === 'Home') || (item.label === 'Home' && activeTab === 'Scholar Hub')) ? 'active' : ''}`}
           onClick={() => setActiveTab(item.label)}
         >
           <item.icon size={22} />

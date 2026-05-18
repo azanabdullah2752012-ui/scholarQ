@@ -81,15 +81,15 @@ export default function Sidebar({ activeTab, setActiveTab }) {
           </div>
           <div className="status-row">
             <span className="label">Score</span>
-            <span className="value">{profile?.academic_percentage || '92'}%</span>
+            <span className="value">{profile?.academic_percentage || '0'}%</span>
           </div>
           <div className="status-row">
             <span className="label">Subjects</span>
-            <span className="value">{profile?.subjects?.length || '5'}</span>
+            <span className="value">{profile?.subjects?.length || 0}</span>
           </div>
           <div className="status-row">
             <span className="label">Reputation</span>
-            <span className="value primary">A+</span>
+            <span className="value primary">{profile?.reputation || 'A+'}</span>
           </div>
         </div>
         <button 

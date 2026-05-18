@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Award, Calendar, Settings, Edit3, ShieldCheck, MapPin, Save, X, BookOpen } from 'lucide-react';
+import { User, Mail, Award, Calendar, Settings, Edit3, ShieldCheck, MapPin, Save, X, BookOpen, LogOut } from 'lucide-react';
 import { useAuth } from '../lib/context';
 import { supabase } from '../lib/supabase';
 
 export default function Profile({ userId, onRequestHelp }) {
-  const { user, profile: myProfile, setProfile: setMyProfile } = useAuth();
+  const { user, profile: myProfile, setProfile: setMyProfile, signOut } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -109,7 +109,7 @@ export default function Profile({ userId, onRequestHelp }) {
             ) : (
               <>
                 <button className="btn-edit-profile" onClick={() => setIsEditing(true)}>Edit Profile</button>
-                <button className="btn-settings"><Settings size={18} /></button>
+                <button className="btn-settings" onClick={signOut} title="Sign Out"><LogOut size={18} /></button>
               </>
             )}
           </div>

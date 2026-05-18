@@ -117,7 +117,7 @@ function App() {
                 onViewAll={() => handleTabChange('Unanswered Feed')}
                 refreshTrigger={refreshTrigger}
               />
-              {activeTab !== 'Unanswered Feed' && <RightPanel setActiveTab={handleTabChange} />}
+              {activeTab !== 'Unanswered Feed' && <RightPanel setActiveTab={handleTabChange} onProfileClick={handleProfileClick} />}
             </>
           )}
           
@@ -150,7 +150,10 @@ function App() {
           {selectedDoubt && (
             <DoubtThread 
               doubt={selectedDoubt} 
-              onBack={() => setSelectedDoubt(null)} 
+              onBack={() => {
+                setSelectedDoubt(null);
+                setRefreshTrigger(prev => prev + 1);
+              }} 
             />
           )}
 
