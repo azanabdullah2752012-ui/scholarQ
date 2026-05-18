@@ -22,6 +22,8 @@ const DoubtCard = ({ doubt, onClick }) => {
                    doubt.subject === 'Physics' ? '#F59E0B' : 
                    doubt.subject === 'Chemistry' ? '#10B981' : '#388BFD';
 
+  const askerName = doubt.profiles?.full_name || 'User';
+
   return (
     <div className="doubt-card-item" onClick={() => onClick(doubt)}>
       <div className="doubt-main">
@@ -41,9 +43,9 @@ const DoubtCard = ({ doubt, onClick }) => {
           <div className="doubt-footer">
             <div className="asker-info">
               <div className="avatar-mini">
-                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${doubt.asker_name}`} alt="avatar" />
+                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${askerName}`} alt="avatar" />
               </div>
-              <span>{doubt.asker_name}</span>
+              <span>{askerName}</span>
               <span className="separator">•</span>
               <span className="time-text">
                 {doubt.created_at ? new Date(doubt.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
@@ -63,7 +65,7 @@ const DoubtCard = ({ doubt, onClick }) => {
   );
 };
 
-export default function MainContent({ searchQuery, isScholar, activeTab, onDoubtClick, onViewAll }) {
+export default function MainContent({ searchQuery, isScholar, activeTab, onDoubtClick, onViewAll, refreshTrigger }) {
   const { profile } = useAuth();
   const [doubts, setDoubts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,14 +74,14 @@ export default function MainContent({ searchQuery, isScholar, activeTab, onDoubt
   useEffect(() => {
     fetchDoubts();
     if (isScholar) fetchStats();
-  }, [searchQuery, activeTab]);
+  }, [searchQuery, activeTab, refreshTrigger]);
 
   const fetchDoubts = async () => {
     setLoading(true);
     try {
       let query = supabase
         .from('doubts')
-        .select('*, profiles(full_name)');
+        .select('*');
 
       if (activeTab === 'Unanswered Feed') {
         query = query.eq('status', 'open').order('created_at', { ascending: true });
@@ -93,8 +95,42 @@ export default function MainContent({ searchQuery, isScholar, activeTab, onDoubt
         query = query.or(`title.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`);
       }
 
-      const { data, error } = await query.limit(20);
-      if (data) setDoubts(data);
+      const { data, error } = await query.limit(40);
+      if (error) {
+        console.error("Error fetching doubts:", error);
+      }
+      if (data) {
+        // Filter by answer count if activeTab is unanswered or scholar hub
+        let filteredData = data;
+        if (activeTab === 'Unanswered Feed' || activeTab === 'Scholar Hub') {
+          filteredData = data.filter(d => {
+            const hasNoAnswers = !d.answer_count || d.answer_count === 0;
+            return d.status === 'open' && hasNoAnswers;
+          });
+        }
+
+        const userIds = [...new Set(filteredData.map(d => d.user_id).filter(Boolean))];
+        if (userIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, full_name, role')
+            .in('id', userIds);
+          
+          if (profilesData) {
+            const profileMap = {};
+            profilesData.forEach(p => {
+              profileMap[p.id] = p;
+            });
+            const doubtsWithProfiles = filteredData.map(d => ({
+              ...d,
+              profiles: profileMap[d.user_id] || null
+            }));
+            setDoubts(doubtsWithProfiles);
+            return;
+          }
+        }
+        setDoubts(filteredData);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -104,10 +140,14 @@ export default function MainContent({ searchQuery, isScholar, activeTab, onDoubt
 
   const fetchStats = async () => {
     // 1. Get unanswered doubts
-    const { count: unanswered } = await supabase
+    const { data: unansweredData } = await supabase
       .from('doubts')
-      .select('*', { count: 'exact', head: true })
+      .select('id, status, answer_count')
       .eq('status', 'open');
+
+    const unansweredCount = unansweredData 
+      ? unansweredData.filter(d => !d.answer_count || d.answer_count === 0).length 
+      : 0;
 
     // 2. Get total community answers (as a measure of "solved by community")
     const { count: totalAnswers } = await supabase
@@ -115,7 +155,7 @@ export default function MainContent({ searchQuery, isScholar, activeTab, onDoubt
       .select('*', { count: 'exact', head: true });
 
     setStats({ 
-      unanswered: unanswered || 0, 
+      unanswered: unansweredCount, 
       solved: totalAnswers || 0 
     });
   };

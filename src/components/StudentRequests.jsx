@@ -50,27 +50,52 @@ const DoubtCard = ({ doubt, onClick }) => {
   );
 };
 
-export default function StudentRequests({ onDoubtClick }) {
+export default function StudentRequests({ onDoubtClick, refreshTrigger }) {
   const { profile } = useAuth();
   const [doubts, setDoubts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (profile) {
+    if (profile?.id) {
       fetchRequests();
     }
-  }, [profile?.id]);
+  }, [profile?.id, refreshTrigger]);
 
   const fetchRequests = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('doubts')
-        .select('*, profiles(full_name)')
+        .select('*')
         .eq('target_scholar_id', profile.id)
         .order('created_at', { ascending: false });
 
-      if (data) setDoubts(data);
+      if (error) {
+        console.error("fetchRequests error:", error);
+      }
+      if (data) {
+        const userIds = [...new Set(data.map(d => d.user_id).filter(Boolean))];
+        if (userIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, full_name, role')
+            .in('id', userIds);
+          
+          if (profilesData) {
+            const profileMap = {};
+            profilesData.forEach(p => {
+              profileMap[p.id] = p;
+            });
+            const doubtsWithProfiles = data.map(d => ({
+              ...d,
+              profiles: profileMap[d.user_id] || null
+            }));
+            setDoubts(doubtsWithProfiles);
+            return;
+          }
+        }
+        setDoubts(data);
+      }
     } catch (e) {
       console.error(e);
     } finally {

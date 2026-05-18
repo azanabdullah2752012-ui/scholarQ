@@ -15,6 +15,7 @@ import StudentRequests from './components/StudentRequests';
 import LoginPage from './components/LoginPage';
 import OnboardingModal from './components/OnboardingModal';
 import { useAuth, useTheme } from './lib/context';
+import { supabase } from './lib/supabase';
 
 function App() {
   const { user, profile, loading: authLoading, setProfile } = useAuth();
@@ -25,6 +26,7 @@ function App() {
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [targetScholar, setTargetScholar] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   const isScholar = profile?.role === 'Scholar' || profile?.role === 'Elite Scholar';
 
@@ -113,13 +115,14 @@ function App() {
                 activeTab={activeTab} 
                 onDoubtClick={handleDoubtClick}
                 onViewAll={() => handleTabChange('Unanswered Feed')}
+                refreshTrigger={refreshTrigger}
               />
               {activeTab !== 'Unanswered Feed' && <RightPanel setActiveTab={handleTabChange} />}
             </>
           )}
           
           {activeTab === 'My Doubts' && !selectedDoubt && (
-            <MyDoubts onDoubtClick={handleDoubtClick} />
+            <MyDoubts onDoubtClick={handleDoubtClick} refreshTrigger={refreshTrigger} />
           )}
 
           {(activeTab === 'Answers' || activeTab === 'My Answers') && !selectedDoubt && (
@@ -152,7 +155,7 @@ function App() {
           )}
 
           {activeTab === 'Student Requests' && !selectedDoubt && (
-            <StudentRequests onDoubtClick={handleDoubtClick} />
+            <StudentRequests onDoubtClick={handleDoubtClick} refreshTrigger={refreshTrigger} />
           )}
 
           {activeTab !== 'Home' && activeTab !== 'Scholar Hub' && activeTab !== 'My Doubts' && activeTab !== 'Unanswered Feed' && activeTab !== 'Answers' && activeTab !== 'My Answers' && activeTab !== 'Top Scholars' && activeTab !== 'Scholars' && activeTab !== 'Leaderboard' && activeTab !== 'Notifications' && activeTab !== 'Profile' && activeTab !== 'Student Requests' && !selectedDoubt && (
@@ -173,6 +176,7 @@ function App() {
           setTargetScholar(null);
         }} 
         targetScholar={targetScholar}
+        onDoubtPosted={() => setRefreshTrigger(prev => prev + 1)}
       />
 
       <OnboardingModal 

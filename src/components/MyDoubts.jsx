@@ -39,26 +39,43 @@ const DoubtListItem = ({ doubt, onClick }) => (
   </motion.div>
 );
 
-export default function MyDoubts({ onDoubtClick }) {
-  const { user } = useAuth();
+export default function MyDoubts({ onDoubtClick, refreshTrigger }) {
+  const { user, profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [doubts, setDoubts] = useState([]);
 
   useEffect(() => {
-    if (user) {
-      fetchMyDoubts();
+    const currentUserId = profile?.id || user?.id;
+    if (currentUserId) {
+      fetchMyDoubts(currentUserId);
     }
-  }, [user]);
+  }, [user?.id, profile?.id, refreshTrigger]);
 
-  const fetchMyDoubts = async () => {
+  const fetchMyDoubts = async (currentUserId) => {
     setLoading(true);
     const { data, error } = await supabase
       .from('doubts')
-      .select('*, profiles(full_name)')
-      .eq('user_id', user.id)
+      .select('*')
+      .eq('user_id', currentUserId)
       .order('created_at', { ascending: false });
 
-    if (data) setDoubts(data);
+    if (error) {
+      console.error("fetchMyDoubts error:", error);
+    }
+    if (data) {
+      // Fetch current user's profile to map name
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('id', currentUserId)
+        .single();
+
+      const doubtsWithProfile = data.map(d => ({
+        ...d,
+        profiles: profileData || null
+      }));
+      setDoubts(doubtsWithProfile);
+    }
     setLoading(false);
   };
 

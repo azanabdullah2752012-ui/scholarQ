@@ -5,7 +5,7 @@ import { X, Send, HelpCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../lib/context';
 import { supabase } from '../lib/supabase';
 
-export default function AskDoubtModal({ isOpen, onClose, targetScholar }) {
+export default function AskDoubtModal({ isOpen, onClose, targetScholar, onDoubtPosted }) {
   const { profile, setProfile } = useAuth();
   const [subject, setSubject] = useState('');
   const [title, setTitle] = useState('');
@@ -63,6 +63,7 @@ export default function AskDoubtModal({ isOpen, onClose, targetScholar }) {
 
       setLoading(false);
       setSuccess(true);
+      if (onDoubtPosted) onDoubtPosted();
       setTimeout(() => {
         setSuccess(false);
         onClose();
